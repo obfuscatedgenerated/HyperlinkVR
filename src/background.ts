@@ -36,6 +36,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 const REAL_SPECTATOR_URL = new URL(VR_HOST_URL, location.href).href;
 
 chrome.runtime.onMessage.addListener((msg, sender) => {
+    let dropped = true;
     console.table([msg, sender.url]);
 
     if (msg.action === "VVR_START_STREAM") {
@@ -49,9 +50,21 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
                             stream: stream_id,
                             tab: {
                                 id: tab.id,
+                            }
+                        });
+
+                        chrome.runtime.sendMessage({
+                            type: "VVR_DIMENSIONS_UPDATE",
+                            tab: {
+                                id: tab.id,
                                 width: tab.width,
                                 height: tab.height
                             }
+                        });
+
+                        chrome.runtime.sendMessage({
+                            type: "VVR_URL_UPDATE",
+                            url: tab.url
                         });
                     });
                 } else {
@@ -62,9 +75,9 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
                 }
             }
         );
-    }
 
-    let dropped = true;
+        dropped = false;
+    }
 
     if (msg.target === "cs" && sender.url === REAL_SPECTATOR_URL) {
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -100,6 +113,16 @@ chrome.windows.onBoundsChanged.addListener(async (window) => {
                 width: tab.width,
                 height: tab.height
             }
+        });
+    }
+});
+
+// alert the vr host of changes in url
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (changeInfo.url) {
+        chrome.runtime.sendMessage({
+            type: "VVR_URL_UPDATE",
+            url: changeInfo.url
         });
     }
 });

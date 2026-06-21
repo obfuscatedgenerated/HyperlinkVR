@@ -67,10 +67,7 @@ export const DOMMirror = ({ position, height }: { position: Vector3; height: num
     useEffect(() => {
         const handle_message = async (message: any) => {
             // Keep tab dimensions continuously synced
-            if (
-                message.type === "VVR_STREAM" ||
-                message.type === "VVR_DIMENSIONS_UPDATED"
-            ) {
+            if (message.type === "VVR_DIMENSIONS_UPDATED") {
                 if (message.tab?.width && message.tab?.height) {
                     setTabDims({
                         width: message.tab.width,
