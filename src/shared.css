@@ -1,5 +1,4 @@
 @import "tailwindcss";
+@theme inline {
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+}

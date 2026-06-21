@@ -1,10 +1,9 @@
+import shared_css from "data-text:~shared.css";
+import type { PlasmoGetStyle } from "plasmo";
 import { useEffect, useRef, useState } from "react";
 
+
 import { Storage } from "@plasmohq/storage";
-
-import "~shared.css";
-
-import type { PlasmoGetStyle } from "plasmo";
 
 const storage = new Storage();
 
@@ -12,7 +11,9 @@ export const config = { matches: ["<all_urls>"], all_frames: true };
 
 export const getStyle: PlasmoGetStyle = () => {
     const style = document.createElement("style");
-    style.textContent = `
+    style.textContent =
+        shared_css +
+        `
     :host {
         pointer-events: none;
     }
