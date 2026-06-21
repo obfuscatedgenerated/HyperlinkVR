@@ -1,6 +1,10 @@
+import type { Vector3 } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import type { Vector3 } from "@react-three/fiber";
+
+
+
+
 
 export const DOMMirror = ({position}: {position: Vector3}) => {
     const videoRef = useRef(document.createElement("video"));
@@ -14,81 +18,33 @@ export const DOMMirror = ({position}: {position: Vector3}) => {
         return new THREE.VideoTexture(video);
     }, []);
 
-    const stream_guard_ref = useRef(false);
-
     useEffect(() => {
-        if (stream_guard_ref.current) return;
-        stream_guard_ref.current = true;
+        // wait for a stream id from the background script
+        const handle_message = async (message: any) => {
+            if (message.type === "VVR_STREAM") {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        mandatory: {
+                            chromeMediaSource: "tab",
+                            chromeMediaSourceId: message.stream
+                        }
+                    }
+                });
 
-        // recieve and send VVR_STREAM_OFFER and VVR_STREAM_CANDIDATE messages to facilitate WebRTC connection for the video stream
-        const pc = new RTCPeerConnection();
-        const iceCandidateQueue = [];
+                videoRef.current.srcObject = stream;
+                videoRef.current.play();
+            }
 
-        pc.ontrack = (event) => {
-            console.log("Received track from offscreen", event.streams[0]);
-
-            const video = videoRef.current;
-            video.srcObject = event.streams[0];
-            video.play();
+            // TODO: fix square stream, also get geometry to match ratio (and be a bit smaller)
         }
 
-        const handleMessage = async (msg) => {
-            if (msg.target !== "cs") return;
+        chrome.runtime.onMessage.addListener(handle_message);
 
-            if (msg.type === "VVR_STREAM_OFFER") {
-                console.log("Received offer from offscreen", msg.offer);
-                // After setRemoteDescription, process the queue
-                await pc.setRemoteDescription(
-                    new RTCSessionDescription(msg.offer)
-                );
-                console.log(
-                    "Remote description set. Signaling state:",
-                    pc.signalingState
-                );
-
-                while (iceCandidateQueue.length > 0) {
-                    pc.addIceCandidate(iceCandidateQueue.shift());
-                }
-
-                const answer = await pc.createAnswer();
-                await pc.setLocalDescription(answer);
-
-                console.log(
-                    "Local description set. Signaling state:",
-                    pc.signalingState
-                );
-                chrome.runtime.sendMessage({
-                    type: "VVR_STREAM_ANSWER",
-                    answer,
-                    target: "offscreen"
-                });
-            } else if (msg.type === "VVR_STREAM_CANDIDATE") {
-                const candidate = new RTCIceCandidate(msg.candidate);
-                // Only add candidate if remote description is set
-                if (pc.remoteDescription && pc.remoteDescription.type) {
-                    pc.addIceCandidate(candidate);
-                } else {
-                    iceCandidateQueue.push(candidate);
-                }
-            }
-        };
-
-        // be sure to send our own candidates to the offscreen script
-        pc.onicecandidate = (event) => {
-            if (event.candidate) {
-                chrome.runtime.sendMessage({ type: "VVR_STREAM_CANDIDATE", candidate: event.candidate, target: "offscreen" });
-            }
-        };
-
-        chrome.runtime.onMessage.addListener(handleMessage);
-
-        // tell the background script that we are ready to receive the offer
+        // tell the background script to send us a stream id
         chrome.runtime.sendMessage({ action: "VVR_START_STREAM" });
-        console.log("Sent VVR_START_STREAM message to background script");
 
         return () => {
-            chrome.runtime.onMessage.removeListener(handleMessage);
-            pc.close();
+            chrome.runtime.onMessage.removeListener(handle_message);
         };
     }, []);
 
