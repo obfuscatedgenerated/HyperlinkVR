@@ -43,9 +43,16 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
             { targetTabId: interacted_tab_id },
             (stream_id) => {
                 if (stream_id) {
-                    chrome.runtime.sendMessage({
-                        type: "VVR_STREAM",
-                        stream: stream_id
+                    chrome.tabs.get(interacted_tab_id!, (tab) => {
+                        chrome.runtime.sendMessage({
+                            type: "VVR_STREAM",
+                            stream: stream_id,
+                            tab: {
+                                id: tab.id,
+                                width: tab.width,
+                                height: tab.height
+                            }
+                        });
                     });
                 } else {
                     console.error(
@@ -75,5 +82,24 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
 
     if (dropped) {
         console.warn("Dropped message:", msg, "from sender:", sender.url);
+    }
+});
+
+// alert the vr host of resizes of the active tab
+chrome.windows.onBoundsChanged.addListener(async (window) => {
+    const [tab] = await chrome.tabs.query({
+        active: true,
+        windowId: window.id
+    });
+
+    if (tab && tab.id) {
+        chrome.runtime.sendMessage({
+            type: "VVR_DIMENSIONS_UPDATE",
+            tab: {
+                id: tab.id,
+                width: tab.width,
+                height: tab.height
+            }
+        });
     }
 });
