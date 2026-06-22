@@ -1,27 +1,15 @@
-
-
-
 import "~shared.css";
 
-
-
+import {version} from "~../package.json";
 import bg from "data-base64:~../assets/popup_bg.webp";
-import { useCallback, useEffect, useState } from "react";
-
-
+import { useEffect, useState } from "react";
 
 import { useStorage } from "@plasmohq/storage/hook";
 
-
-
-import { ToggleSwitch } from "~components/dom/ToggleSwitch";
 import { Dropdown } from "~components/dom/Dropdown";
+import { ToggleSwitch } from "~components/dom/ToggleSwitch";
 
-
-
-
-
-function Popup() {
+const Popup = () => {
     const [active, setActive] = useState(false);
 
     // fade in as soon as the component mounts (slight delay)
@@ -34,7 +22,10 @@ function Popup() {
         false
     );
 
-    const [watch_hand, setWatchHand] = useStorage("settings.watch_hand", "left");
+    const [watch_hand, setWatchHand] = useStorage(
+        "settings.watch_hand",
+        "left"
+    );
 
     // nevermind, debugger cant be optional
     // const on_debug_input_change = useCallback(
@@ -80,7 +71,9 @@ function Popup() {
             />
 
             <div className="p-4 w-full h-full flex flex-col items-center justify-center absolute top-0 left-0 gap-4">
-                <h1 className="font-title text-2xl mb-8 absolute top-4">ViewportVR</h1>
+                <h1 className="font-title text-2xl mb-8 absolute top-4">
+                    ViewportVR
+                </h1>
 
                 <button
                     className="mb-4 px-4 py-2 outline outline-white rounded-lg hover:not-disabled:bg-white hover:not-disabled:text-black transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
@@ -102,13 +95,39 @@ Enable this option to use Chrome's debugger to inject raw inputs directly.`}
                 <Dropdown
                     options={[
                         { label: "Left Hand", value: "left" },
-                        { label: "Right Hand", value: "right" },
+                        { label: "Right Hand", value: "right" }
                     ]}
                     selected={watch_hand}
                     on_change={setWatchHand}
                     label="Watch hand"
                     tooltip="Which hand to wear the wristwatch on."
                 />
+
+                <span className="text-xs text-gray-400 absolute bottom-4">
+                    v{version}
+
+                    {" "}•{" "}
+
+                    <a
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        href="https://github.com/obfuscatedgenerated/ViewportVR"
+                        className="underline hover:text-white transition"
+                    >
+                        GitHub
+                    </a>
+
+                    {" "}•{" "}
+
+                    <a
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        href="tabs/devtools.html"
+                        className="underline hover:text-white transition"
+                    >
+                        DevTools
+                    </a>
+                </span>
             </div>
         </div>
     );

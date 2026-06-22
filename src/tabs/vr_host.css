@@ -1,7 +1,0 @@
-@reference "../shared.css";
-
-body {
-    margin: 0;
-
-    @apply font-sans;
-}

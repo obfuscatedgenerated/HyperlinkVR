@@ -1,0 +1,60 @@
+diff --git a/dist/properties/schema.js b/dist/properties/schema.js
+index 0d84e8c198998e8a593df2e53b0157d62f4a9a9e..959dcf3627129325de3e378e10a8bc355fba07db 100644
+--- a/dist/properties/schema.js
++++ b/dist/properties/schema.js
+@@ -6,7 +6,23 @@ import { allAliases } from './alias.js';
+ import { FontFamiliesSchema, FontWeightSchema } from '../text/font.js';
+ import { isNumberString, isPercentageString, isPixelLengthString, isViewportLengthString, } from './values.js';
+ export function defineSchema(create) {
+-    return create();
++    let cached;
++    const get = () => {
++        if (!cached) cached = create();
++        return cached;
++    };
++
++    // Return a proxy that mimics a Zod schema but defers all property access
++    return new Proxy({}, {
++        get(target, prop) {
++            const schema = get();
++            const value = schema[prop];
++            if (typeof value === 'function') {
++                return value.bind(schema);
++            }
++            return value;
++        }
++    });
+ }
+ const conditionals = [
+     'dark',
+diff --git a/dist/text/font.js b/dist/text/font.js
+index f73f2d5a7fac133a0f46df6c157964333bc0772a..437356fc7d4f1b2ad5bf5f9c7ab80f719203083e 100644
+--- a/dist/text/font.js
++++ b/dist/text/font.js
+@@ -15,13 +15,19 @@ export const fontWeightNames = {
+     black: 900,
+     'extra-black': 950,
+ };
+-const numberStringSchema = /* @__PURE__ */ defineSchema(() => custom(isNumberString, 'Expected a number string'));
+-const namedFontWeightSchema = /* @__PURE__ */ defineSchema(() => enumSchema(Object.keys(fontWeightNames)));
+-const fontWeightKeySchema = /* @__PURE__ */ defineSchema(() => union([namedFontWeightSchema, numberStringSchema]));
+-export const FontWeightSchema = /* @__PURE__ */ defineSchema(() => union([number(), namedFontWeightSchema, numberStringSchema]));
+-const fontFamilyWeightMapEntrySchema = /* @__PURE__ */ defineSchema(() => anySchema());
+-export const FontFamilyWeightMapSchema = /* @__PURE__ */ defineSchema(() => partialRecord(fontWeightKeySchema, fontFamilyWeightMapEntrySchema));
+-export const FontFamiliesSchema = /* @__PURE__ */ defineSchema(() => record(string(), FontFamilyWeightMapSchema));
++
++const bypassSchema = {
++    parse: (val) => val,
++    safeParse: (val) => ({ success: true, data: val })
++};
++
++const numberStringSchema = bypassSchema;
++const namedFontWeightSchema = bypassSchema;
++const fontWeightKeySchema = bypassSchema;
++export var FontWeightSchema = bypassSchema;
++const fontFamilyWeightMapEntrySchema = bypassSchema;
++export const FontFamilyWeightMapSchema = bypassSchema;
++export const FontFamiliesSchema = bypassSchema;
+ const defaultFontFamiles = {
+     inter: {
+         light: () => import('@pmndrs/msdfonts/inter').then(({ inter }) => inter.light),

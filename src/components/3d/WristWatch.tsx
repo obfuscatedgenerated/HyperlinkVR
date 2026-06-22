@@ -1,5 +1,5 @@
-import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
+import { Container } from "@react-three/uikit";
 import { useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
@@ -7,12 +7,18 @@ import * as THREE from "three";
 
 import { useStorage } from "@plasmohq/storage/hook";
 
+import {
+    WATCH_UI_HEIGHT,
+    WATCH_UI_WIDTH,
+    WatchUI
+} from "~components/3d/ui/WatchUI";
+
 
 
 
 
 const OPEN_THRESHOLD = 0.85; // Harder to open
-const CLOSE_THRESHOLD = 0.70; // Easier to keep open
+const CLOSE_THRESHOLD = 0.7; // Easier to keep open
 
 export const WristWatch = () => {
     const watchGroupRef = useRef<THREE.Group>(null);
@@ -79,12 +85,13 @@ export const WristWatch = () => {
                         orientation.w
                     );
 
-
                     // rotate around the X axis to tilt the watch face towards the user
                     watchGroupRef.current.rotateX(-Math.PI / 3);
 
                     // then rotate 90 degrees so its on top of the wrist
-                    watchGroupRef.current.rotateZ(watch_hand === "left" ? Math.PI / 2 : -Math.PI / 2);
+                    watchGroupRef.current.rotateZ(
+                        watch_hand === "left" ? Math.PI / 2 : -Math.PI / 2
+                    );
 
                     // --- REFINED WRIST OFFSETS ---
                     // Assuming standard VR controller orientation:
@@ -136,26 +143,26 @@ export const WristWatch = () => {
                 <meshStandardMaterial color="#222222" />
             </mesh>
 
-            <group name="WatchUI" ref={uiGroupRef} position={[0, 0.05, -0.05]} rotation={[-Math.PI / 2, 0, watch_hand === "left" ? Math.PI / 2 : -Math.PI / 2]}>
-                <mesh>
-                    <planeGeometry args={[0.3, 0.2]} />
-                    <meshBasicMaterial
-                        color="#4db8ff"
-                        transparent
-                        opacity={0.8}
-                        side={THREE.DoubleSide}
-                        depthWrite={false}
-                    />
-                </mesh>
+            <group
+                name="WatchUI"
+                ref={uiGroupRef}
+                position={[0, 0.05, -0.05]}
+                rotation={[
+                    -Math.PI / 2,
+                    0,
+                    watch_hand === "left" ? Math.PI / 2 : -Math.PI / 2
+                ]}
+            >
 
-                <Text
-                    position={[0, 0, 0.01]} // Lift it 1mm off the blue panel
-                    fontSize={0.03}
-                    color="#ffffff"
-                    anchorX="center"
-                    anchorY="middle">
-                    UI goes here!
-                </Text>
+                <Container
+                    sizeX={0.3}
+                    sizeY={0.2}
+                    width={WATCH_UI_WIDTH}
+                    height={WATCH_UI_HEIGHT}
+                    flexDirection="column"
+                >
+                    <WatchUI />
+                </Container>
             </group>
         </group>
     );

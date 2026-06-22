@@ -3,7 +3,6 @@ import { createXRStore, XR } from "@react-three/xr";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import "~shared.css";
-import "./vr_host.css";
 
 import { CanvasResizer } from "~components/3d/CanvasResizer";
 import { DOMMirror } from "~components/3d/DOMMirror";
@@ -72,7 +71,7 @@ const SpectatorWindow = () => {
     }
 
     return (
-        <>
+        <main className="font-sans">
             {!started && (
                 <div className="bg-black/80 backdrop-blur-md absolute inset-0 flex flex-col items-center justify-center z-50 text-white gap-8">
                     <h1 className="font-title text-3xl">ViewportVR</h1>
@@ -113,7 +112,7 @@ const SpectatorWindow = () => {
                     </Canvas>
                 </div>
             </div>
-        </>
+        </main>
     );
 };
 

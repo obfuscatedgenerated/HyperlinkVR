@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
+  '@pmndrs/uikit':
+    hash: 3f272a0ad12160430ec802e91064cab6e8395f5a9ff964ed2be9b36d879d4ae1
+    path: patches/@pmndrs__uikit.patch
   '@tailwindcss/oxide@4.3.1':
     hash: adaee549c69537cdd9ceb5b9384d1da927741fb9a0540133a953c7b14dcbb6dc
     path: patches/@tailwindcss__oxide@4.3.1.patch
@@ -5242,7 +5245,7 @@ snapshots:
     dependencies:
       '@preact/signals-core': 1.14.3
 
-  '@pmndrs/uikit@1.0.74(three@0.184.0)':
+  '@pmndrs/uikit@1.0.74(patch_hash=3f272a0ad12160430ec802e91064cab6e8395f5a9ff964ed2be9b36d879d4ae1)(three@0.184.0)':
     dependencies:
       '@pmndrs/msdfonts': 1.0.74
       '@pmndrs/uikit-pub-sub': 1.0.74
@@ -5373,7 +5376,7 @@ snapshots:
   '@react-three/uikit@1.0.74(@react-three/fiber@8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0))(@types/react@18.2.48)(react@18.2.0)(three@0.184.0)(use-sync-external-store@1.6.0(react@18.2.0))':
     dependencies:
       '@pmndrs/pointer-events': 6.6.30
-      '@pmndrs/uikit': 1.0.74(three@0.184.0)
+      '@pmndrs/uikit': 1.0.74(patch_hash=3f272a0ad12160430ec802e91064cab6e8395f5a9ff964ed2be9b36d879d4ae1)(three@0.184.0)
       '@preact/signals-core': 1.14.3
       '@react-three/fiber': 8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0)
       react: 18.2.0
