@@ -1,13 +1,15 @@
-import type { Vector3 } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import type { ThreeEvent, Vector3 } from "@react-three/fiber";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
 export const DOMMirror = ({
     position,
-    height
+    height,
+    before_click
 }: {
     position: Vector3;
     height: number;
+    before_click?: (e: ThreeEvent<PointerEvent>, click_x: number, click_y: number) => boolean; // return false to veto the click
 }) => {
     const videoRef = useRef(document.createElement("video"));
 
@@ -122,8 +124,50 @@ export const DOMMirror = ({
     // 3. Resize the physical plane to exactly match the tab's aspect ratio
     const planeWidth = (tabDims.width / tabDims.height) * height;
 
+    const handle_click = useCallback(
+        (e: ThreeEvent<PointerEvent>) => {
+            if (!e.uv) {
+                return;
+            }
+
+            // the uv is normalised hit point [0,1] [0,1] on the plane. need to convert to tab pixels
+
+            // convert to texture space
+            const texture_x = (e.uv.x - texture.offset.x) / texture.repeat.x;
+            const texture_y = (e.uv.y - texture.offset.y) / texture.repeat.y;
+
+            if (texture_x < 0 || texture_x > 1 || texture_y < 0 || texture_y > 1) {
+                return;
+            }
+
+            // convert to physical tab pixels
+            // threejs uv originates from bottom-left, but we want to transmit in top-left origin for dom
+            const click_x = Math.round(texture_x * tabDims.width);
+            const click_y = Math.round((1 - texture_y) * tabDims.height);
+
+            if (before_click && !before_click(e, click_x, click_y)) {
+                return;
+            }
+
+            chrome.runtime.sendMessage({
+                action: "VVR_CLICK",
+                pos: {
+                    x: click_x,
+                    y: click_y,
+                    button: 0
+                    // TODO: support right click, middle click, drag scrolling
+                    // TODO: support holding and dragging mouse (emit mouse move and send up and down sep)
+                }
+            });
+        },
+        [tabDims, texture]
+    );
+
     return (
-        <mesh position={position}>
+        <mesh
+            position={position}
+            onPointerDown={handle_click}
+        >
             <planeGeometry args={[planeWidth, height]} />
             <meshBasicMaterial map={texture} toneMapped={false} />
         </mesh>

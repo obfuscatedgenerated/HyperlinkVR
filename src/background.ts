@@ -41,6 +41,8 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     let dropped = true;
     console.table([msg, sender.url]);
 
+    // handle messages meant directly for the background script
+    // TODO: clean up and use switch
     if (msg.action === "VVR_START_STREAM") {
         chrome.tabCapture.getMediaStreamId(
             { targetTabId: interacted_tab_id },
@@ -95,6 +97,9 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
         });
 
         dropped = false;
+    } else if (msg.action === "VVR_CLICK") {
+        handle_click(msg);
+        dropped = false;
     }
 
     if (msg.target === "cs" && sender.url === REAL_SPECTATOR_URL) {
@@ -145,6 +150,26 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 });
 
+const handle_click = (msg: any) => {
+    chrome.storage.sync.get("settings.use_debug_input", (data) => {
+        const use_debug_input = data["settings.use_debug_input"] || false;
+
+        if (use_debug_input) {
+            console.error("not yet implemented!!!!!");
+        } else {
+            // forward event to the active tab's content script
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs[0] && tabs[0].id) {
+                    chrome.tabs.sendMessage(tabs[0].id, msg);
+                }
+            });
+        }
+    });
+}
+
+// TODO: handle debugger attachment in response to setting changing, only if activated
+
 // TODO: end session when source tab closes
 // TODO: tab hopping
 // TODO: user input relay
+// TODO: make sure tab is correct one before dispatching updates
