@@ -129,7 +129,7 @@ export const WristWatch = () => {
                 <meshStandardMaterial color="#222222" />
             </mesh>
 
-            <group ref={uiGroupRef} position={[0, 0.05, -0.05]} rotation={[-Math.PI / 2, 0, watch_hand === "left" ? Math.PI / 2 : -Math.PI / 2]}>
+            <group name="WatchUI" ref={uiGroupRef} position={[0, 0.05, -0.05]} rotation={[-Math.PI / 2, 0, watch_hand === "left" ? Math.PI / 2 : -Math.PI / 2]}>
                 <mesh>
                     <planeGeometry args={[0.3, 0.2]} />
                     <meshBasicMaterial

@@ -1,5 +1,8 @@
 const VR_HOST_URL = "./tabs/vr_host.html";
 
+const VR_HOST_WIDTH = 750;
+const VR_HOST_HEIGHT = 450;
+
 // Replace your onInstalled listener with this development-friendly version:
 chrome.contextMenus.removeAll(() => {
     // TODO: check if launch allowed in context (not protected page)
@@ -28,8 +31,8 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         chrome.windows.create({
             url: VR_HOST_URL,
             type: "popup",
-            width: 800,
-            height: 600
+            width: VR_HOST_WIDTH,
+            height: VR_HOST_HEIGHT
         });
     }
 });
@@ -91,8 +94,8 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
             chrome.windows.create({
                 url: VR_HOST_URL,
                 type: "popup",
-                width: 800,
-                height: 600
+                width: VR_HOST_WIDTH,
+                height: VR_HOST_HEIGHT
             });
         });
 

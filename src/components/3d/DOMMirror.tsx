@@ -167,6 +167,7 @@ export const DOMMirror = ({
 
     return (
         <mesh
+            name="DOMMirror"
             position={position}
             onPointerDown={handle_click}
         >

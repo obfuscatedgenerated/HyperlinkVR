@@ -2,28 +2,20 @@ import { Canvas } from "@react-three/fiber";
 import { createXRStore, XR } from "@react-three/xr";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-
-
-
-
-
 import "~shared.css";
 import "./vr_host.css";
 
-
-
+import { CanvasResizer } from "~components/3d/CanvasResizer";
 import { DOMMirror } from "~components/3d/DOMMirror";
 import { SpectatorCameraController } from "~components/3d/SpectatorCameraController";
 import { URLBar } from "~components/3d/URLBar";
-import { CanvasResizer } from "~components/3d/CanvasResizer";
-import { LogoOverlay } from "~components/dom/LogoOverlay";
 import { WristWatch } from "~components/3d/WristWatch";
+import { LogoOverlay } from "~components/dom/LogoOverlay";
+import { FakeHand } from "~components/3d/FakeHand";
 
-
-
-
-
-const xr_store = createXRStore({});
+const xr_store = createXRStore({
+    controller: FakeHand
+});
 
 const SpectatorWindow = () => {
     const [started, setStarted] = useState(false);
@@ -94,7 +86,9 @@ const SpectatorWindow = () => {
                 </div>
             )}
             <div className="h-screen w-screen bg-black flex items-center justify-center">
-                <div className="w-full h-full max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)] relative" ref={canvas_container_ref}>
+                <div
+                    className="w-full h-full max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)] relative"
+                    ref={canvas_container_ref}>
                     <LogoOverlay />
 
                     <Canvas gl={{ alpha: false }}>

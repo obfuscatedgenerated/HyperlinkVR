@@ -81,8 +81,9 @@ function Popup() {
 
             <div className="p-4 w-full h-full flex flex-col items-center justify-center absolute top-0 left-0 gap-4">
                 <h1 className="font-title text-2xl mb-8 absolute top-4">ViewportVR</h1>
+
                 <button
-                    className="px-4 py-2 outline outline-white rounded-lg hover:not-disabled:bg-white hover:not-disabled:text-black transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
+                    className="mb-4 px-4 py-2 outline outline-white rounded-lg hover:not-disabled:bg-white hover:not-disabled:text-black transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
                     onClick={() => {
                         chrome.runtime.sendMessage({ action: "VVR_LAUNCH" });
                         window.close();
@@ -105,7 +106,7 @@ Enable this option to use Chrome's debugger to inject raw inputs directly.`}
                     ]}
                     selected={watch_hand}
                     on_change={setWatchHand}
-                    label="Watch Hand"
+                    label="Watch hand"
                     tooltip="Which hand to wear the wristwatch on."
                 />
             </div>
