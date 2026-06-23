@@ -2,6 +2,10 @@ import type { ThreeEvent, Vector3 } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
+
+
+
+
 export const DOMMirror = ({
     position,
     height,
@@ -86,6 +90,7 @@ export const DOMMirror = ({
             if (message.type === "VVR_STREAM") {
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: {
+                        // @ts-expect-error this is special to chrome extension apis, not standard web
                         mandatory: {
                             chromeMediaSource: "tab",
                             chromeMediaSourceId: message.stream
