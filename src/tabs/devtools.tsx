@@ -70,12 +70,19 @@ const DevTools = () => {
                     </ToolGroup>
 
                     <ToolGroup title="Input Interception">
-                        <ToolSettingSwitch label="Debug hit points" setting_key="settings.debug_hits" default_val={false} />
+                        <ToolSettingSwitch label="Debug click points" setting_key="settings.debug_clicks" default_val={false} />
+                    </ToolGroup>
+
+                    <ToolGroup title="Raycasts (VR)">
+                        <ToolSettingSwitch label="Show touch rays" setting_key="settings.debug_touch" default_val={false} />
+                        <ToolSettingSwitch label="Show controller ray hits" setting_key="settings.debug_ray_hits" default_val={false} />
                     </ToolGroup>
                 </div>
             </div>
         </main>
     );
 }
+
+// TODO: namespace settings
 
 export default DevTools;

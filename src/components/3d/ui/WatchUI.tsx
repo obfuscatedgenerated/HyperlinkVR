@@ -2,6 +2,7 @@ import { Container, Text } from "@react-three/uikit";
 import { Label, Switch } from "@react-three/uikit-default";
 import * as THREE from "three";
 import { configureTextBuilder } from "troika-three-text";
+import { useState } from "react";
 
 
 
@@ -26,8 +27,11 @@ class DoubleSidedSolidPanel extends THREE.MeshBasicMaterial {
 }
 
 export const WatchUI = () => {
+    const [switchEnabled, setSwitchEnabled] = useState(false);
+
     return (
         <Container
+
             width={WATCH_UI_WIDTH}
             height={WATCH_UI_HEIGHT}
             flexDirection="column"
@@ -37,11 +41,12 @@ export const WatchUI = () => {
             opacity={0.8}
             borderRadius={16}
             panelMaterialClass={DoubleSidedSolidPanel}>
-            <Container flexDirection="row" alignItems="center" gap={8}>
+            <Container onPointerDown={() => {console.log("hello");setSwitchEnabled(!switchEnabled)}} flexDirection="row" alignItems="center" gap={8}>
                 <Label>
                     <Text>Awesomeness detection</Text>
                 </Label>
-                <Switch />
+
+                <Switch checked={switchEnabled}  />
             </Container>
         </Container>
     );

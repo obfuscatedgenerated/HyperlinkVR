@@ -1,14 +1,14 @@
-let debug_hits = false;
+let debug_clicks = false;
 
 // set initial value from storage
-chrome.storage.sync.get("settings.debug_hits", (data) => {
-    debug_hits = data["settings.debug_hits"] || false;
+chrome.storage.sync.get("settings.debug_clicks", (data) => {
+    debug_clicks = data["settings.debug_clicks"] || false;
 });
 
 // listen for changes to the setting
 chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === "sync" && changes["settings.debug_hits"]) {
-        debug_hits = changes["settings.debug_hits"].newValue;
+    if (area === "sync" && changes["settings.debug_clicks"]) {
+        debug_clicks = changes["settings.debug_clicks"].newValue;
     }
 });
 
@@ -18,7 +18,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         const button = msg.button || 0;
         console.log(`Received click at (${x}, ${y}) with button ${button}`);
 
-        if (debug_hits) {
+        if (debug_clicks) {
             // render a dot for debugging
             const dot = document.createElement("div");
             dot.style.position = "absolute";

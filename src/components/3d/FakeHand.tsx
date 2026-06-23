@@ -1,18 +1,19 @@
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { PointerCursorModel, PointerRayModel, useRayPointer, useXRInputSourceStateContext, XRSpace } from "@react-three/xr";
+import {
+    PointerCursorModel,
+    PointerRayModel,
+    useRayPointer,
+    useTouchPointer,
+    useXRInputSourceStateContext,
+    XRSpace
+} from "@react-three/xr";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import left_hand from "url:~./assets/hands/left.glb";
 import right_hand from "url:~./assets/hands/right.glb";
 
-
-
 import { useStorage } from "@plasmohq/storage/hook";
-
-
-
-
 
 const FINGER_NAMES = ["middle", "ring", "pinky"];
 const SEGMENT_NAMES = ["proximal", "intermediate", "distal"];
@@ -26,7 +27,8 @@ type ChainLink = {
     bindPos: THREE.Vector3;
 };
 
-// TODO: switch to touchpointer when pointed at watch nondetached
+// TODO: disable ray when touch has a hit
+// TODO: prevent double touch when passing through watch
 
 export const FakeHand = () => {
     // which hand is this?
@@ -43,6 +45,11 @@ export const FakeHand = () => {
     const rayOriginRef = useRef<THREE.Group>(null);
     const rayPointer = useRayPointer(rayOriginRef, state);
     const wasTriggerDownRef = useRef(false);
+    const [debug_ray_hit] = useStorage("settings.debug_ray_hits", false);
+
+    const touchOriginRef = useRef<THREE.Group>(null);
+    const touchPointer = useTouchPointer(touchOriginRef, state);
+    const [debug_touch] = useStorage("settings.debug_touch", false);
 
     // Smoothed curl amount (0 = open, ~1.2 = closed fist). This is the ONLY
     // value we smooth — every bone pose is derived from it each frame, so
@@ -124,9 +131,17 @@ export const FakeHand = () => {
             localDeltaWorld: new THREE.Quaternion(),
             cumulative: new THREE.Quaternion(),
             offset: new THREE.Vector3(),
-            thumbGoal: new THREE.Quaternion()
+            thumbGoal: new THREE.Quaternion(),
+            touchDebugArrow: debug_touch
+                ? new THREE.ArrowHelper(
+                      new THREE.Vector3(0, 0, -1), // Default forward
+                      new THREE.Vector3(),
+                      0.05,
+                      0x00ff00 // Green
+                  )
+                : null
         }),
-        []
+        [debug_touch]
     );
 
     useFrame((rootState, frameDelta, xrFrame) => {
@@ -145,6 +160,46 @@ export const FakeHand = () => {
             rayPointer.up({ timeStamp: performance.now(), button: 0 });
         }
         wasTriggerDownRef.current = isTriggerDown;
+
+        // glue the touch ray to the fingertip
+        if (touchOriginRef.current) {
+            const indexTipBone = handScene.getObjectByName(
+                "index-finger-phalanx-distal"
+            );
+            if (indexTipBone) {
+                // 1. Get the absolute world coordinates of the bone
+                indexTipBone.getWorldPosition(math.rayPos);
+                indexTipBone.getWorldQuaternion(math.rayQuat);
+
+                // 2. Convert World Space -> Local Controller Space
+                touchOriginRef.current.parent.worldToLocal(math.rayPos);
+
+                touchOriginRef.current.parent.getWorldQuaternion(
+                    math.cumulative
+                );
+                math.rayQuat.premultiply(math.cumulative.invert());
+
+                // 3. Apply the safe, local coordinates!
+                touchOriginRef.current.position.copy(math.rayPos);
+                touchOriginRef.current.quaternion.copy(math.rayQuat);
+
+                // shift out the finger a little so the ray doesn't start inside the hand mesh
+                touchOriginRef.current.translateZ(-0.025);
+
+                touchOriginRef.current.updateMatrixWorld(true);
+
+                if (debug_touch && math.touchDebugArrow) {
+                    const touchDir = new THREE.Vector3(0, 0, -1)
+                        .applyQuaternion(touchOriginRef.current.quaternion)
+                        .normalize();
+
+                    math.touchDebugArrow.setDirection(touchDir);
+                    math.touchDebugArrow.position.copy(
+                        touchOriginRef.current.position
+                    );
+                }
+            }
+        }
 
         let targetCurl = 0;
         const isPointerHand = handedness !== (watch_hand || "left");
@@ -224,6 +279,18 @@ export const FakeHand = () => {
                     );
                     if (hits.length > 0) {
                         targetCurl = 1.2;
+
+                        if (debug_ray_hit) {
+                            const hit = hits[0];
+                            const geometry = new THREE.SphereGeometry(0.005);
+                            const material = new THREE.MeshBasicMaterial({
+                                color: 0xff0000
+                            });
+                            const dot = new THREE.Mesh(geometry, material);
+                            dot.position.copy(hit.point);
+                            rootState.scene.add(dot);
+                            setTimeout(() => rootState.scene.remove(dot), 100);
+                        }
                     }
                 }
             }
@@ -351,12 +418,16 @@ export const FakeHand = () => {
                 <primitive object={handScene} />
             </group>
 
+            <group ref={touchOriginRef} />
+
             {state.inputSource.targetRaySpace && (
                 <XRSpace
                     ref={rayOriginRef}
                     space={state.inputSource.targetRaySpace}
                 />
             )}
+
+            {debug_touch && <primitive object={math.touchDebugArrow} />}
 
             <PointerRayModel pointer={rayPointer} />
             <PointerCursorModel pointer={rayPointer} />
