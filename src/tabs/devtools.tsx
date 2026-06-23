@@ -2,6 +2,8 @@ import "~shared.css";
 
 import bg from "data-base64:~../assets/popup_bg.webp";
 import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH } from "~components/3d/ui/WatchUI";
+import { useStorage } from "@plasmohq/storage/hook";
+import { ToggleSwitch } from "~components/dom/ToggleSwitch";
 
 const ToolGroup = ({ title, children }: { title: string; children: React.ReactNode }) => {
     return (
@@ -44,11 +46,17 @@ const ToolWindowButton = ({ label, url, width, height }: { label: string; url: s
     );
 }
 
+const ToolSettingSwitch = ({ label, setting_key, default_val }: { label: string; setting_key: string; default_val?: boolean }) => {
+    const [enabled, setEnabled] = useStorage(setting_key, default_val);
+
+    return <ToggleSwitch enabled={enabled} on_change={setEnabled} label={label} />;
+}
+
 const DevTools = () => {
     return (
-        <main className="w-full h-screen bg-cover bg-center font-sans" style={{ backgroundImage: `url(${bg})` }}>
+        <main className="text-white w-full h-screen bg-cover bg-center font-sans" style={{ backgroundImage: `url(${bg})` }}>
             <div className="w-full h-full p-6 bg-black/50 backdrop-blur-md">
-                <h1 className="text-white text-4xl font-bold font-title">ViewportVR DevTools</h1>
+                <h1 className="text-4xl font-bold font-title">ViewportVR DevTools</h1>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                     <ToolGroup title="UI Inspector">
@@ -59,6 +67,10 @@ const DevTools = () => {
                             width={WATCH_UI_WIDTH}
                             height={WATCH_UI_HEIGHT}
                         />
+                    </ToolGroup>
+
+                    <ToolGroup title="Input Interception">
+                        <ToolSettingSwitch label="Debug hit points" setting_key="settings.debug_hits" default_val={false} />
                     </ToolGroup>
                 </div>
             </div>

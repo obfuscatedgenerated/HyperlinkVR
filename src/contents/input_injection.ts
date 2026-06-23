@@ -1,8 +1,40 @@
+let debug_hits = false;
+
+// set initial value from storage
+chrome.storage.sync.get("settings.debug_hits", (data) => {
+    debug_hits = data["settings.debug_hits"] || false;
+});
+
+// listen for changes to the setting
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === "sync" && changes["settings.debug_hits"]) {
+        debug_hits = changes["settings.debug_hits"].newValue;
+    }
+});
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.action === "VVR_CLICK") {
         const { x, y } = msg.pos;
         const button = msg.button || 0;
         console.log(`Received click at (${x}, ${y}) with button ${button}`);
+
+        if (debug_hits) {
+            // render a dot for debugging
+            const dot = document.createElement("div");
+            dot.style.position = "absolute";
+            dot.style.left = `${x}px`;
+            dot.style.top = `${y}px`;
+            dot.style.width = "10px";
+            dot.style.height = "10px";
+            dot.style.transform = "translate(-50%, -50%)";
+            dot.style.backgroundColor = "red";
+            dot.style.borderRadius = "50%";
+            dot.style.zIndex = "9999";
+            document.body.appendChild(dot);
+            setTimeout(() => {
+                document.body.removeChild(dot);
+            }, 1000);
+        }
 
         // find the element at the click position
         const el = document.elementFromPoint(x, y);

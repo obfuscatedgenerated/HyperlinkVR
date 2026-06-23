@@ -1,16 +1,16 @@
 import { Canvas } from "@react-three/fiber";
-import { createXRStore, XR } from "@react-three/xr";
+import { createXRStore, XR, PointerEvents } from "@react-three/xr";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import "~shared.css";
 
 import { CanvasResizer } from "~components/3d/CanvasResizer";
 import { DOMMirror } from "~components/3d/DOMMirror";
+import { FakeHand } from "~components/3d/FakeHand";
 import { SpectatorCameraController } from "~components/3d/SpectatorCameraController";
 import { URLBar } from "~components/3d/URLBar";
 import { WristWatch } from "~components/3d/WristWatch";
 import { LogoOverlay } from "~components/dom/LogoOverlay";
-import { FakeHand } from "~components/3d/FakeHand";
 
 const xr_store = createXRStore({
     controller: FakeHand
@@ -94,6 +94,8 @@ const SpectatorWindow = () => {
                         <CanvasResizer containerRef={canvas_container_ref} />
 
                         <XR store={xr_store}>
+                            <PointerEvents />
+
                             <color attach="background" args={["#111111"]} />
                             <ambientLight intensity={0.5} />
                             <pointLight position={[10, 10, 10]} />

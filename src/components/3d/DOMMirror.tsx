@@ -132,18 +132,8 @@ export const DOMMirror = ({
 
             // the uv is normalised hit point [0,1] [0,1] on the plane. need to convert to tab pixels
 
-            // convert to texture space
-            const texture_x = (e.uv.x - texture.offset.x) / texture.repeat.x;
-            const texture_y = (e.uv.y - texture.offset.y) / texture.repeat.y;
-
-            if (texture_x < 0 || texture_x > 1 || texture_y < 0 || texture_y > 1) {
-                return;
-            }
-
-            // convert to physical tab pixels
-            // threejs uv originates from bottom-left, but we want to transmit in top-left origin for dom
-            const click_x = Math.round(texture_x * tabDims.width);
-            const click_y = Math.round((1 - texture_y) * tabDims.height);
+            const click_x = Math.round(e.uv.x * tabDims.width);
+            const click_y = Math.round((1 - e.uv.y) * tabDims.height);
 
             if (before_click && !before_click(e, click_x, click_y)) {
                 return;

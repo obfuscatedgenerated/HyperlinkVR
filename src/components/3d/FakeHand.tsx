@@ -1,6 +1,6 @@
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { PointerCursorModel, PointerRayModel, useRayPointer, useXRInputSourceStateContext } from "@react-three/xr";
+import { PointerCursorModel, PointerRayModel, useRayPointer, useXRInputSourceStateContext, XRSpace } from "@react-three/xr";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import left_hand from "url:~./assets/hands/left.glb";
@@ -42,6 +42,7 @@ export const FakeHand = () => {
 
     const rayOriginRef = useRef<THREE.Group>(null);
     const rayPointer = useRayPointer(rayOriginRef, state);
+    const wasTriggerDownRef = useRef(false);
 
     // Smoothed curl amount (0 = open, ~1.2 = closed fist). This is the ONLY
     // value we smooth — every bone pose is derived from it each frame, so
@@ -135,6 +136,16 @@ export const FakeHand = () => {
         const session = xr.getSession();
         if (!session) return;
 
+        // need to manually wire up inputs
+        const isTriggerDown =
+            state.gamepad?.["xr-standard-trigger"]?.state === "pressed";
+        if (isTriggerDown && !wasTriggerDownRef.current) {
+            rayPointer.down({ timeStamp: performance.now(), button: 0 });
+        } else if (!isTriggerDown && wasTriggerDownRef.current) {
+            rayPointer.up({ timeStamp: performance.now(), button: 0 });
+        }
+        wasTriggerDownRef.current = isTriggerDown;
+
         let targetCurl = 0;
         const isPointerHand = handedness !== (watch_hand || "left");
 
@@ -198,22 +209,6 @@ export const FakeHand = () => {
                     .normalize();
 
                 math.raycaster.set(math.rayPos, math.rayDir);
-
-                if (rayOriginRef.current) {
-                    // 2. Convert World Tracking coordinates into the Local Parent space
-                    if (rayOriginRef.current.parent) {
-                        rayOriginRef.current.parent.worldToLocal(math.rayPos);
-
-                        // Convert orientation safely using the inverse world quaternion of parent
-                        const parentWorldQuat = new THREE.Quaternion();
-                        rayOriginRef.current.parent.getWorldQuaternion(parentWorldQuat);
-                        math.rayQuat.premultiply(parentWorldQuat.invert());
-                    }
-
-                    // 3. Apply the corrected local transformations
-                    rayOriginRef.current.position.copy(math.rayPos);
-                    rayOriginRef.current.quaternion.copy(math.rayQuat);
-                }
 
                 const mirrorMesh = rootState.scene.getObjectByName("DOMMirror");
                 const watchMesh = rootState.scene.getObjectByName("WatchUI");
@@ -352,11 +347,16 @@ export const FakeHand = () => {
 
     return (
         <>
-            <group rotation={[Math.PI / 2, 0, 0]}>
+            <group rotation={[Math.PI / 2, 0, 0]} pointerEvents="none">
                 <primitive object={handScene} />
             </group>
 
-            <group ref={rayOriginRef} position={[0, 0, 0]} />
+            {state.inputSource.targetRaySpace && (
+                <XRSpace
+                    ref={rayOriginRef}
+                    space={state.inputSource.targetRaySpace}
+                />
+            )}
 
             <PointerRayModel pointer={rayPointer} />
             <PointerCursorModel pointer={rayPointer} />
