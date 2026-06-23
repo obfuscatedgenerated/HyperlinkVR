@@ -1,14 +1,6 @@
 import { Storage } from "@plasmohq/storage";
 
-
-
-import {
-    StaticIdentityRecordSchema,
-    type StaticIdentityRecord
-} from "~lib/auth/schema";
-
-
-
+import { AuthManifestSchema, StaticIdentityRecordSchema, type AuthManifest, type StaticIdentityRecord } from "~lib/auth/schema";
 
 
 export const AUTH_METHODS = ["static", "jwt"] as const;
@@ -168,31 +160,37 @@ export const resolve_identity = async (
 
     // now reach out to the host to see what auth methods they support
     // TODO: handle host more safely
-    const methods_response = await fetch(
-        `https://${identity.host}/.well-known/vvr/auth-methods.json`
+    const manifest_response = await fetch(
+        `https://${identity.host}/.well-known/vvr/auth-manifest.json`
     );
-    if (!methods_response.ok) {
+    if (!manifest_response.ok) {
         return {
             resolved: false,
             allowed: {},
-            error: `Failed to fetch auth methods from host: ${methods_response.statusText}`
+            error: `Failed to fetch auth manifest from host: ${manifest_response.statusText}`
         };
     }
 
-    const methods_data = await methods_response.json();
-    const methods = methods_data.methods as LoginMethod[];
-    if (
-        !methods ||
-        !Array.isArray(methods) ||
-        methods.length === 0 ||
-        !methods.some((m) => AUTH_METHODS.includes(m))
-    ) {
+    const manifest_data = await manifest_response.json();
+    if (!manifest_data) {
         return {
             resolved: false,
             allowed: {},
-            error: `No supported auth methods found for host: ${identity.host}`
+            error: "Auth manifest is empty"
         };
     }
+
+    // validate manifest against schema
+    const { success, error } = AuthManifestSchema.safeParse(manifest_data);
+    if (!success) {
+        return {
+            resolved: false,
+            allowed: {},
+            error: `Invalid auth manifest: ${error}`
+        };
+    }
+
+    const { methods } = manifest_data as AuthManifest;
 
     // if only one method is supported, select it automatically
     if (methods.length === 1) {
