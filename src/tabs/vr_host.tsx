@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber";
-import { createXRStore, XR, PointerEvents } from "@react-three/xr";
+import { createXRStore, PointerEvents, XR } from "@react-three/xr";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import "~shared.css";
@@ -11,6 +11,7 @@ import { SpectatorCameraController } from "~components/3d/SpectatorCameraControl
 import { URLBar } from "~components/3d/URLBar";
 import { WristWatch } from "~components/3d/WristWatch";
 import { LogoOverlay } from "~components/dom/LogoOverlay";
+import { useTabSession } from "~hooks/useTabSession";
 
 const xr_store = createXRStore({
     controller: FakeHand
@@ -19,6 +20,8 @@ const xr_store = createXRStore({
 const SpectatorWindow = () => {
     const [started, setStarted] = useState(false);
     const [is_supported, setIsSupported] = useState<boolean | null>(false);
+
+    useTabSession();
 
     const enter_vr = useCallback(() => {
         if (started) return;

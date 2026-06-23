@@ -152,6 +152,14 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 });
 
+// alert the vr host of the session closing
+chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+    chrome.runtime.sendMessage({
+        type: "VVR_TAB_CLOSED",
+        tab: tabId
+    });
+});
+
 const handle_click = (msg: any) => {
     chrome.storage.sync.get("settings.use_debug_input", (data) => {
         const use_debug_input = data["settings.use_debug_input"] === "true" || false;
@@ -167,6 +175,4 @@ const handle_click = (msg: any) => {
 
 // TODO: handle debugger attachment in response to setting changing, only if activated
 
-// TODO: end session when source tab closes
 // TODO: tab hopping
-// TODO: user input relay
