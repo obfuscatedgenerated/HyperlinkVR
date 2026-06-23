@@ -1,0 +1,253 @@
+import { Storage } from "@plasmohq/storage";
+
+// TODO: type static record once determined. probably will learn zod for this, basing off JWK standard
+
+export const AUTH_METHODS = ["static", "jwt"] as const;
+export type LoginMethod = (typeof AUTH_METHODS)[number];
+
+export type LoginAction = "login" | "signup";
+
+export interface Identity {
+    name: string;
+    host: string;
+}
+
+interface SuccessfulIdentityParse {
+    success: true;
+    identity: Identity;
+}
+
+interface FailedIdentityParse {
+    success: false;
+    error: string;
+}
+
+type IdentityParseResult = SuccessfulIdentityParse | FailedIdentityParse;
+
+export const parse_identity = (username: string): IdentityParseResult => {
+    // parse username into identity
+    const parts = username.split("@");
+    if (parts.length !== 2) {
+        return {
+            success: false,
+            error: "Invalid username format. Use name@host.com"
+        };
+    }
+
+    const [name, host] = parts;
+    if (!name || !host) {
+        return {
+            success: false,
+            error: "Invalid username format. Use name@host.com"
+        };
+    }
+
+    return {
+        success: true,
+        identity: {
+            name,
+            host
+        }
+    };
+};
+
+interface SuccessfulRecordResolution {
+    success: true;
+    record: any | undefined;
+}
+
+interface FailedRecordResolution {
+    success: false;
+    error: string;
+}
+
+type StaticRecordResolution =
+    | SuccessfulRecordResolution
+    | FailedRecordResolution;
+
+export const resolve_static_record = async (
+    identity: Identity
+): Promise<StaticRecordResolution> => {
+    const static_record_response = await fetch(
+        `https://${identity.host}/.well-known/vvr/auth/${identity.name}.json`
+    );
+
+    if (!static_record_response.ok) {
+        if (static_record_response.status === 404) {
+            return {
+                success: true,
+                record: undefined
+            };
+        } else {
+            return {
+                success: false,
+                error: `Failed to fetch static auth record: ${static_record_response.statusText}`
+            };
+        }
+    }
+
+    try {
+        const record = await static_record_response.json();
+        return {
+            success: true,
+            record
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error: `Failed to parse static auth record: ${error}`
+        };
+    }
+};
+
+export interface StoredKey {
+    method: LoginMethod;
+    key: string;
+}
+
+export type ActionableMethods = Partial<Record<LoginMethod, LoginAction[]>>;
+
+interface SuccessfulIdentityResolution {
+    resolved: true;
+    allowed: ActionableMethods;
+    stored_key?: StoredKey;
+    static_record?: any;
+}
+
+interface FailedIdentityResolution {
+    resolved: false;
+    allowed: {};
+    error?: string;
+}
+
+type IdentityResolution =
+    | SuccessfulIdentityResolution
+    | FailedIdentityResolution;
+
+export const resolve_identity = async (
+    identity: Identity,
+    storage?: Storage
+): Promise<IdentityResolution> => {
+    if (!storage) {
+        storage = new Storage({ area: "local" });
+    }
+
+    // first, check if a local key already exists, which can be logged in immediately
+    const stored_key = await storage.get<StoredKey>(
+        `keystore:${identity.name}@${identity.host}`
+    );
+
+    if (stored_key) {
+        return {
+            resolved: true,
+            allowed: {
+                [stored_key.method]: ["login"]
+            },
+            stored_key
+        };
+    }
+
+    // now reach out to the host to see what auth methods they support
+    // TODO: handle host more safely
+    const methods_response = await fetch(
+        `https://${identity.host}/.well-known/vvr/auth-methods.json`
+    );
+    if (!methods_response.ok) {
+        return {
+            resolved: false,
+            allowed: {},
+            error: `Failed to fetch auth methods from host: ${methods_response.statusText}`
+        };
+    }
+
+    const methods_data = await methods_response.json();
+    const methods = methods_data.methods as LoginMethod[];
+    if (
+        !methods ||
+        !Array.isArray(methods) ||
+        methods.length === 0 ||
+        !methods.some((m) => AUTH_METHODS.includes(m))
+    ) {
+        return {
+            resolved: false,
+            allowed: {},
+            error: `No supported auth methods found for host: ${identity.host}`
+        };
+    }
+
+    // if only one method is supported, select it automatically
+    if (methods.length === 1) {
+        // if the method is static, check for a static record first
+        if (methods[0] === "static") {
+            const static_record = await resolve_static_record(identity);
+
+            if (static_record.success && static_record.record) {
+                return {
+                    resolved: true,
+                    allowed: {
+                        static: ["login"]
+                    },
+                    static_record: static_record.record
+                };
+            } else if (
+                static_record.success &&
+                static_record.record === undefined
+            ) {
+                // doesnt exist so only offer signup
+                return {
+                    resolved: true,
+                    allowed: {
+                        static: ["signup"]
+                    }
+                };
+            } else if (static_record.success === false) {
+                // error fetching static record
+                return {
+                    resolved: false,
+                    error: static_record.error,
+                    allowed: {}
+                };
+            }
+        } else if (methods[0] === "jwt") {
+            // jwt doesnt distinguish login and signup
+            return {
+                resolved: true,
+                allowed: {
+                    jwt: ["login"]
+                }
+            };
+        }
+    } else {
+        // determine auth method by checking for a static record for the user
+        const static_record = await resolve_static_record(identity);
+
+        if (static_record.success && static_record.record) {
+            return {
+                resolved: true,
+                allowed: {
+                    static: ["login"]
+                },
+                static_record: static_record.record
+            };
+        } else if (
+            static_record.success &&
+            static_record.record === undefined
+        ) {
+            // doesnt exist, offer static signup or jwt login/signup (same thing)
+            return {
+                resolved: true,
+                allowed: {
+                    static: ["signup"],
+                    jwt: ["login"]
+                }
+            };
+        } else if (static_record.success === false) {
+            // error fetching static record
+            return {
+                resolved: false,
+                error: static_record.error,
+                allowed: {}
+            };
+        }
+    }
+};

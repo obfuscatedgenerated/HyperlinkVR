@@ -3,6 +3,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Storage } from "@plasmohq/storage";
 
 import { useDebounce } from "~hooks/useDebounce";
+import {
+    parse_identity,
+    resolve_identity,
+    type ActionableMethods,
+    type Identity,
+    type LoginAction,
+    type LoginMethod,
+    type StoredKey
+} from "~lib/auth";
 
 const LandingPage = ({
     username,
@@ -47,8 +56,12 @@ const LandingPage = ({
                         {actions.map((action) => (
                             <button
                                 key={action}
-                                onClick={() => on_path_selected(method as LoginMethod, action as LoginAction)}
-                            >
+                                onClick={() =>
+                                    on_path_selected(
+                                        method as LoginMethod,
+                                        action as LoginAction
+                                    )
+                                }>
                                 {action}
                             </button>
                         ))}
@@ -57,9 +70,7 @@ const LandingPage = ({
             </div>
         </>
     );
-}
-
-// TODO: type static record once determined. probably will learn zod for this, basing off JWK standard
+};
 
 interface FormProps {
     username: string;
@@ -87,11 +98,6 @@ const SignupFormJWT = ({ username }: FormProps) => {
     return <LoginFormJWT username={username} />;
 };
 
-const AUTH_METHODS = ["static", "jwt"] as const;
-type LoginMethod = (typeof AUTH_METHODS)[number];
-
-type LoginAction = "login" | "signup";
-
 type FormGroup = Record<LoginMethod, React.FC<FormProps>>;
 
 type Forms = Record<LoginAction, FormGroup>;
@@ -106,25 +112,6 @@ const FORMS: Forms = {
         jwt: SignupFormJWT
     }
 };
-
-interface StoredKey {
-    method: LoginMethod;
-    key: string;
-}
-
-interface Identity {
-    name: string;
-    host: string;
-}
-
-type ActionableMethods = Partial<Record<LoginMethod, LoginAction[]>>;
-
-interface IdentityResolution {
-    resolved: boolean;
-    allowed: ActionableMethods;
-}
-
-// TODO: move auth stuff to common lib
 
 const LoginWindow = () => {
     const [action, setAction] = useState<LoginAction | null>(null);
@@ -144,169 +131,12 @@ const LoginWindow = () => {
 
     const storage = useMemo(() => new Storage({ area: "local" }), []);
 
-    const resolve_static_record = useCallback(
-        async (identity: Identity): Promise<any | undefined | null> => {
-            const static_record_response = await fetch(
-                `https://${identity.host}/.well-known/vvr/auth/${identity.name}.json`
-            );
-
-            if (!static_record_response.ok) {
-                if (static_record_response.status === 404) {
-                    return undefined;
-                } else {
-                    setError(
-                        `Failed to fetch static auth record: ${static_record_response.statusText}`
-                    );
-                    return null;
-                }
-            }
-
-            // TODO: safe parse
-            return await static_record_response.json();
-        },
-        []
-    );
-
-    const resolve_identity = useCallback(
-        async (identity: Identity): Promise<IdentityResolution> => {
-            setStoredKey(null);
-            setStoredStaticRecord(null);
-
-            // first, check if a local key already exists, which can be logged in immediately
-            const stored_key = await storage.get<StoredKey>(
-                `keystore:${identity.name}@${identity.host}`
-            );
-
-            if (stored_key) {
-                setStoredKey(stored_key);
-
-                return {
-                    resolved: true,
-                    allowed: {
-                        [stored_key.method]: ["login"]
-                    }
-                };
-            }
-
-            // now reach out to the host to see what auth methods they support
-            // TODO: handle host more safely
-            const methods_response = await fetch(
-                `https://${identity.host}/.well-known/vvr/auth-methods.json`
-            );
-            if (!methods_response.ok) {
-                setError(
-                    `Failed to fetch auth methods from host: ${methods_response.statusText}`
-                );
-                return {
-                    resolved: false,
-                    allowed: {}
-                };
-            }
-
-            const methods_data = await methods_response.json();
-            const methods = methods_data.methods as LoginMethod[];
-            if (
-                !methods ||
-                !Array.isArray(methods) ||
-                methods.length === 0 ||
-                !methods.some((m) => AUTH_METHODS.includes(m))
-            ) {
-                setError(
-                    `No supported auth methods found for host: ${identity.host}`
-                );
-                return {
-                    resolved: false,
-                    allowed: {}
-                };
-            }
-
-            // if only one method is supported, select it automatically
-            if (methods.length === 1) {
-                // if the method is static, check for a static record first
-                if (methods[0] === "static") {
-                    const static_record = await resolve_static_record(identity);
-
-                    if (static_record) {
-                        setStoredStaticRecord(static_record);
-                        return {
-                            resolved: true,
-                            allowed: {
-                                static: ["login"]
-                            }
-                        };
-                    } else if (static_record === null) {
-                        // error fetching static record
-                        return {
-                            resolved: false,
-                            allowed: {}
-                        };
-                    } else if (static_record === undefined) {
-                        // doesnt exist so only offer signup
-                        return {
-                            resolved: true,
-                            allowed: {
-                                static: ["signup"]
-                            }
-                        };
-                    }
-                } else if (methods[0] === "jwt") {
-                    // jwt doesnt distinguish login and signup
-                    return {
-                        resolved: true,
-                        allowed: {
-                            jwt: ["login"]
-                        }
-                    };
-                }
-            } else {
-                // determine auth method by checking for a static record for the user
-                const static_record = await resolve_static_record(identity);
-                if (static_record) {
-                    setStoredStaticRecord(static_record);
-
-                    return {
-                        resolved: true,
-                        allowed: {
-                            static: ["login"]
-                        }
-                    };
-                } else if (static_record === null) {
-                    // error fetching static record
-                    return {
-                        resolved: false,
-                        allowed: {}
-                    };
-                } else if (static_record === undefined) {
-                    // doesnt exist, offer static signup or jwt login/signup (same thing)
-                    return {
-                        resolved: true,
-                        allowed: {
-                            static: ["signup"],
-                            jwt: ["login"]
-                        }
-                    };
-                }
-            }
+    const do_resolve_identity = useCallback(
+        (identity: Identity) => {
+            return resolve_identity(identity, storage);
         },
         [storage]
     );
-
-    const parse_identity = useCallback((username: string): Identity | null => {
-        // parse username into identity
-        const parts = username.split("@");
-        if (parts.length !== 2) {
-            setError("Invalid username format. Use name@host.com");
-            return null;
-        }
-
-        const [name, host] = parts;
-        if (!name || !host) {
-            setError("Invalid username format. Use name@host.com");
-            return null;
-        }
-
-        return { name, host };
-    }, []);
 
     // when debounced username changes, resolve identity and present actions
     useEffect(() => {
@@ -317,16 +147,18 @@ const LoginWindow = () => {
             return;
         }
 
-        const identity = parse_identity(debounced_username);
-        if (!identity) {
+        const identity_parse = parse_identity(debounced_username);
+        if (identity_parse.success === false) {
+            setError(identity_parse.error);
             setActionableMethods({});
             setAction(null);
             setMethod(null);
             return;
         }
 
-        resolve_identity(identity).then((result) => {
-            if (!result.resolved) {
+        do_resolve_identity(identity_parse.identity).then((result) => {
+            if (result.resolved === false) {
+                setError(result.error || "Failed to resolve identity");
                 setActionableMethods({});
                 setAction(null);
                 setMethod(null);
@@ -334,17 +166,22 @@ const LoginWindow = () => {
             }
 
             setActionableMethods(result.allowed);
+            setStoredKey(result.stored_key || null);
+            setStoredStaticRecord(result.static_record || null);
+            setError(null);
 
             // if only one method is allowed, autoselect it
             const allowed_methods = Object.keys(
                 result.allowed
             ) as LoginMethod[];
+
             let local_method: LoginMethod | null = null;
             if (allowed_methods.length === 1) {
                 local_method = allowed_methods[0];
             } else {
                 local_method = null;
             }
+
             setMethod(local_method);
 
             // // if only one action is allowed for the selected method, autoselect it
@@ -359,7 +196,7 @@ const LoginWindow = () => {
             //     setAction(null);
             // }
         });
-    }, [debounced_username, parse_identity, resolve_identity]);
+    }, [debounced_username, parse_identity, do_resolve_identity]);
 
     const FormComponent = useMemo(() => {
         if (!action || !method) {
@@ -380,7 +217,11 @@ const LoginWindow = () => {
     return (
         <div>
             {FormComponent ? (
-                <FormComponent username={username} stored_key={stored_key} stored_static_record={stored_static_record} />
+                <FormComponent
+                    username={username}
+                    stored_key={stored_key}
+                    stored_static_record={stored_static_record}
+                />
             ) : (
                 <LandingPage
                     username={username}
