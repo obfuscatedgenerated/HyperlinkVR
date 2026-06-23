@@ -59,6 +59,16 @@ const DevTools = () => {
                 <h1 className="text-4xl font-bold font-title">ViewportVR DevTools</h1>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                    <ToolGroup title="Authentication Hosts">
+                        <ToolWindowButton
+                            label="Open auth manifest generator"
+
+                            url="tabs/devtools-form.html?schema=AuthManifest&format=json&filename=auth-manifest"
+                            width={400}
+                            height={800}
+                        />
+                    </ToolGroup>
+
                     <ToolGroup title="UI Inspector">
                         <ToolWindowButton
                             label="Open watch UI"

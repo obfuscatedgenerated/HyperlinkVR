@@ -27,7 +27,10 @@ export type DeviceRecord = z.infer<typeof DeviceRecordSchema>;
 
 export const StaticIdentityRecordSchema_VERSION = 1;
 export const StaticIdentityRecordSchema = z.object({
-    $schema: z.string().optional(),
+    $schema: z
+        .string()
+        .optional()
+        .default("https://vvr.ollieg.codes/schemas/StaticIdentityRecord_v1.json"),
     version: z.number().int().min(1).max(StaticIdentityRecordSchema_VERSION),
     identity: z.string(),
     created_at: z.number(),
@@ -39,14 +42,20 @@ export type StaticIdentityRecord = z.infer<typeof StaticIdentityRecordSchema>;
 
 export const AuthManifestSchema_VERSION = 1;
 export const AuthManifestSchema = z.object({
-    $schema: z.string().optional(),
+    $schema: z.string().optional().default("https://vvr.ollieg.codes/schemas/AuthManifest_v1.json"),
     version: z.number().int().min(1).max(AuthManifestSchema_VERSION),
 
-    methods: z.array(z.enum(AUTH_METHODS)).min(1),
+    methods: z.array(z.enum(AUTH_METHODS)).min(1)
+        .describe("Supported authentication methods"),
 
-    host_name: z.string().optional(),
-    host_description: z.string().optional(),
-    host_icon: z.url().optional(),
+    host_name: z.string().optional()
+        .describe("Host friendly name"),
+
+    host_description: z.string().optional()
+        .describe("Host description"),
+
+    host_icon: z.url().optional()
+        .describe("Host icon URL"),
 });
 export type AuthManifest = z.infer<typeof AuthManifestSchema>;
 
