@@ -8,25 +8,28 @@ import {
     WATCH_UI_WIDTH,
     WatchUI
 } from "~components/3d/ui/WatchUI";
+import { MockTabSessionProvider } from "~contexts/TabSession";
 
 const DevToolsWatchUI = () => {
     return (
-        <main className="w-screen h-screen flex items-center justify-center">
-            <Canvas gl={{ localClippingEnabled: true }}>
-                <Fullscreen
-                    flexDirection="column"
-                    alignItems="center"
-                    justifyContent="center">
-                    <Container
-                        width={WATCH_UI_WIDTH}
-                        height={WATCH_UI_HEIGHT}
+        <MockTabSessionProvider>
+            <main className="w-screen h-screen flex items-center justify-center">
+                <Canvas gl={{ localClippingEnabled: true }}>
+                    <Fullscreen
                         flexDirection="column"
-                    >
-                        <WatchUI />
-                    </Container>
-                </Fullscreen>
-            </Canvas>
-        </main>
+                        alignItems="center"
+                        justifyContent="center">
+                        <Container
+                            width={WATCH_UI_WIDTH}
+                            height={WATCH_UI_HEIGHT}
+                            flexDirection="column"
+                        >
+                            <WatchUI />
+                        </Container>
+                    </Fullscreen>
+                </Canvas>
+            </main>
+        </MockTabSessionProvider>
     );
 };
 

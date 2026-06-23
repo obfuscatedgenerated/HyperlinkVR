@@ -3,19 +3,13 @@ import { Container } from "@react-three/uikit";
 import { useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-
-
 import { useStorage } from "@plasmohq/storage/hook";
 
 import {
+    WatchUI,
     WATCH_UI_HEIGHT,
-    WATCH_UI_WIDTH,
-    WatchUI
+    WATCH_UI_WIDTH
 } from "~components/3d/ui/WatchUI";
-
-
-
-
 
 const OPEN_THRESHOLD = 0.85; // Harder to open
 const CLOSE_THRESHOLD = 0.7; // Easier to keep open
@@ -151,16 +145,13 @@ export const WristWatch = () => {
                     -Math.PI / 2,
                     0,
                     watch_hand === "left" ? Math.PI / 2 : -Math.PI / 2
-                ]}
-            >
-
+                ]}>
                 <Container
                     width={WATCH_UI_WIDTH}
                     height={WATCH_UI_HEIGHT}
                     // rendered with a target width of 30cm, the aspect is handled by the engine
                     pixelSize={0.3 / WATCH_UI_HEIGHT}
-                    flexDirection="column"
-                >
+                    flexDirection="column">
                     <WatchUI />
                 </Container>
             </group>
