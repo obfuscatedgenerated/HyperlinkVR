@@ -1,8 +1,7 @@
 import type { ThreeEvent, Vector3 } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-
-import { TAB_ID } from "~util/tab_id";
+import { useTabSession } from "~contexts/TabSession";
 
 export const DOMMirror = ({
     position,
@@ -19,8 +18,9 @@ export const DOMMirror = ({
 }) => {
     const videoRef = useRef(document.createElement("video"));
 
-    // State 1: The actual tab dimensions (the content)
-    const [tabDims, setTabDims] = useState({ width: 16, height: 9 });
+    const session = useTabSession();
+    const tabDims = session.dimensions;
+
     // State 2: The oversized square stream (the envelope)
     const [videoDims, setVideoDims] = useState({ width: 0, height: 0 });
 
@@ -79,16 +79,6 @@ export const DOMMirror = ({
 
     useEffect(() => {
         const handle_message = async (message: any) => {
-            // Keep tab dimensions continuously synced
-            if (message.type === "VVR_DIMENSIONS_UPDATE") {
-                if (message.tab?.width && message.tab?.height) {
-                    setTabDims({
-                        width: message.tab.width,
-                        height: message.tab.height
-                    });
-                }
-            }
-
             if (message.type === "VVR_STREAM") {
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: {
@@ -123,7 +113,7 @@ export const DOMMirror = ({
         };
 
         chrome.runtime.onMessage.addListener(handle_message);
-        chrome.runtime.sendMessage({ action: "VVR_START_STREAM", tab: TAB_ID });
+        chrome.runtime.sendMessage({ action: "VVR_START_STREAM", tab: session.id });
 
         return () => chrome.runtime.onMessage.removeListener(handle_message);
     }, []);
@@ -148,7 +138,7 @@ export const DOMMirror = ({
 
             chrome.runtime.sendMessage({
                 action: "VVR_CLICK",
-                tab: TAB_ID,
+                tab: session.id,
                 pos: {
                     x: click_x,
                     y: click_y,

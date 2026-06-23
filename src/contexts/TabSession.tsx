@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-import { TAB_ID } from "~util/tab_id";
+const params = new URLSearchParams(window.location.search);
+const TAB_ID = params.get("tab") ? parseInt(params.get("tab")!) : null;
 
 export interface TabSessionContextValue {
     id: number;
