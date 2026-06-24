@@ -1,0 +1,62 @@
+{
+    "name": "@viewportvr/extension",
+    "displayName": "ViewportVR",
+    "version": "0.0.1",
+    "description": "The hyperspace navigator.",
+    "author": "obfuscatedgenerated",
+    "scripts": {
+        "dev": "plasmo dev",
+        "build": "plasmo build",
+        "package": "plasmo package",
+        "build-schema": "tsx scripts/build_json_schema.ts"
+    },
+    "//": "note the hard coded react versions. plasmo cannot read catalog: react version, so will need to manually sync",
+    "dependencies": {
+        "@autoform/mantine": "^3.0.0",
+        "@autoform/react": "^4.0.0",
+        "@autoform/zod": "^5.0.0",
+        "@mantine/core": "^7.17.8",
+        "@mantine/dates": "^7.17.8",
+        "@plasmohq/messaging": "^0.7.2",
+        "@plasmohq/storage": "^1.15.0",
+        "@react-three/drei": "catalog:",
+        "@react-three/fiber": "catalog:",
+        "@react-three/uikit": "^1.0.74",
+        "@react-three/uikit-default": "^1.0.74",
+        "@react-three/xr": "catalog:",
+        "@types/three": "catalog:",
+        "lucide-react": "catalog:",
+        "plasmo": "0.90.5",
+        "react": "18.2.0",
+        "react-dom": "18.2.0",
+        "postcss-preset-mantine": "^1.18.0",
+        "postcss-simple-vars": "^7.0.1",
+        "react-hook-form": "^7.80.0",
+        "tailwind-preset-mantine": "^4.1.0",
+        "three": "catalog:",
+        "zod": "catalog:"
+    },
+    "devDependencies": {
+        "@tailwindcss/postcss": "catalog:",
+        "@types/chrome": "catalog:",
+        "@types/node": "catalog:",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "tailwindcss": "catalog:"
+    },
+    "manifest": {
+        "host_permissions": [
+            "https://*/*"
+        ],
+        "permissions": [
+            "contextMenus",
+            "tabCapture",
+            "activeTab",
+            "offscreen",
+            "debugger"
+        ],
+        "content_security_policy": {
+            "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+        }
+    }
+}

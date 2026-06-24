@@ -1,67 +1,18 @@
 {
-    "name": "viewport-vr",
-    "displayName": "ViewportVR",
-    "version": "0.0.1",
-    "description": "The hyperspace navigator.",
-    "author": "obfuscatedgenerated",
+    "name": "viewportvr",
+    "private": true,
+    "packageManager": "pnpm@10.19.0",
     "scripts": {
-        "dev": "plasmo dev",
-        "build": "plasmo build",
-        "package": "plasmo package",
-        "build-schema": "tsx scripts/build_json_schema.ts"
-    },
-    "dependencies": {
-        "@autoform/mantine": "^3.0.0",
-        "@autoform/react": "^4.0.0",
-        "@autoform/zod": "^5.0.0",
-        "@mantine/core": "^7.17.8",
-        "@mantine/dates": "^7.17.8",
-        "@plasmohq/messaging": "^0.7.2",
-        "@plasmohq/storage": "^1.15.0",
-        "@react-three/drei": "^9.122.0",
-        "@react-three/fiber": "^8.18.0",
-        "@react-three/uikit": "^1.0.74",
-        "@react-three/uikit-default": "^1.0.74",
-        "@react-three/xr": "^6.6.30",
-        "@types/three": "^0.184.1",
-        "lucide-react": "^1.21.0",
-        "plasmo": "0.90.5",
-        "postcss-preset-mantine": "^1.18.0",
-        "postcss-simple-vars": "^7.0.1",
-        "react": "18.2.0",
-        "react-dom": "18.2.0",
-        "react-hook-form": "^7.80.0",
-        "tailwind-preset-mantine": "^4.1.0",
-        "three": "^0.184.0",
-        "zod": "^4.4.3"
+        "dev": "turbo run dev",
+        "build": "turbo run build"
     },
     "devDependencies": {
-        "@ianvs/prettier-plugin-sort-imports": "4.1.1",
-        "@tailwindcss/postcss": "^4.1.4",
-        "@types/chrome": "0.0.258",
-        "@types/node": "20.11.5",
-        "@types/react": "18.2.48",
-        "@types/react-dom": "18.2.18",
-        "autoprefixer": "^10.5.0",
-        "postcss": "^8.5.15",
+        "turbo": "latest",
+        "typescript": "5.3.3",
         "prettier": "3.2.4",
-        "tailwindcss": "^4.1.4",
-        "tsx": "^4.22.4",
-        "typescript": "5.3.3"
-    },
-    "manifest": {
-        "host_permissions": [
-            "https://*/*"
-        ],
-        "permissions": [
-            "contextMenus",
-            "tabCapture",
-            "activeTab",
-            "offscreen",
-            "debugger"
-        ],
-        "content_security_policy": {
-            "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
-        }
+        "@ianvs/prettier-plugin-sort-imports": "4.1.1",
+        "postcss": "^8.5.15",
+        "autoprefixer": "^10.5.0",
+        "tsx": "^4.22.4"
     }
 }

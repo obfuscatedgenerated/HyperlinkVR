@@ -4,10 +4,58 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@react-three/drei':
+      specifier: ^9.122.0
+      version: 9.122.0
+    '@react-three/fiber':
+      specifier: ^8.18.0
+      version: 8.18.0
+    '@react-three/xr':
+      specifier: ^6.6.30
+      version: 6.6.30
+    '@tailwindcss/postcss':
+      specifier: ^4.1.4
+      version: 4.3.1
+    '@types/chrome':
+      specifier: 0.0.258
+      version: 0.0.258
+    '@types/node':
+      specifier: 20.11.5
+      version: 20.11.5
+    '@types/react':
+      specifier: 18.2.48
+      version: 18.2.48
+    '@types/react-dom':
+      specifier: 18.2.18
+      version: 18.2.18
+    '@types/three':
+      specifier: ^0.184.1
+      version: 0.184.1
+    lucide-react:
+      specifier: ^1.21.0
+      version: 1.21.0
+    react:
+      specifier: 18.2.0
+      version: 18.2.0
+    react-dom:
+      specifier: 18.2.0
+      version: 18.2.0
+    tailwindcss:
+      specifier: ^4.1.4
+      version: 4.3.1
+    three:
+      specifier: ^0.184.0
+      version: 0.184.0
+    zod:
+      specifier: ^4.4.3
+      version: 4.4.3
+
 patchedDependencies:
-  '@pmndrs/uikit':
+  '@pmndrs/uikit@1.0.74':
     hash: 3f272a0ad12160430ec802e91064cab6e8395f5a9ff964ed2be9b36d879d4ae1
-    path: patches/@pmndrs__uikit.patch
+    path: patches/@pmndrs__uikit@1.0.74.patch
   '@tailwindcss/oxide@4.3.1':
     hash: adaee549c69537cdd9ceb5b9384d1da927741fb9a0540133a953c7b14dcbb6dc
     path: patches/@tailwindcss__oxide@4.3.1.patch
@@ -18,6 +66,30 @@ patchedDependencies:
 importers:
 
   .:
+    devDependencies:
+      '@ianvs/prettier-plugin-sort-imports':
+        specifier: 4.1.1
+        version: 4.1.1(@vue/compiler-sfc@3.3.4)(prettier@3.2.4)
+      autoprefixer:
+        specifier: ^10.5.0
+        version: 10.5.0(postcss@8.5.15)
+      postcss:
+        specifier: ^8.5.15
+        version: 8.5.15
+      prettier:
+        specifier: 3.2.4
+        version: 3.2.4
+      tsx:
+        specifier: ^4.22.4
+        version: 4.22.4
+      turbo:
+        specifier: latest
+        version: 2.9.18
+      typescript:
+        specifier: 5.3.3
+        version: 5.3.3
+
+  apps/extension:
     dependencies:
       '@autoform/mantine':
         specifier: ^3.0.0
@@ -41,10 +113,10 @@ importers:
         specifier: ^1.15.0
         version: 1.15.0(react@18.2.0)
       '@react-three/drei':
-        specifier: ^9.122.0
+        specifier: 'catalog:'
         version: 9.122.0(@react-three/fiber@8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0))(@types/react@18.2.48)(@types/three@0.184.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0)(use-sync-external-store@1.6.0(react@18.2.0))
       '@react-three/fiber':
-        specifier: ^8.18.0
+        specifier: 'catalog:'
         version: 8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0)
       '@react-three/uikit':
         specifier: ^1.0.74
@@ -53,13 +125,13 @@ importers:
         specifier: ^1.0.74
         version: 1.0.74(@react-three/fiber@8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0))(@types/react@18.2.48)(react@18.2.0)(three@0.184.0)(use-sync-external-store@1.6.0(react@18.2.0))
       '@react-three/xr':
-        specifier: ^6.6.30
+        specifier: 'catalog:'
         version: 6.6.30(@react-three/fiber@8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0)
       '@types/three':
-        specifier: ^0.184.1
+        specifier: 'catalog:'
         version: 0.184.1
       lucide-react:
-        specifier: ^1.21.0
+        specifier: 'catalog:'
         version: 1.21.0(react@18.2.0)
       plasmo:
         specifier: 0.90.5
@@ -71,10 +143,10 @@ importers:
         specifier: ^7.0.1
         version: 7.0.1(postcss@8.5.15)
       react:
-        specifier: 18.2.0
+        specifier: 'catalog:'
         version: 18.2.0
       react-dom:
-        specifier: 18.2.0
+        specifier: 'catalog:'
         version: 18.2.0(react@18.2.0)
       react-hook-form:
         specifier: ^7.80.0
@@ -83,48 +155,30 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(tailwindcss@4.3.1)
       three:
-        specifier: ^0.184.0
+        specifier: 'catalog:'
         version: 0.184.0
       zod:
-        specifier: ^4.4.3
+        specifier: 'catalog:'
         version: 4.4.3
     devDependencies:
-      '@ianvs/prettier-plugin-sort-imports':
-        specifier: 4.1.1
-        version: 4.1.1(@vue/compiler-sfc@3.3.4)(prettier@3.2.4)
       '@tailwindcss/postcss':
-        specifier: ^4.1.4
+        specifier: 'catalog:'
         version: 4.3.1
       '@types/chrome':
-        specifier: 0.0.258
+        specifier: 'catalog:'
         version: 0.0.258
       '@types/node':
-        specifier: 20.11.5
+        specifier: 'catalog:'
         version: 20.11.5
       '@types/react':
-        specifier: 18.2.48
+        specifier: 'catalog:'
         version: 18.2.48
       '@types/react-dom':
-        specifier: 18.2.18
+        specifier: 'catalog:'
         version: 18.2.18
-      autoprefixer:
-        specifier: ^10.5.0
-        version: 10.5.0(postcss@8.5.15)
-      postcss:
-        specifier: ^8.5.15
-        version: 8.5.15
-      prettier:
-        specifier: 3.2.4
-        version: 3.2.4
       tailwindcss:
-        specifier: ^4.1.4
+        specifier: 'catalog:'
         version: 4.3.1
-      tsx:
-        specifier: ^4.22.4
-        version: 4.22.4
-      typescript:
-        specifier: 5.3.3
-        version: 5.3.3
 
 packages:
 
@@ -2096,6 +2150,36 @@ packages:
   '@tailwindcss/postcss@4.3.1':
     resolution: {integrity: sha512-dNJuNbdEJT/SWRuXTYP1WSamelsz3ztkUsdtWQPjrexysrTpaEPM40P/71knXiXLYEojqPOEGitVLLpPMS5T6A==}
 
+  '@turbo/darwin-64@2.9.18':
+    resolution: {integrity: sha512-9f27peFu16ur8c0v9nUFUEyBnbKuuFsUTjHFWfmwGfzySBXbHwzU44QhZon6Mznz0cHsIr3984NQj/bVrnGSRw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@turbo/darwin-arm64@2.9.18':
+    resolution: {integrity: sha512-9A6TMRq/Ib+QnbhLlgkhOm+624wO4pzSQ/yQviQfWHOlFvaYxdnIAYmu2H6TS6y7kSVL0DvzNe04NbESTOzFVQ==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@turbo/linux-64@2.9.18':
+    resolution: {integrity: sha512-zCdIDtz69AnbYh913elJRRoF3QY5aa2HNnf+4rAkc7bQ+tWujiDkCNV7stazOUPggaDvhKIf2Z87qHftTeXSkw==}
+    cpu: [x64]
+    os: [linux]
+
+  '@turbo/linux-arm64@2.9.18':
+    resolution: {integrity: sha512-Va1kXI04naMgYwqv/5Dfa36dTDx8015U7oaQAjrXa45ua9OoFjSV4OmvkML4EmXvUclQHCiBRbY8bvd0jV7eAg==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@turbo/windows-64@2.9.18':
+    resolution: {integrity: sha512-m0kDhZANxSNz9ck1ybogFscHabriAsp4eDFNrN/1H5WrgTF7b3VlcPZnhuO3v2+E2KnCbeAc+UUT10BZZHdDKw==}
+    cpu: [x64]
+    os: [win32]
+
+  '@turbo/windows-arm64@2.9.18':
+    resolution: {integrity: sha512-nUdR8WqoomUys9iIQmG45TMiizJ+5BV8egSeLLZba/AWblyp3fVBcIH1kSE58OtK4g2YzbMJEth6Ttv9w5rqMA==}
+    cpu: [arm64]
+    os: [win32]
+
   '@tweenjs/tween.js@23.1.3':
     resolution: {integrity: sha512-vJmvvwFxYuGnF2axRtPYocag6Clbb5YS7kLL+SO/TeVFzHqDIWrNKYtcsPMibjDx9O+bu+psAy9NKfWklassUA==}
 
@@ -3899,6 +3983,10 @@ packages:
   tunnel-rat@0.1.2:
     resolution: {integrity: sha512-lR5VHmkPhzdhrM092lI2nACsLO4QubF0/yoOhzX7c+wIpbN1GjHNzCc91QlpxBi+cnx8vVJ+Ur6vL5cEoQPFpQ==}
 
+  turbo@2.9.18:
+    resolution: {integrity: sha512-bwabv6PupzeavybzEoArBAkwq5fnzwf8OFnRtpHwnviFWuwJPFxtyH+aVp36TmIqK3aYYgtTJ3J0m2ysxxSzQg==}
+    hasBin: true
+
   type-fest@0.20.2:
     resolution: {integrity: sha512-Ne+eE4r0/iWnpAxD852z3A+N0Bt5RN//NjJwRd2VFHEmrywxf5vsZlh4R6lixl6B+wz/8d+maTSAkN1FIkI3LQ==}
     engines: {node: '>=10'}
@@ -4945,7 +5033,7 @@ snapshots:
       json5: 2.2.3
       msgpackr: 1.12.1
       nullthrows: 1.1.1
-      semver: 7.7.1
+      semver: 7.8.5
 
   '@parcel/diagnostic@2.8.3':
     dependencies:
@@ -5031,7 +5119,7 @@ snapshots:
       '@parcel/fs': 2.9.3(@parcel/core@2.9.3)
       '@parcel/utils': 2.9.3
       nullthrows: 1.1.1
-      semver: 7.7.1
+      semver: 7.8.5
     transitivePeerDependencies:
       - '@parcel/core'
 
@@ -5124,7 +5212,7 @@ snapshots:
       '@parcel/types': 2.9.3(@parcel/core@2.9.3)
       '@parcel/utils': 2.9.3
       '@parcel/workers': 2.9.3(@parcel/core@2.9.3)
-      semver: 7.7.1
+      semver: 7.8.5
 
   '@parcel/packager-css@2.9.3(@parcel/core@2.9.3)':
     dependencies:
@@ -5265,7 +5353,7 @@ snapshots:
       browserslist: 4.28.2
       json5: 2.2.3
       nullthrows: 1.1.1
-      semver: 7.7.1
+      semver: 7.8.5
     transitivePeerDependencies:
       - '@parcel/core'
 
@@ -5298,7 +5386,7 @@ snapshots:
       posthtml: 0.16.7
       posthtml-parser: 0.10.2
       posthtml-render: 3.0.0
-      semver: 7.7.1
+      semver: 7.8.5
       srcset: 4.0.0
     transitivePeerDependencies:
       - '@parcel/core'
@@ -5329,7 +5417,7 @@ snapshots:
       browserslist: 4.28.2
       nullthrows: 1.1.1
       regenerator-runtime: 0.13.11
-      semver: 7.7.1
+      semver: 7.8.5
 
   '@parcel/transformer-json@2.9.3(@parcel/core@2.9.3)':
     dependencies:
@@ -5355,7 +5443,7 @@ snapshots:
       clone: 2.1.2
       nullthrows: 1.1.1
       postcss-value-parser: 4.2.0
-      semver: 7.7.1
+      semver: 7.8.5
     transitivePeerDependencies:
       - '@parcel/core'
 
@@ -5367,7 +5455,7 @@ snapshots:
       posthtml: 0.16.7
       posthtml-parser: 0.10.2
       posthtml-render: 3.0.0
-      semver: 7.7.1
+      semver: 7.8.5
     transitivePeerDependencies:
       - '@parcel/core'
 
@@ -5412,7 +5500,7 @@ snapshots:
       posthtml: 0.16.7
       posthtml-parser: 0.10.2
       posthtml-render: 3.0.0
-      semver: 7.7.1
+      semver: 7.8.5
     transitivePeerDependencies:
       - '@parcel/core'
 
@@ -6339,6 +6427,24 @@ snapshots:
       '@tailwindcss/oxide': 4.3.1(patch_hash=adaee549c69537cdd9ceb5b9384d1da927741fb9a0540133a953c7b14dcbb6dc)
       postcss: 8.5.15
       tailwindcss: 4.3.1
+
+  '@turbo/darwin-64@2.9.18':
+    optional: true
+
+  '@turbo/darwin-arm64@2.9.18':
+    optional: true
+
+  '@turbo/linux-64@2.9.18':
+    optional: true
+
+  '@turbo/linux-arm64@2.9.18':
+    optional: true
+
+  '@turbo/windows-64@2.9.18':
+    optional: true
+
+  '@turbo/windows-arm64@2.9.18':
+    optional: true
 
   '@tweenjs/tween.js@23.1.3': {}
 
@@ -7491,7 +7597,7 @@ snapshots:
       ky: 1.14.3
       registry-auth-token: 5.1.1
       registry-url: 6.0.1
-      semver: 7.7.1
+      semver: 7.8.5
 
   parent-module@1.0.1:
     dependencies:
@@ -7891,7 +7997,7 @@ snapshots:
     dependencies:
       color: 4.2.3
       detect-libc: 2.1.2
-      semver: 7.7.1
+      semver: 7.8.5
     optionalDependencies:
       '@img/sharp-darwin-arm64': 0.33.5
       '@img/sharp-darwin-x64': 0.33.5
@@ -8160,6 +8266,15 @@ snapshots:
       - '@types/react'
       - immer
       - react
+
+  turbo@2.9.18:
+    optionalDependencies:
+      '@turbo/darwin-64': 2.9.18
+      '@turbo/darwin-arm64': 2.9.18
+      '@turbo/linux-64': 2.9.18
+      '@turbo/linux-arm64': 2.9.18
+      '@turbo/windows-64': 2.9.18
+      '@turbo/windows-arm64': 2.9.18
 
   type-fest@0.20.2: {}
 
