@@ -1,6 +1,7 @@
 import { Storage } from "@plasmohq/storage";
 
 import { AuthManifestSchema, StaticIdentityRecordSchema, type AuthManifest, type StaticIdentityRecord, AUTH_METHODS } from "~lib/auth/schema";
+import { resolve_static_record } from "~lib/auth/static";
 
 export type LoginMethod = (typeof AUTH_METHODS)[number];
 
@@ -50,65 +51,6 @@ export const parse_identity = (username: string): IdentityParseResult => {
     };
 };
 
-interface SuccessfulRecordResolution {
-    success: true;
-    record: StaticIdentityRecord | undefined;
-}
-
-interface FailedRecordResolution {
-    success: false;
-    error: string;
-}
-
-type StaticRecordResolution =
-    | SuccessfulRecordResolution
-    | FailedRecordResolution;
-
-export const resolve_static_record = async (
-    identity: Identity
-): Promise<StaticRecordResolution> => {
-    const static_record_response = await fetch(
-        `https://${identity.host}/.well-known/vvr/auth/${identity.name}.json`
-    );
-
-    if (!static_record_response.ok) {
-        if (static_record_response.status === 404) {
-            return {
-                success: true,
-                record: undefined
-            };
-        } else {
-            return {
-                success: false,
-                error: `Failed to fetch static auth record: ${static_record_response.statusText}`
-            };
-        }
-    }
-
-    try {
-        const record = await static_record_response.json();
-
-        // validate record against schema
-        const { success, error } = StaticIdentityRecordSchema.safeParse(record);
-        if (!success) {
-            return {
-                success: false,
-                error: `Invalid static auth record: ${error}`
-            };
-        }
-
-        return {
-            success: true,
-            record
-        };
-    } catch (error) {
-        return {
-            success: false,
-            error: `Failed to parse static auth record: ${error}`
-        };
-    }
-};
-
 export interface StoredKey {
     method: LoginMethod;
     key: string;
@@ -146,6 +88,7 @@ export const resolve_identity = async (
     }
 
     // first, check if a local key already exists, which can be logged in immediately
+    // TODO: move this logic to static.ts
     const stored_key = await storage.get<StoredKey>(
         `keystore:${identity.name}@${identity.host}`
     );
@@ -276,3 +219,5 @@ export const resolve_identity = async (
         }
     }
 };
+
+// TODO: force impls to expose a fixed interface (e.g. signup, try_login etc)

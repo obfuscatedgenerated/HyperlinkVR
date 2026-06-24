@@ -16,11 +16,19 @@ export const JWK_EC_Schema = z.object({
 });
 export type JWK_EC = z.infer<typeof JWK_EC_Schema>;
 
+export const JWK_OKP_Schema = z.object({
+    kty: z.literal("OKP"),
+    crv: z.literal("Ed25519"),
+    x: z.string(), // Base64url encoded public key
+    ext: z.boolean().optional()
+});
+export type JWK_OKP = z.infer<typeof JWK_OKP_Schema>;
+
 export const DeviceRecordSchema = z.object({
     device_id: z.string(),
     label: z.string(),
     added_at: z.number(),
-    public_key: JWK_EC_Schema
+    public_key: z.union([JWK_EC_Schema, JWK_OKP_Schema])
 });
 export type DeviceRecord = z.infer<typeof DeviceRecordSchema>;
 

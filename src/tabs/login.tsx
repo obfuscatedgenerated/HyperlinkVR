@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 
 
@@ -6,15 +6,15 @@ import { Storage } from "@plasmohq/storage";
 
 
 
-import { useDebounce } from "~hooks/useDebounce";
-import { parse_identity, resolve_identity, type ActionableMethods, type Identity, type LoginAction, type LoginMethod, type StoredKey,
-    type IdentityResolutionData
-} from "~lib/auth";
-import {
-    StaticIdentityRecordSchema,
-    type StaticIdentityRecord
-} from "~lib/auth/schema";
 import { LoadingSpinner } from "~components/dom/LoadingSpinner";
+import { useDebounce } from "~hooks/useDebounce";
+import { parse_identity, resolve_identity, type ActionableMethods, type Identity, type IdentityResolutionData, type LoginAction, type LoginMethod, type StoredKey } from "~lib/auth";
+import { StaticIdentityRecordSchema, type StaticIdentityRecord } from "~lib/auth/schema";
+import { signup_static } from "~lib/auth/static";
+
+
+
+
 
 // const SchemaForm = lazy(() =>
 //     import("~components/dom/SchemaForm").then((mod) => ({
@@ -89,6 +89,7 @@ const LandingPage = ({
 interface FormProps {
     username: string;
     resolved_identity?: IdentityResolutionData | null;
+    storage: Storage;
 }
 
 const LoginFormStatic = ({ username }: FormProps) => {
@@ -99,7 +100,9 @@ const LoginFormJWT = ({ username }: FormProps) => {
     return <p>Not implemented yet!</p>;
 };
 
-const SignupFormStaticManual = ({ username, resolved_identity }: FormProps) => {
+const SignupFormStaticManual = ({ username, resolved_identity, storage }: FormProps) => {
+    const record_dl_pressed_ref = useRef(false);
+
     const hint = useMemo(() => {
         if (!resolved_identity) {
             return null;
@@ -112,8 +115,54 @@ const SignupFormStaticManual = ({ username, resolved_identity }: FormProps) => {
         return resolved_identity.auth_manifest.static_submit_hint;
     }, [resolved_identity]);
 
+    const identity = useMemo(() => {
+        const parsed = parse_identity(username);
+        if (!parsed.success) {
+            alert("Invalid username format. Please try again in a new window.");
+            window.close();
+            return;
+        }
+
+        return parsed.identity;
+    }, [username]);
+
+    const generate_and_download_record = useCallback(
+        async () => {
+            if (!resolved_identity) {
+                return;
+            }
+
+            if (record_dl_pressed_ref.current) {
+                return;
+            }
+            record_dl_pressed_ref.current = true;
+
+            if (await storage.get(`keystore:${username}`)) {
+                alert("A static identity record already exists for this username! Try logging in!");
+                return;
+            }
+
+            // TODO: accept device label
+            const record = await signup_static(identity, undefined, storage);
+
+            // download the record as a json file
+            const blob = new Blob([JSON.stringify(record, null, 4)], {
+                type: "application/json"
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${identity.name}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        },
+        [username, resolved_identity, storage, identity]
+    );
+
     return (
         <>
+            <h2>You're signing up for an account at {identity.host}</h2>
+
             {hint && (
                 <div>
                     The host has provided the following instructions for submitting your static identity record:
@@ -121,7 +170,9 @@ const SignupFormStaticManual = ({ username, resolved_identity }: FormProps) => {
                 </div>
             )}
 
-            <p>TODO generate record and offer DL button</p>
+            <button onClick={generate_and_download_record}>
+                Sign up and download record for {username}
+            </button>
         </>
         // <Suspense fallback={<LoadingSpinner />}>
         //     <h1>Creating account as {username}</h1>
@@ -141,8 +192,8 @@ const SignupFormStatic = (props: FormProps) => {
     return <SignupFormStaticManual {...props} />;
 };
 
-const SignupFormJWT = ({ username }: FormProps) => {
-    return <LoginFormJWT username={username} />;
+const SignupFormJWT = (props: FormProps) => {
+    return <LoginFormJWT {...props} />;
 };
 
 type FormGroup = Record<LoginMethod, React.FC<FormProps>>;
@@ -263,6 +314,7 @@ const LoginWindow = () => {
                 <FormComponent
                     username={username}
                     resolved_identity={resolved_identity}
+                    storage={storage}
                 />
             ) : (
                 <LandingPage
