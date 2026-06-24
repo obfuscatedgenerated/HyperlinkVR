@@ -143,10 +143,10 @@ importers:
         specifier: ^7.0.1
         version: 7.0.1(postcss@8.5.15)
       react:
-        specifier: 'catalog:'
+        specifier: 18.2.0
         version: 18.2.0
       react-dom:
-        specifier: 'catalog:'
+        specifier: 18.2.0
         version: 18.2.0(react@18.2.0)
       react-hook-form:
         specifier: ^7.80.0
@@ -179,6 +179,130 @@ importers:
       tailwindcss:
         specifier: 'catalog:'
         version: 4.3.1
+
+  packages/auth:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
+
+  packages/core: {}
+
+  packages/hooks:
+    dependencies:
+      '@viewportvr/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@viewportvr/core':
+        specifier: workspace:*
+        version: link:../core
+      react:
+        specifier: 'catalog:'
+        version: 18.2.0
+
+  packages/pages:
+    dependencies:
+      '@viewportvr/core':
+        specifier: workspace:*
+        version: link:../core
+      '@viewportvr/hooks':
+        specifier: workspace:*
+        version: link:../hooks
+      '@viewportvr/ui-3d':
+        specifier: workspace:*
+        version: link:../ui-3d
+      '@viewportvr/ui-dom':
+        specifier: workspace:*
+        version: link:../ui-dom
+      react:
+        specifier: 'catalog:'
+        version: 18.2.0
+      react-dom:
+        specifier: 'catalog:'
+        version: 18.2.0(react@18.2.0)
+
+  packages/platform-extension:
+    dependencies:
+      '@plasmohq/messaging':
+        specifier: ^0.7.2
+        version: 0.7.2(react@19.2.7)
+      '@plasmohq/storage':
+        specifier: ^1.15.0
+        version: 1.15.0(react@19.2.7)
+      '@viewportvr/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@types/chrome':
+        specifier: 'catalog:'
+        version: 0.0.258
+
+  packages/ui-3d:
+    dependencies:
+      '@react-three/drei':
+        specifier: 'catalog:'
+        version: 9.122.0(@react-three/fiber@8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0))(@types/react@18.2.48)(@types/three@0.184.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0)(use-sync-external-store@1.6.0(react@18.2.0))
+      '@react-three/fiber':
+        specifier: 'catalog:'
+        version: 8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0)
+      '@react-three/uikit':
+        specifier: ^1.0.74
+        version: 1.0.74(@react-three/fiber@8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0))(@types/react@18.2.48)(react@18.2.0)(three@0.184.0)(use-sync-external-store@1.6.0(react@18.2.0))
+      '@react-three/uikit-default':
+        specifier: ^1.0.74
+        version: 1.0.74(@react-three/fiber@8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0))(@types/react@18.2.48)(react@18.2.0)(three@0.184.0)(use-sync-external-store@1.6.0(react@18.2.0))
+      '@react-three/xr':
+        specifier: 'catalog:'
+        version: 6.6.30(@react-three/fiber@8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0)
+      '@viewportvr/ui-dom':
+        specifier: workspace:*
+        version: link:../ui-dom
+      react:
+        specifier: 'catalog:'
+        version: 18.2.0
+      react-dom:
+        specifier: 'catalog:'
+        version: 18.2.0(react@18.2.0)
+      three:
+        specifier: 'catalog:'
+        version: 0.184.0
+    devDependencies:
+      '@types/three':
+        specifier: 'catalog:'
+        version: 0.184.1
+
+  packages/ui-dom:
+    dependencies:
+      '@autoform/mantine':
+        specifier: ^3.0.0
+        version: 3.0.0(@hookform/resolvers@3.10.0(react-hook-form@7.80.0(react@18.2.0)))(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@mantine/dates@7.17.8(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@mantine/hooks@7.17.8(react@18.2.0))(dayjs@1.11.21)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-hook-form@7.80.0(react@18.2.0))(react@18.2.0)
+      '@autoform/react':
+        specifier: ^4.0.0
+        version: 4.0.0(@hookform/resolvers@3.10.0(react-hook-form@7.80.0(react@18.2.0)))(react-hook-form@7.80.0(react@18.2.0))(react@18.2.0)
+      '@autoform/zod':
+        specifier: ^5.0.0
+        version: 5.0.0(zod@4.4.3)
+      '@mantine/core':
+        specifier: ^7.17.8
+        version: 7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@mantine/dates':
+        specifier: ^7.17.8
+        version: 7.17.8(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@mantine/hooks@7.17.8(react@18.2.0))(dayjs@1.11.21)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@viewportvr/auth':
+        specifier: workspace:*
+        version: link:../auth
+      lucide-react:
+        specifier: 'catalog:'
+        version: 1.21.0(react@18.2.0)
+      react:
+        specifier: 'catalog:'
+        version: 18.2.0
+      react-dom:
+        specifier: 'catalog:'
+        version: 18.2.0(react@18.2.0)
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
 
 packages:
 
@@ -5650,6 +5774,12 @@ snapshots:
     optionalDependencies:
       react: 18.2.0
 
+  '@plasmohq/messaging@0.7.2(react@19.2.7)':
+    dependencies:
+      nanoid: 5.1.5
+    optionalDependencies:
+      react: 19.2.7
+
   '@plasmohq/parcel-bundler@0.5.6':
     dependencies:
       '@parcel/core': 2.9.3
@@ -5950,6 +6080,12 @@ snapshots:
       pify: 6.1.0
     optionalDependencies:
       react: 18.2.0
+
+  '@plasmohq/storage@1.15.0(react@19.2.7)':
+    dependencies:
+      pify: 6.1.0
+    optionalDependencies:
+      react: 19.2.7
 
   '@pmndrs/handle@6.6.30(@types/react@18.2.48)(react@19.2.7)':
     dependencies:

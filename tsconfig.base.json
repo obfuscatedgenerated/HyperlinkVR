@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        /* Base Engine Settings */
+        "target": "ES2022",
+        "module": "ESNext",
+        "lib": ["DOM", "DOM.Iterable", "ES2022"],
+
+        /* Modern Module Resolution */
+        "moduleResolution": "Bundler",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+
+        /* React 18 Support */
+        "jsx": "react-jsx",
+
+        /* Strictness & Safety */
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
+    }
+}
