@@ -50,7 +50,7 @@ const LandingPage = ({
         return actionable_methods;
     }, [actionable_methods, method]);
 
-    const closed = useMemo(() => open_for_registration === false && !Object.keys(filtered_methods).length, [open_for_registration, filtered_methods]);
+    const closed = useMemo(() => open_for_registration === false || !Object.keys(filtered_methods).length, [open_for_registration, filtered_methods]);
 
     return (
         <>
@@ -107,9 +107,9 @@ const LoginFormStatic = ({ username, storage }: FormProps) => {
     }, [username]);
 
     useEffect(() => {
-        check_static_credentials(identity, undefined, undefined, storage).then((result) => {
+        check_static_credentials(identity, undefined, undefined, storage).then(async (result) => {
             if (result.success) {
-                store_auth_session({
+                await store_auth_session({
                     identity,
                     method: "static",
                     device: result.device,
@@ -226,6 +226,10 @@ const SignupFormStaticManual = ({ username, resolved_identity, storage }: FormPr
 };
 
 const SignupFormStatic = (props: FormProps) => {
+    if (props.resolved_identity.auth_manifest.open_for_registration === false) {
+        return <p>Host is not open for registration</p>;
+    }
+
     return <SignupFormStaticManual {...props} />;
 };
 
@@ -270,9 +274,23 @@ const LoginWindow = () => {
         [storage]
     );
 
-    // when debounced username changes, resolve identity and present actions
+    // optimistically clear when undebounced username changes
     useEffect(() => {
+        // TODO: clear function
+        setResolvedIdentity(null);
+        setActionableMethods({});
+        setAction(null);
+        setMethod(null);
+        setError(null);
+    }, [username]);
+
+    // when debounced username changes, resolve identity and present actions
+    const resolving_username_ref = useRef<string | null>(null);
+    useEffect(() => {
+        resolving_username_ref.current = debounced_username;
+
         if (!debounced_username) {
+            setResolvedIdentity(null);
             setActionableMethods({});
             setAction(null);
             setMethod(null);
@@ -281,6 +299,10 @@ const LoginWindow = () => {
 
         const identity_parse = parse_identity(debounced_username);
         if (identity_parse.success === false) {
+            if (resolving_username_ref.current !== debounced_username) {
+                return;
+            }
+
             setError(identity_parse.error);
             setActionableMethods({});
             setAction(null);
@@ -289,6 +311,10 @@ const LoginWindow = () => {
         }
 
         do_resolve_identity(identity_parse.identity).then((result) => {
+            if (resolving_username_ref.current !== debounced_username) {
+                return;
+            }
+
             if (result.resolved === false) {
                 setError(result.error || "Failed to resolve identity");
                 setActionableMethods({});
