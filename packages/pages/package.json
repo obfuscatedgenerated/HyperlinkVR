@@ -12,7 +12,9 @@
         "@viewportvr/react": "workspace:*",
         "@viewportvr/ui-dom": "workspace:*",
         "@viewportvr/watch-ui": "workspace:*",
-        "react": "catalog:",
-        "react-dom": "catalog:"
+        "react": "catalog:"
+    },
+    "devDependencies": {
+        "@types/react": "catalog:"
     }
 }

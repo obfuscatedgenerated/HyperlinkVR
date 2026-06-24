@@ -5,6 +5,28 @@ const VR_HOST_URL = "./tabs/vr_host.html";
 const VR_HOST_WIDTH = 750;
 const VR_HOST_HEIGHT = 450;
 
+const WINDOW_INTENTS = {
+    DEVTOOLS_FORM: "./tabs/devtools-form.html",
+    DEVTOOLS_WATCH_UI: "./tabs/devtools-watch.html"
+}
+
+const get_window_url = (intent: string, args?: Record<string, any>) => {
+    const base_url = WINDOW_INTENTS[intent];
+    if (!base_url) {
+        console.error("Unknown window intent:", intent);
+        return null;
+    }
+
+    const url = new URL(base_url, location.href);
+    if (args) {
+        Object.entries(args).forEach(([key, value]) => {
+            url.searchParams.set(key, value);
+        });
+    }
+
+    return url.href;
+};
+
 // Replace your onInstalled listener with this development-friendly version:
 chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create(
@@ -107,8 +129,24 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     } else if (msg.action === "VVR_CLICK") {
         handle_click(msg);
         dropped = false;
+    } else if (msg.action === "VVR_CREATE_WINDOW") {
+        const window_url = get_window_url(msg.intent, msg.args);
+        if (!window_url) {
+            console.error("Failed to create window: unknown intent", msg.intent);
+            return;
+        }
+
+        chrome.windows.create({
+            url: window_url,
+            type: msg.type || "popup",
+            width: msg.width || 800,
+            height: msg.height || 600
+        });
+
+        dropped = false;
     }
 
+    // TODO: subscription based routing
     if (msg.target === "cs" && sender.url?.startsWith(REAL_HOST_URL)) {
         chrome.tabs.sendMessage(msg.tab, msg);
         dropped = false;
