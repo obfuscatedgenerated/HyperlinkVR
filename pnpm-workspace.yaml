@@ -32,6 +32,8 @@ catalog:
    "@react-three/fiber": "^8.18.0"
    "@react-three/drei": "^9.122.0"
    "@react-three/xr": "^6.6.30"
+   "@react-three/uikit": "^1.0.74"
+   "@react-three/uikit-default": "^1.0.74"
 
    "@types/node": "20.11.5"
    "@types/chrome": "0.0.258"

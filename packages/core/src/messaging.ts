@@ -3,10 +3,7 @@ export interface MessageChannel<Tx = any, Rx = any> {
 
     listen(handler: (payload: Rx) => Promise<Tx> | void): () => void;
 
-    unlisten(handler: (payload: Rx) => Promise<Tx> | void): void;
-
     on_disconnect(handler: () => void): () => void;
-    remove_disconnect_listener(handler: () => void): void;
 
     disconnect(): void;
 }
@@ -15,21 +12,17 @@ export interface MessageEngine {
     // one off messages
     send<Req, Res>(payload: Req): Promise<Res>;
 
-    // returns a function to remove the listener (or pass original handler to unlisten)
+    // returns a function to remove the listener
     listen<Req, Res>(
         handler: (payload: Req) => Promise<Res> | void
     ): () => void;
 
-    unlisten<Req, Res>(handler: (payload: Req) => Promise<Res> | void): void;
-
     // long-lived connections
     connect<Tx, Rx>(channel_name: string): MessageChannel<Tx, Rx>;
 
-    // returns a function to remove the listener (or pass original handler to remove_channel_listener)
+    // returns a function to remove the listener
     on_connect<Tx, Rx>(
         channel_name: string,
         handler: (channel: MessageChannel<Rx, Tx>) => void
     ): () => void;
-
-    remove_channel_listener<Tx, Rx>(channel_name: string, handler: (channel: MessageChannel<Rx, Tx>) => void): void;
 }

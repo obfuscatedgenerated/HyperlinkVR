@@ -4,6 +4,10 @@ import { useMessageEngine } from "./engines";
 const params = new URLSearchParams(window.location.search);
 const TAB_ID = params.get("tab") ? parseInt(params.get("tab")!) : null;
 
+if (TAB_ID === null) {
+    throw new Error("tab is not defined in the URL parameters");
+}
+
 export interface TabSessionContextValue {
     id: number;
     url: string | null;
@@ -49,8 +53,8 @@ export const TabSessionProvider = ({
             }
         };
 
-        messenger.listen(handle_message);
-        return () => messenger.unlisten(handle_message);
+        const unlisten = messenger.listen(handle_message);
+        return () => unlisten();
     });
 
     return (

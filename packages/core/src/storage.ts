@@ -8,5 +8,4 @@ export interface StorageEngine<T extends StorageKind = StorageKind> {
     remove(key: string): Promise<void>;
 
     watch<V>(key: string, callback: (new_value: V | null) => void): () => void;
-    unwatch<V>(key: string, callback: (new_value: V | null) => void): void;
 }

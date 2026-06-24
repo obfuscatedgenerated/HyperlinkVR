@@ -14,8 +14,8 @@
         "@react-three/fiber": "catalog:",
         "@react-three/drei": "catalog:",
         "@react-three/xr": "catalog:",
-        "@react-three/uikit": "^1.0.74",
-        "@react-three/uikit-default": "^1.0.74"
+        "@react-three/uikit": "catalog:",
+        "@react-three/uikit-default": "catalog:"
     },
     "devDependencies": {
         "@types/three": "catalog:"

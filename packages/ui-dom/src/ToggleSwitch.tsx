@@ -1,4 +1,4 @@
-export const ToggleSwitch = ({ enabled, on_change, label, tooltip }: { enabled: boolean; on_change: (new_state: boolean) => void; label?: string; tooltip?: string }) => {
+export const ToggleSwitch = ({ enabled, on_change, label, tooltip }: { enabled?: boolean; on_change: (new_state: boolean) => void; label?: string; tooltip?: string }) => {
     return (
         <label title={tooltip} className="cursor-pointer flex items-center">
             {label && <span className="mr-2">{label}</span>}

@@ -8,9 +8,7 @@
         "build": "tsc --build"
     },
     "dependencies": {
-        "@viewportvr/core": "workspace:*",
-        "@plasmohq/storage": "^1.15.0",
-        "@plasmohq/messaging": "^0.7.2"
+        "@viewportvr/core": "workspace:*"
     },
     "devDependencies": {
         "@types/chrome": "catalog:"

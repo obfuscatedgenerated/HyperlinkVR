@@ -114,10 +114,11 @@ export const DOMMirror = ({
             }
         };
 
-        messenger.listen(handle_message);
+        const unlisten = messenger.listen(handle_message);
         messenger.send({ action: "VVR_START_STREAM", tab: session.id });
 
-        return () => messenger.unlisten(handle_message);
+        // TODO: send stop stream message just for cleanliness
+        return () => unlisten();
     }, [messenger, session.id]);
 
     // 3. Resize the physical plane to exactly match the tab's aspect ratio

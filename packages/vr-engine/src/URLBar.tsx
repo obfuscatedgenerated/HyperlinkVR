@@ -15,6 +15,8 @@ export const URLBar = ({position, height, height_of_dom_mirror}: {position: Vect
     const [width, setWidth] = useState(0);
     
     useEffect(() => {
+        if (!session.dimensions) return;
+
         const new_width = (session.dimensions.width / session.dimensions.height) * height_of_dom_mirror;
         setWidth(new_width);
     }, [session.dimensions, height_of_dom_mirror]);

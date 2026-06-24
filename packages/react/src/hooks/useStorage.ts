@@ -17,8 +17,8 @@ export function useStorage<T>(kind: StorageKind, key: string, default_value: T):
 
     // watch for changes in storage and update state accordingly
     useEffect(() => {
-        engine.watch<T>(key, setValue);
-        return () => engine.unwatch<T>(key, setValue);
+        const unwatch = engine.watch<T>(key, setValue);
+        return () => unwatch();
     }, [engine, key]);
 
     // setter
