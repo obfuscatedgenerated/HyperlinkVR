@@ -7,6 +7,6 @@ export interface StorageEngine<T extends StorageKind = StorageKind> {
     set<V>(key: string, value: V): Promise<void>;
     remove(key: string): Promise<void>;
 
-    watch<V>(key: string, callback: (newValue: V | null) => void): () => void;
-    unwatch<V>(key: string, callback: (newValue: V | null) => void): void;
+    watch<V>(key: string, callback: (new_value: V | null) => void): () => void;
+    unwatch<V>(key: string, callback: (new_value: V | null) => void): void;
 }
