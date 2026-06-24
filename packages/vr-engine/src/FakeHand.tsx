@@ -1,10 +1,18 @@
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { PointerCursorModel, PointerRayModel, useRayPointer, useTouchPointer, useXRInputSourceStateContext, XRSpace } from "@react-three/xr";
-import { get_asset_path } from "@viewportvr/asset-resolver";
+import {
+    PointerCursorModel,
+    PointerRayModel,
+    useRayPointer,
+    useTouchPointer,
+    useXRInputSourceStateContext,
+    XRSpace
+} from "@react-three/xr";
 import { useStorage } from "@viewportvr/react";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+
+import { get_asset_path } from "@viewportvr/asset-resolver";
 
 const ASSET_PKG = "vr-engine/assets";
 
@@ -48,7 +56,7 @@ export const FakeHand = () => {
     );
 
     const touchOriginRef = useRef<THREE.Group>(null);
-    const touchPointer = useTouchPointer(touchOriginRef, state);
+    useTouchPointer(touchOriginRef, state);
     const [debug_touch] = useStorage("sync", "settings.debug_touch", false);
 
     // Smoothed curl amount (0 = open, ~1.2 = closed fist). This is the ONLY
@@ -162,7 +170,7 @@ export const FakeHand = () => {
         wasTriggerDownRef.current = isTriggerDown;
 
         // glue the touch ray to the fingertip
-        if (touchOriginRef.current) {
+        if (touchOriginRef.current && touchOriginRef.current.parent) {
             const indexTipBone = handScene.getObjectByName(
                 "index-finger-phalanx-distal"
             );

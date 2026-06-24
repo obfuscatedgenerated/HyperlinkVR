@@ -1,5 +1,5 @@
 import {SchemaForm} from "@viewportvr/ui-dom";
-import { AuthManifestSchema } from "@viewportvr/auth/schema";
+import { AuthManifestSchema } from "@viewportvr/auth";
 
 
 const SCHEMAS = {

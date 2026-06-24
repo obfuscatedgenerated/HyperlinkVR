@@ -215,6 +215,9 @@ importers:
       '@react-three/uikit':
         specifier: 'catalog:'
         version: 1.0.74(@react-three/fiber@8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0))(@types/react@18.2.48)(react@18.2.0)(three@0.184.0)(use-sync-external-store@1.6.0(react@18.2.0))
+      '@viewportvr/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@viewportvr/core':
         specifier: workspace:*
         version: link:../core

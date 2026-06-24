@@ -1,16 +1,16 @@
 import "~shared.css";
 
+import { AuthSessionProvider } from "@viewportvr/react";
+import { Dropdown, ProfileButton, ToggleSwitch } from "@viewportvr/ui-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useStorage } from "@plasmohq/storage/hook";
 
 import { version } from "~../package.json";
-import { Dropdown, ProfileButton, ToggleSwitch } from "@viewportvr/ui-dom";
 import { useActiveTab } from "~hooks/useActiveTab";
-import { AuthSessionProvider } from "@viewportvr/react";
 import { check_url_allowed } from "~util/url_patterns";
 
-import {get_asset_path} from "@asset-resolver";
+import { get_asset_path } from "@viewportvr/asset-resolver";
 
 const bg = get_asset_path("bg.webp");
 

@@ -10,11 +10,11 @@ export class ExtensionStorage<T extends StorageKind> implements StorageEngine {
     get<V>(key: string): Promise<V | null> {
         return new Promise((resolve, reject) => {
             try {
-                chrome.storage[this.kind].get(key, (result: V) => {
+                chrome.storage[this.kind].get(key, (result: unknown) => {
                     if (chrome.runtime.lastError) {
                         reject(chrome.runtime.lastError);
                     } else {
-                        resolve(result ?? null);
+                        resolve(result as V | null);
                     }
                 });
             } catch (error) {

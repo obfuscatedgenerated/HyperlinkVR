@@ -1,4 +1,6 @@
 export type WindowIntent =
+    "LOGIN" |
+    "DEVTOOLS" |
     "DEVTOOLS_FORM" |
     "DEVTOOLS_WATCH_UI";
 // TODO: finish

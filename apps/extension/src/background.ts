@@ -6,6 +6,8 @@ const VR_HOST_WIDTH = 750;
 const VR_HOST_HEIGHT = 450;
 
 const WINDOW_INTENTS = {
+    LOGIN: "./tabs/login.html",
+    DEVTOOLS: "./tabs/devtools.html",
     DEVTOOLS_FORM: "./tabs/devtools-form.html",
     DEVTOOLS_WATCH_UI: "./tabs/devtools-watch.html"
 }

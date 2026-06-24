@@ -3,7 +3,7 @@ import path from "path";
 
 
 
-import { EXPORT_TO_JSON as AUTH_EXPORTS } from "@viewportvr/auth/schema";
+import { EXPORT_TO_JSON as AUTH_EXPORTS } from "@viewportvr/auth";
 import {z} from "zod";
 
 
