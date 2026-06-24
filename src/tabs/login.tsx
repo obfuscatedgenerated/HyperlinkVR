@@ -8,9 +8,9 @@ import { Storage } from "@plasmohq/storage";
 
 import { LoadingSpinner } from "~components/dom/LoadingSpinner";
 import { useDebounce } from "~hooks/useDebounce";
-import { parse_identity, resolve_identity, type ActionableMethods, type Identity, type IdentityResolutionData, type LoginAction, type LoginMethod, type StoredKey } from "~lib/auth";
+import { parse_identity, resolve_identity, store_auth_session, type ActionableMethods, type Identity, type IdentityResolutionData, type LoginAction, type LoginMethod, type StoredKey } from "~lib/auth";
 import { StaticIdentityRecordSchema, type StaticIdentityRecord } from "~lib/auth/schema";
-import { signup_static } from "~lib/auth/static";
+import { check_static_credentials, signup_static } from "~lib/auth/static";
 
 
 
@@ -92,8 +92,45 @@ interface FormProps {
     storage: Storage;
 }
 
-const LoginFormStatic = ({ username }: FormProps) => {
-    return <p>test</p>;
+const LoginFormStatic = ({ username, storage }: FormProps) => {
+    const [success, setSuccess] = useState<boolean | null>(null);
+
+    const identity = useMemo(() => {
+        const parsed = parse_identity(username);
+        if (!parsed.success) {
+            alert("Invalid username format. Please try again in a new window.");
+            window.close();
+            return;
+        }
+
+        return parsed.identity;
+    }, [username]);
+
+    useEffect(() => {
+        check_static_credentials(identity, undefined, undefined, storage).then((result) => {
+            if (result.success) {
+                store_auth_session({
+                    identity,
+                    method: "static",
+                    device: result.device,
+                    authed_at: Date.now()
+                });
+            }
+
+            setSuccess(result.success);
+            setTimeout(() => {
+                window.close();
+            }, 3000);
+        });
+    }, []);
+
+    if (success === null) {
+        return <LoadingSpinner />;
+    } else if (success === true) {
+        return <p>Login successful!</p>;
+    } else {
+        return <p>Login failed. Please try again in a new window.</p>;
+    }
 };
 
 const LoginFormJWT = ({ username }: FormProps) => {

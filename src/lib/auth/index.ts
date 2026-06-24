@@ -1,7 +1,20 @@
 import { Storage } from "@plasmohq/storage";
 
-import { AuthManifestSchema, StaticIdentityRecordSchema, type AuthManifest, type StaticIdentityRecord, AUTH_METHODS } from "~lib/auth/schema";
-import { resolve_static_record } from "~lib/auth/static";
+
+
+import {
+    AUTH_METHODS,
+    AuthManifestSchema,
+    StaticIdentityRecordSchema,
+    type AuthManifest,
+    type DeviceRecord,
+    type StaticIdentityRecord
+} from "~lib/auth/schema";
+import { resolve_static_record, what_device_am_i } from "~lib/auth/static";
+
+
+
+
 
 export type LoginMethod = (typeof AUTH_METHODS)[number];
 
@@ -53,7 +66,7 @@ export const parse_identity = (username: string): IdentityParseResult => {
 
 export interface StoredKey {
     method: LoginMethod;
-    key: string;
+    key: string | JsonWebKey;
 }
 
 export type ActionableMethods = Partial<Record<LoginMethod, LoginAction[]>>;
@@ -220,4 +233,65 @@ export const resolve_identity = async (
     }
 };
 
+interface AuthSessionToStore {
+    identity: Identity;
+    method: LoginMethod;
+    device?: {
+        id: string;
+        label: string;
+    } | DeviceRecord;
+    authed_at?: number;
+}
+
+export interface AuthSession extends AuthSessionToStore {
+    username: string;
+    authed_at: number;
+    device: {
+        id: string;
+        label: string;
+    }
+    avatar_url?: string;
+}
+
+export const store_auth_session = async (
+    session: AuthSessionToStore,
+    storage?: Storage
+): Promise<AuthSession> => {
+    if (!storage) {
+        storage = new Storage({ area: "local" });
+    }
+
+    const to_commit = session as AuthSession;
+
+    if (!session.device) {
+        // TODO: this wont work when jwt added
+        const device = await what_device_am_i(session.identity, storage);
+        if (!device) {
+            throw new Error("Failed to determine device ID for auth session");
+        }
+
+        to_commit.device = {
+            id: device.device_id,
+            label: device.label
+        };
+    } else if ("device_id" in session.device) {
+        // convert DeviceRecord to device object
+        to_commit.device = {
+            id: session.device.device_id,
+            label: session.device.label
+        };
+    }
+
+    if (!session.authed_at) {
+        to_commit.authed_at = Date.now();
+    }
+
+    to_commit.username = `${session.identity.name}@${session.identity.host}`;
+
+    await storage.set("auth_session", to_commit);
+    return session as AuthSession;
+}
+
 // TODO: force impls to expose a fixed interface (e.g. signup, try_login etc)
+// TODO: static add device flow
+// TODO: force lowercase names? any other restrictions? and dont forget to normalise the host part to lowercase as well

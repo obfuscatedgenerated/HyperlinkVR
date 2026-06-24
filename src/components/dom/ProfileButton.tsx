@@ -1,9 +1,16 @@
 import { CircleUserRound } from "lucide-react";
+import { useAuthSession } from "~lib/auth/context";
+import { Avatar } from "~components/dom/Avatar";
 
 const LOGIN_URL = "./tabs/login.html";
 
 export const ProfileButton = () => {
-    // TODO: auth state, for now assume not logged in
+    const auth_session = useAuthSession();
+
+    if (auth_session) {
+        // TODO: option to log out or open some profile
+        return <Avatar avatar_url={auth_session.avatar_url} username={auth_session.username} />
+    }
 
     return (
         <button

@@ -149,3 +149,118 @@ export const signup_static = async (identity: Identity, device_label?: string, s
     // TODO: should we sanity check the keys?
     return static_record;
 }
+
+export const load_stored_private_key = async (identity: Identity, storage?: Storage): Promise<JsonWebKey | null> => {
+    if (!storage) {
+        storage = new Storage({ area: "local" });
+    }
+
+    const key_identifier = `keystore:${identity.name}@${identity.host}`;
+    const stored_key = await storage.get<StoredKey>(key_identifier);
+
+    if (!stored_key) {
+        return null;
+    }
+
+    if (stored_key.method !== "static") {
+        return null;
+    }
+
+    return stored_key.key as JsonWebKey;
+}
+
+interface SuccessfulStaticCredentialCheckResult {
+    success: true;
+    device: DeviceRecord;
+}
+
+interface FailedStaticCredentialCheckResult {
+    success: false;
+}
+
+type StaticCredentialCheckResult = SuccessfulStaticCredentialCheckResult | FailedStaticCredentialCheckResult;
+
+export const check_static_credentials = async (identity: Identity, challenge?: string, device?: DeviceRecord, storage?: Storage): Promise<StaticCredentialCheckResult> => {
+    const private_key = await load_stored_private_key(identity, storage);
+    if (!private_key) {
+        return {
+            success: false
+        };
+    }
+
+    if (!challenge) {
+        challenge = crypto.randomUUID();
+    }
+
+    // sign the challenge with the private key
+    const private_key_obj = await crypto.subtle.importKey(
+        "jwk",
+        private_key,
+        {
+            name: "Ed25519",
+        },
+        false,
+        ["sign"]
+    );
+
+    const encoder = new TextEncoder();
+    const challenge_bytes = encoder.encode(challenge);
+
+    const signature = await crypto.subtle.sign(
+        {
+            name: "Ed25519"
+        },
+        private_key_obj,
+        challenge_bytes
+    );
+
+    // verify the signature with the public key from the static record against all devices TODO: caching
+    const static_record_resolution = await resolve_static_record(identity);
+    if (!static_record_resolution.success || !static_record_resolution.record) {
+        return {
+            success: false
+        };
+    }
+
+    const devices = device ? [device] : static_record_resolution.record.devices;
+    for (const device of devices) {
+        const public_key_obj = await crypto.subtle.importKey(
+            "jwk",
+            device.public_key,
+            {
+                name: "Ed25519",
+            },
+            false,
+            ["verify"]
+        );
+
+        const is_valid = await crypto.subtle.verify(
+            {
+                name: "Ed25519"
+            },
+            public_key_obj,
+            signature,
+            challenge_bytes
+        );
+
+        if (is_valid) {
+            return {
+                success: true,
+                device
+            };
+        }
+    }
+
+    return {
+        success: false
+    };
+}
+
+export const what_device_am_i = async (identity: Identity, storage?: Storage): Promise<DeviceRecord | null> => {
+    const check_result = await check_static_credentials(identity, undefined, undefined, storage);
+    if (check_result.success) {
+        return check_result.device;
+    }
+
+    return null;
+}
