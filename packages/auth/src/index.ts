@@ -1,20 +1,13 @@
-import { Storage } from "@plasmohq/storage";
-
-
+import { type StorageEngine } from "@viewportvr/core";
 
 import {
     AUTH_METHODS,
     AuthManifestSchema,
-    StaticIdentityRecordSchema,
     type AuthManifest,
     type DeviceRecord,
     type StaticIdentityRecord
-} from "~lib/auth/schema";
-import { resolve_static_record, what_device_am_i } from "~lib/auth/static";
-
-
-
-
+} from "./schema";
+import { resolve_static_record, what_device_am_i } from "./static";
 
 export type LoginMethod = (typeof AUTH_METHODS)[number];
 
@@ -94,12 +87,8 @@ type IdentityResolution =
 
 export const resolve_identity = async (
     identity: Identity,
-    storage?: Storage
+    storage: StorageEngine<"local">
 ): Promise<IdentityResolution> => {
-    if (!storage) {
-        storage = new Storage({ area: "local" });
-    }
-
     // first, check if a local key already exists, which can be logged in immediately
     // TODO: move this logic to static.ts
     const stored_key = await storage.get<StoredKey>(
@@ -178,7 +167,7 @@ export const resolve_identity = async (
                         static: ["signup"]
                     }
                 };
-            } else if (static_record.success === false) {
+            } else if (!static_record.success) {
                 // error fetching static record
                 return {
                     resolved: false,
@@ -222,7 +211,7 @@ export const resolve_identity = async (
                     jwt: ["login"]
                 }
             };
-        } else if (static_record.success === false) {
+        } else if (!static_record.success) {
             // error fetching static record
             return {
                 resolved: false,
@@ -230,6 +219,12 @@ export const resolve_identity = async (
                 allowed: {}
             };
         }
+    }
+
+    return {
+        resolved: false,
+        allowed: {},
+        error: "No valid auth methods available"
     }
 };
 
@@ -255,12 +250,8 @@ export interface AuthSession extends AuthSessionToStore {
 
 export const store_auth_session = async (
     session: AuthSessionToStore,
-    storage?: Storage
+    storage: StorageEngine<"local">
 ): Promise<AuthSession> => {
-    if (!storage) {
-        storage = new Storage({ area: "local" });
-    }
-
     const to_commit = session as AuthSession;
 
     if (!session.device) {

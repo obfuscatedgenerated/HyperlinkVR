@@ -8,6 +8,7 @@
         "build": "tsc"
     },
     "dependencies": {
+        "@viewportvr/core": "workspace:*",
         "zod": "catalog:"
     }
 }

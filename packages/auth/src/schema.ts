@@ -1,9 +1,5 @@
 import { z } from "zod";
 
-
-
-
-
 export const AUTH_METHODS = ["static", "jwt"] as const;
 
 

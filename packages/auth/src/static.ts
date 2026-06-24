@@ -1,12 +1,9 @@
-import { Storage } from "@plasmohq/storage";
+import { type StorageEngine } from "@viewportvr/core";
 
 
 
-import type { Identity, StoredKey } from "~lib/auth";
-import { DeviceRecordSchema, StaticIdentityRecordSchema, type DeviceRecord, type StaticIdentityRecord } from "~lib/auth/schema";
-
-
-
+import type { Identity, StoredKey } from "./index";
+import { DeviceRecordSchema, StaticIdentityRecordSchema, type DeviceRecord, type StaticIdentityRecord } from "./schema";
 
 
 interface SuccessfulRecordResolution {
@@ -120,11 +117,7 @@ export const add_device_to_static_record = async (record: StaticIdentityRecord, 
     });
 }
 
-export const store_private_key = async (identity: Identity, private_key: JsonWebKey, storage?: Storage) => {
-    if (!storage) {
-        storage = new Storage({ area: "local" });
-    }
-
+export const store_private_key = async (identity: Identity, private_key: JsonWebKey, storage: StorageEngine<"local">) => {
     const key_identifier = `keystore:${identity.name}@${identity.host}`;
 
     if (await storage.get(key_identifier)) {
@@ -137,7 +130,7 @@ export const store_private_key = async (identity: Identity, private_key: JsonWeb
     });
 }
 
-export const signup_static = async (identity: Identity, device_label?: string, storage?: Storage): Promise<StaticIdentityRecord> => {
+export const signup_static = async (identity: Identity, storage: StorageEngine<"local">, device_label?: string): Promise<StaticIdentityRecord> => {
     const { public_key, private_key } = await generate_jwk_keys();
 
     const device_record = await generate_device_record(public_key, device_label);
@@ -150,11 +143,10 @@ export const signup_static = async (identity: Identity, device_label?: string, s
     return static_record;
 }
 
-export const load_stored_private_key = async (identity: Identity, storage?: Storage): Promise<JsonWebKey | null> => {
-    if (!storage) {
-        storage = new Storage({ area: "local" });
-    }
-
+export const load_stored_private_key = async (
+    identity: Identity,
+    storage: StorageEngine<"local">
+): Promise<JsonWebKey | null> => {
     const key_identifier = `keystore:${identity.name}@${identity.host}`;
     const stored_key = await storage.get<StoredKey>(key_identifier);
 
@@ -167,7 +159,7 @@ export const load_stored_private_key = async (identity: Identity, storage?: Stor
     }
 
     return stored_key.key as JsonWebKey;
-}
+};
 
 interface SuccessfulStaticCredentialCheckResult {
     success: true;
@@ -180,7 +172,12 @@ interface FailedStaticCredentialCheckResult {
 
 type StaticCredentialCheckResult = SuccessfulStaticCredentialCheckResult | FailedStaticCredentialCheckResult;
 
-export const check_static_credentials = async (identity: Identity, challenge?: string, device?: DeviceRecord, storage?: Storage): Promise<StaticCredentialCheckResult> => {
+export const check_static_credentials = async (
+    identity: Identity,
+    storage: StorageEngine<"local">,
+    challenge?: string,
+    device?: DeviceRecord,
+): Promise<StaticCredentialCheckResult> => {
     const private_key = await load_stored_private_key(identity, storage);
     if (!private_key) {
         return {
@@ -197,7 +194,7 @@ export const check_static_credentials = async (identity: Identity, challenge?: s
         "jwk",
         private_key,
         {
-            name: "Ed25519",
+            name: "Ed25519"
         },
         false,
         ["sign"]
@@ -228,7 +225,7 @@ export const check_static_credentials = async (identity: Identity, challenge?: s
             "jwk",
             device.public_key,
             {
-                name: "Ed25519",
+                name: "Ed25519"
             },
             false,
             ["verify"]
@@ -254,10 +251,10 @@ export const check_static_credentials = async (identity: Identity, challenge?: s
     return {
         success: false
     };
-}
+};
 
-export const what_device_am_i = async (identity: Identity, storage?: Storage): Promise<DeviceRecord | null> => {
-    const check_result = await check_static_credentials(identity, undefined, undefined, storage);
+export const what_device_am_i = async (identity: Identity, storage: StorageEngine<"local">): Promise<DeviceRecord | null> => {
+    const check_result = await check_static_credentials(identity, storage);
     if (check_result.success) {
         return check_result.device;
     }
