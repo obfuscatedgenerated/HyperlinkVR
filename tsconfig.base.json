@@ -13,6 +13,5 @@
         "lib": ["DOM", "DOM.Iterable", "ESNext"],
         "module": "ESNext",
         "target": "ESNext",
-        "typeRoots": ["node_modules/@types", "types"],
     }
 }

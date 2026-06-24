@@ -21,6 +21,7 @@
     },
     "devDependencies": {
         "@types/three": "catalog:",
-        "@types/react": "catalog:"
+        "@types/react": "catalog:",
+        "@types/troika-three-text": "workspace:*"
     }
 }

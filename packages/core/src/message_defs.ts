@@ -1,3 +1,6 @@
+import type { WindowArguments, WindowIntent } from "./windowing";
+
+
 interface BaseMessage {
 
 }
@@ -28,15 +31,10 @@ interface ClickAction extends BaseActionMessage {
     button?: 0 | 1 | 2;
 }
 
-export type WindowIntent =
-    "DEVTOOLS_FORM" |
-    "DEVTOOLS_WATCH_UI";
-// TODO: finish
-
 interface CreateWindowAction extends BaseActionMessage {
     action: "VVR_CREATE_WINDOW";
     intent: WindowIntent;
-    args?: Record<string, any>;
+    args?: WindowArguments;
     type?: "popup" | "normal";
     width?: number;
     height?: number;

@@ -1,12 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useMessageEngine } from "./engines";
-
-const params = new URLSearchParams(window.location.search);
-const TAB_ID = params.get("tab") ? parseInt(params.get("tab")!) : null;
-
-if (TAB_ID === null) {
-    throw new Error("tab is not defined in the URL parameters");
-}
+import { useWindowArguments } from "./windowing";
 
 export interface TabSessionContextValue {
     id: number;
@@ -24,6 +18,14 @@ export const TabSessionProvider = ({
 }: {
     children: React.ReactNode;
 }) => {
+    const window_data = useWindowArguments();
+
+    if (!window_data.tab) {
+        throw new Error("TabSessionProvider must be used within a window with a tab argument");
+    }
+
+    const { tab } = window_data;
+
     const messenger = useMessageEngine();
 
     const [url, setUrl] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export const TabSessionProvider = ({
     useEffect(() => {
         const handle_message = (msg: any) => {
             // TODO: switch
-            if (msg.type === "VVR_TAB_CLOSED" && msg.tab === TAB_ID) {
+            if (msg.type === "VVR_TAB_CLOSED" && msg.tab === tab) {
                 // just close for now as tab hopping isnt yet implemented
                 window.close();
             }
@@ -53,14 +55,16 @@ export const TabSessionProvider = ({
             }
         };
 
+        // TODO: actively fetch url and dimensions in case missed, currently a race
+
         const unlisten = messenger.listen(handle_message);
         return () => unlisten();
-    });
+    }, [messenger, tab]);
 
     return (
         <TabSessionContext.Provider
             value={{
-                id: TAB_ID,
+                id: tab,
                 url,
                 dimensions
             }}>
