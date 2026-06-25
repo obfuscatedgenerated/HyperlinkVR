@@ -55,6 +55,17 @@ export default defineConfig({
                     return null;
                 },
             } : undefined,
+            {
+                name: "no-tsbuildinfo",
+                enforce: "post",
+                generateBundle(_, bundle) {
+                    for (const file of Object.keys(bundle)) {
+                        if (file.endsWith(".tsbuildinfo")) {
+                            delete bundle[file];
+                        }
+                    }
+                }
+            },
             visualizer((outputOptions) => {
                 const build_name = outputOptions.name
                     ? outputOptions.name.replace(/[^a-z0-9]/gi, "-").toLowerCase()
