@@ -6,11 +6,13 @@
         "dev": "turbo run dev",
         "build": "turbo run build",
         "typecheck": "turbo run typecheck --output-logs=errors-only --continue",
-        "build-schema": "tsx scripts/build_json_schema.ts"
+        "build-schema": "tsx scripts/build_json_schema.ts",
+        "unused": "knip"
     },
     "devDependencies": {
         "@ianvs/prettier-plugin-sort-imports": "4.1.1",
         "autoprefixer": "^10.5.0",
+        "knip": "^6.20.0",
         "postcss": "^8.5.15",
         "prettier": "3.2.4",
         "tsx": "^4.22.4",

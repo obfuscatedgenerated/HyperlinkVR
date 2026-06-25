@@ -1,0 +1,24 @@
+{
+    "$schema": "https://unpkg.com/knip@6/schema.json",
+    "workspaces": {
+        ".": {
+            "ignoreDependencies": ["wxt"]
+        },
+        "apps/extension": {
+            "entry": [
+                "src/entrypoints/background.ts",
+                "src/entrypoints/input_injection.content.ts",
+                "src/entrypoints/**/main.tsx"
+            ],
+            "project": ["src/**/*.{ts,tsx}", "wxt.config.ts"]
+        },
+        "packages/*": {
+            "entry": "src/index.{ts,tsx}!",
+            "project": "src/**/*.{ts,tsx}!"
+        },
+        "scripts": {
+            "entry": "build_json_schema.ts",
+            "project": ["build_json_schema.ts"]
+        }
+    }
+}
