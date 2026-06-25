@@ -1,11 +1,64 @@
 import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig } from "wxt";
 
+
+
 import pkg from "./package.json" with { type: "json" };
+
+
+const INCLUDE_IWER = process.env.USE_IWER === "true" || process.env.USE_IWER === "1";
+const ENVIRONMENT = process.env.NODE_ENV || "development";
+
+if (INCLUDE_IWER && ENVIRONMENT === "production") {
+    throw new Error("Not allowed to pass INCLUDE_IWER=1 in production builds");
+}
+
+const aliases: Record<string, string> = {
+    "@viewportvr/asset-resolver": "./src/shims/asset-resolver.ts"
+}
+
+if (!INCLUDE_IWER) {
+    aliases["iwer"] =  "./src/shims/iwer.ts";
+    aliases["@iwer/sem"] = "./src/shims/iwer-sem.ts";
+    aliases["@iwer/devui"] = "./src/shims/iwer-devui.ts";
+    aliases["@pmndrs/xr/emulate"] = "./src/shims/pmndrs-xr-emulate.ts";
+
+    console.log("Shimmed out IWER modules");
+}
+
+const force_prebundle = [
+    "@viewportvr/vr-engine > @react-three/xr",
+    "@viewportvr/vr-engine > @react-three/xr > @pmndrs/xr",
+    "@viewportvr/vr-engine > @react-three/xr > @pmndrs/xr > @pmndrs/msdfonts",
+    "@viewportvr/vr-engine > @react-three/fiber",
+    "@viewportvr/vr-engine > @react-three/drei",
+    "@viewportvr/vr-engine > @react-three/uikit",
+    "@viewportvr/vr-engine > @react-three/uikit-default",
+    "@viewportvr/watch-ui > @react-three/uikit",
+    "@viewportvr/watch-ui > @react-three/uikit-default",
+    "@viewportvr/vr-engine > troika-three-text",
+    "@viewportvr/vr-engine > three"
+];
+
+const LOG_COMPILATION = process.env.LOG_COMPILATION === "true" || process.env.LOG_COMPILATION === "1";
 
 export default defineConfig({
     vite: () => ({
         plugins: [
+            LOG_COMPILATION ? {
+                name: "comp-log",
+                enforce: "pre",
+                transform(code, id) {
+                    if (id.includes('.vite/deps')) {
+                        return code;
+                    }
+
+                    if (!id.includes("?vue") && !id.includes(".css") && !id.includes("\x00")) {
+                        console.log(`[Compiling] ${id}`);
+                    }
+                    return null;
+                },
+            } : undefined,
             visualizer((outputOptions) => {
                 const build_name = outputOptions.name
                     ? outputOptions.name.replace(/[^a-z0-9]/gi, "-").toLowerCase()
@@ -16,7 +69,10 @@ export default defineConfig({
                     open: false
                 };
             })
-        ]
+        ],
+        optimizeDeps: {
+            include: force_prebundle
+        }
     }),
 
     srcDir: "src",
@@ -45,9 +101,7 @@ export default defineConfig({
         }
     },
 
-    alias: {
-        "@viewportvr/asset-resolver": "./src/shims/asset-resolver.ts"
-    },
+    alias: aliases,
 
     modules: ["@wxt-dev/auto-icons"],
 

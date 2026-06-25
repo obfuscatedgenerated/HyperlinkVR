@@ -106,18 +106,6 @@ importers:
 
   apps/extension:
     dependencies:
-      '@react-three/drei':
-        specifier: 'catalog:'
-        version: 9.122.0(@react-three/fiber@8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0))(@types/react@18.2.48)(@types/three@0.184.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0)(use-sync-external-store@1.6.0(react@18.2.0))
-      '@react-three/uikit':
-        specifier: 'catalog:'
-        version: 1.0.74(@react-three/fiber@8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0))(@types/react@18.2.48)(react@18.2.0)(three@0.184.0)(use-sync-external-store@1.6.0(react@18.2.0))
-      '@react-three/uikit-default':
-        specifier: 'catalog:'
-        version: 1.0.74(@react-three/fiber@8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0))(@types/react@18.2.48)(react@18.2.0)(three@0.184.0)(use-sync-external-store@1.6.0(react@18.2.0))
-      '@react-three/xr':
-        specifier: 'catalog:'
-        version: 6.6.30(@react-three/fiber@8.18.0(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(three@0.184.0)
       '@viewportvr/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -154,9 +142,6 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 18.2.0(react@18.2.0)
-      three:
-        specifier: 'catalog:'
-        version: 0.184.0
       zod:
         specifier: 'catalog:'
         version: 4.4.3
