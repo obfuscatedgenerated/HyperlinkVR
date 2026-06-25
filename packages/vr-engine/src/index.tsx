@@ -25,8 +25,6 @@ export const VRHost = () => {
                 ref={canvas_container_ref}>
                 <LogoOverlay />
 
-                <VRHost />
-
                 <Canvas gl={{ alpha: false }}>
                     <CanvasResizer containerRef={canvas_container_ref} />
 

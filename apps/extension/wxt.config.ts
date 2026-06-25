@@ -49,10 +49,6 @@ export default defineConfig({
                 name: "comp-log",
                 enforce: "pre",
                 transform(code, id) {
-                    if (id.includes('.vite/deps')) {
-                        return code;
-                    }
-
                     if (!id.includes("?vue") && !id.includes(".css") && !id.includes("\x00")) {
                         console.log(`[Compiling] ${id}`);
                     }
