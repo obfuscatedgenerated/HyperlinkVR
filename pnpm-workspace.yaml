@@ -42,3 +42,5 @@ catalog:
 
    wxt: "^0.20.27"
    "@wxt-dev/auto-icons": "^1.1.1"
+
+   "tailwind-preset-mantine": "4.1.0"
