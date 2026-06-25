@@ -36,9 +36,9 @@ export const frame_transforms: Record<string, (...args: any[]) => CameraControll
         }
     },
 
-    third_person: ({position_ref, quarternion_ref}: {position_ref: RefObject<Vector3>, quarternion_ref: RefObject<Quaternion>}) => ({current}) => {
+    third_person: ({position_ref, quaternion_ref}: {position_ref: RefObject<Vector3>, quaternion_ref: RefObject<Quaternion>}) => ({current}) => {
         const new_position = position_ref.current ? position_ref.current.clone() : current.position;
-        const new_quaternion = quarternion_ref.current ? quarternion_ref.current.clone() : current.quaternion;
+        const new_quaternion = quaternion_ref.current ? quaternion_ref.current.clone() : current.quaternion;
         return {
             new_position,
             new_quaternion
