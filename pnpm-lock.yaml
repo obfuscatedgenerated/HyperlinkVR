@@ -224,6 +224,9 @@ importers:
       '@viewportvr/react':
         specifier: workspace:*
         version: link:../react
+      '@viewportvr/schema-form':
+        specifier: workspace:*
+        version: link:../schema-form
       '@viewportvr/ui-dom':
         specifier: workspace:*
         version: link:../ui-dom
@@ -276,11 +279,11 @@ importers:
         specifier: 'catalog:'
         version: 18.2.48
 
-  packages/ui-dom:
+  packages/schema-form:
     dependencies:
       '@autoform/mantine':
         specifier: ^3.0.0
-        version: 3.0.0(@hookform/resolvers@3.10.0(react-hook-form@7.80.0(react@18.2.0)))(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@mantine/dates@7.17.8(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@mantine/hooks@7.17.8(react@18.2.0))(dayjs@1.11.21)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-hook-form@7.80.0(react@18.2.0))(react@18.2.0)
+        version: 3.0.0(@hookform/resolvers@3.10.0(react-hook-form@7.80.0(react@18.2.0)))(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@19.2.7(react@18.2.0))(react@18.2.0))(@mantine/dates@7.17.8(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@19.2.7(react@18.2.0))(react@18.2.0))(@mantine/hooks@7.17.8(react@18.2.0))(dayjs@1.11.21)(react-dom@19.2.7(react@18.2.0))(react@18.2.0))(react-hook-form@7.80.0(react@18.2.0))(react@18.2.0)
       '@autoform/react':
         specifier: ^4.0.0
         version: 4.0.0(@hookform/resolvers@3.10.0(react-hook-form@7.80.0(react@18.2.0)))(react-hook-form@7.80.0(react@18.2.0))(react@18.2.0)
@@ -289,10 +292,29 @@ importers:
         version: 5.0.0(zod@4.4.3)
       '@mantine/core':
         specifier: ^7.17.8
-        version: 7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+        version: 7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@19.2.7(react@18.2.0))(react@18.2.0)
       '@mantine/dates':
         specifier: ^7.17.8
-        version: 7.17.8(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@mantine/hooks@7.17.8(react@18.2.0))(dayjs@1.11.21)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+        version: 7.17.8(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@19.2.7(react@18.2.0))(react@18.2.0))(@mantine/hooks@7.17.8(react@18.2.0))(dayjs@1.11.21)(react-dom@19.2.7(react@18.2.0))(react@18.2.0)
+      react:
+        specifier: 'catalog:'
+        version: 18.2.0
+      react-hook-form:
+        specifier: ^7.80.0
+        version: 7.80.0(react@18.2.0)
+      tailwind-preset-mantine:
+        specifier: ^4.1.0
+        version: 4.1.0(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@19.2.7(react@18.2.0))(react@18.2.0))(tailwindcss@4.3.1)
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
+    devDependencies:
+      '@types/react':
+        specifier: 'catalog:'
+        version: 18.2.48
+
+  packages/ui-dom:
+    dependencies:
       '@viewportvr/auth':
         specifier: workspace:*
         version: link:../auth
@@ -305,18 +327,6 @@ importers:
       react:
         specifier: 'catalog:'
         version: 18.2.0
-      react-dom:
-        specifier: 'catalog:'
-        version: 18.2.0(react@18.2.0)
-      react-hook-form:
-        specifier: ^7.80.0
-        version: 7.80.0(react@18.2.0)
-      tailwind-preset-mantine:
-        specifier: ^4.1.0
-        version: 4.1.0(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(tailwindcss@4.3.1)
-      zod:
-        specifier: 'catalog:'
-        version: 4.4.3
     devDependencies:
       '@types/react':
         specifier: 'catalog:'
@@ -3687,11 +3697,11 @@ snapshots:
 
   '@autoform/core@3.0.0': {}
 
-  '@autoform/mantine@3.0.0(@hookform/resolvers@3.10.0(react-hook-form@7.80.0(react@18.2.0)))(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@mantine/dates@7.17.8(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@mantine/hooks@7.17.8(react@18.2.0))(dayjs@1.11.21)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-hook-form@7.80.0(react@18.2.0))(react@18.2.0)':
+  '@autoform/mantine@3.0.0(@hookform/resolvers@3.10.0(react-hook-form@7.80.0(react@18.2.0)))(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@19.2.7(react@18.2.0))(react@18.2.0))(@mantine/dates@7.17.8(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@19.2.7(react@18.2.0))(react@18.2.0))(@mantine/hooks@7.17.8(react@18.2.0))(dayjs@1.11.21)(react-dom@19.2.7(react@18.2.0))(react@18.2.0))(react-hook-form@7.80.0(react@18.2.0))(react@18.2.0)':
     dependencies:
       '@autoform/react': 4.0.0(@hookform/resolvers@3.10.0(react-hook-form@7.80.0(react@18.2.0)))(react-hook-form@7.80.0(react@18.2.0))(react@18.2.0)
-      '@mantine/core': 7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
-      '@mantine/dates': 7.17.8(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@mantine/hooks@7.17.8(react@18.2.0))(dayjs@1.11.21)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@mantine/core': 7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@19.2.7(react@18.2.0))(react@18.2.0)
+      '@mantine/dates': 7.17.8(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@19.2.7(react@18.2.0))(react@18.2.0))(@mantine/hooks@7.17.8(react@18.2.0))(dayjs@1.11.21)(react-dom@19.2.7(react@18.2.0))(react@18.2.0)
       '@tabler/icons-react': 3.44.0(react@18.2.0)
       react: 18.2.0
       react-hook-form: 7.80.0(react@18.2.0)
@@ -4020,18 +4030,18 @@ snapshots:
       '@floating-ui/core': 1.7.5
       '@floating-ui/utils': 0.2.11
 
-  '@floating-ui/react-dom@2.1.8(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+  '@floating-ui/react-dom@2.1.8(react-dom@19.2.7(react@18.2.0))(react@18.2.0)':
     dependencies:
       '@floating-ui/dom': 1.7.6
       react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
+      react-dom: 19.2.7(react@18.2.0)
 
-  '@floating-ui/react@0.26.28(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+  '@floating-ui/react@0.26.28(react-dom@19.2.7(react@18.2.0))(react@18.2.0)':
     dependencies:
-      '@floating-ui/react-dom': 2.1.8(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@floating-ui/react-dom': 2.1.8(react-dom@19.2.7(react@18.2.0))(react@18.2.0)
       '@floating-ui/utils': 0.2.11
       react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
+      react-dom: 19.2.7(react@18.2.0)
       tabbable: 6.5.0
 
   '@floating-ui/utils@0.2.11': {}
@@ -4209,28 +4219,28 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+  '@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@19.2.7(react@18.2.0))(react@18.2.0)':
     dependencies:
-      '@floating-ui/react': 0.26.28(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@floating-ui/react': 0.26.28(react-dom@19.2.7(react@18.2.0))(react@18.2.0)
       '@mantine/hooks': 7.17.8(react@18.2.0)
       clsx: 2.1.1
       react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-      react-number-format: 5.4.5(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      react-dom: 19.2.7(react@18.2.0)
+      react-number-format: 5.4.5(react-dom@19.2.7(react@18.2.0))(react@18.2.0)
       react-remove-scroll: 2.7.2(@types/react@18.2.48)(react@18.2.0)
       react-textarea-autosize: 8.5.9(@types/react@18.2.48)(react@18.2.0)
       type-fest: 4.41.0
     transitivePeerDependencies:
       - '@types/react'
 
-  '@mantine/dates@7.17.8(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@mantine/hooks@7.17.8(react@18.2.0))(dayjs@1.11.21)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+  '@mantine/dates@7.17.8(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@19.2.7(react@18.2.0))(react@18.2.0))(@mantine/hooks@7.17.8(react@18.2.0))(dayjs@1.11.21)(react-dom@19.2.7(react@18.2.0))(react@18.2.0)':
     dependencies:
-      '@mantine/core': 7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@mantine/core': 7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@19.2.7(react@18.2.0))(react@18.2.0)
       '@mantine/hooks': 7.17.8(react@18.2.0)
       clsx: 2.1.1
       dayjs: 1.11.21
       react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
+      react-dom: 19.2.7(react@18.2.0)
 
   '@mantine/hooks@7.17.8(react@18.2.0)':
     dependencies:
@@ -5979,6 +5989,11 @@ snapshots:
       react: 18.2.0
       scheduler: 0.23.2
 
+  react-dom@19.2.7(react@18.2.0):
+    dependencies:
+      react: 18.2.0
+      scheduler: 0.27.0
+
   react-dom@19.2.7(react@19.2.7):
     dependencies:
       react: 19.2.7
@@ -5990,10 +6005,10 @@ snapshots:
 
   react-is@16.13.1: {}
 
-  react-number-format@5.4.5(react-dom@18.2.0(react@18.2.0))(react@18.2.0):
+  react-number-format@5.4.5(react-dom@19.2.7(react@18.2.0))(react@18.2.0):
     dependencies:
       react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
+      react-dom: 19.2.7(react@18.2.0)
 
   react-reconciler@0.27.0(react@18.2.0):
     dependencies:
@@ -6309,9 +6324,9 @@ snapshots:
 
   tabbable@6.5.0: {}
 
-  tailwind-preset-mantine@4.1.0(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(tailwindcss@4.3.1):
+  tailwind-preset-mantine@4.1.0(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@19.2.7(react@18.2.0))(react@18.2.0))(tailwindcss@4.3.1):
     dependencies:
-      '@mantine/core': 7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      '@mantine/core': 7.17.8(@mantine/hooks@7.17.8(react@18.2.0))(@types/react@18.2.48)(react-dom@19.2.7(react@18.2.0))(react@18.2.0)
       es-module-lexer: 2.1.0
       get-tsconfig: 4.14.0
       postcss: 8.5.15

@@ -1,4 +1,4 @@
-import { LoginPage } from "@viewportvr/pages";
+import { LoginPage } from "@viewportvr/pages/login";
 import ReactDOM from "react-dom/client";
 import { DefaultContextProviders } from "~/contexts/DefaultContextProviders";
 

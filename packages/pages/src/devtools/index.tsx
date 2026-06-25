@@ -7,6 +7,8 @@ import {get_asset_path} from "@viewportvr/asset-resolver";
 
 const bg = get_asset_path("bg.webp");
 
+// TODO: style broken. need to load tailwind ourself maybe? might be wroth moving tw css to a package if its shared
+
 const ToolGroup = ({
     title,
     children
@@ -157,5 +159,3 @@ export const DevToolsPage = () => {
 };
 
 // TODO: namespace settings
-
-export * from "./watch";

@@ -4,20 +4,9 @@ import { MantineProvider } from "@mantine/core";
 import { useCallback, useMemo } from "react";
 import { z } from "zod";
 
-
-
-
-
-
 import "./SchemaForm.css";
 
-
-
 import { ControlledSelect } from "./ControlledSelect";
-
-
-
-
 
 export const SchemaForm = ({
     schema,
@@ -66,7 +55,9 @@ export const SchemaForm = ({
         const modified_fields = {};
 
         const hidden = [
-            ...Object.keys(const_fields).filter((key) => !visibleConstFields.includes(key)),
+            ...Object.keys(const_fields).filter(
+                (key) => !visibleConstFields.includes(key)
+            ),
             ...extraHiddenFields
         ];
 
@@ -82,9 +73,12 @@ export const SchemaForm = ({
 
         return schema.safeExtend(modified_fields);
     }, [schema, const_fields, extraHiddenFields, visibleConstFields]);
-// TODO: allow defining longer string field which sets inputProps size and inputSize
+    // TODO: allow defining longer string field which sets inputProps size and inputSize
 
-    const schema_provider = useMemo(() => new ZodProvider(filtered_schema), [filtered_schema]);
+    const schema_provider = useMemo(
+        () => new ZodProvider(filtered_schema),
+        [filtered_schema]
+    );
 
     const handle_submit = useCallback(
         (data: any) => {
@@ -107,7 +101,7 @@ export const SchemaForm = ({
                     withSubmit
                     formComponents={{
                         select: ControlledSelect,
-                        hidden: () => null,
+                        hidden: () => null
                     }}
                 />
             </main>

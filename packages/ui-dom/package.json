@@ -12,16 +12,7 @@
         "@viewportvr/auth": "workspace:*",
         "@viewportvr/react": "workspace:*",
         "react": "catalog:",
-        "react-dom": "catalog:",
-        "zod": "catalog:",
-        "lucide-react": "catalog:",
-        "@autoform/mantine": "^3.0.0",
-        "@autoform/react": "^4.0.0",
-        "@autoform/zod": "^5.0.0",
-        "@mantine/core": "^7.17.8",
-        "@mantine/dates": "^7.17.8",
-        "react-hook-form": "^7.80.0",
-        "tailwind-preset-mantine": "^4.1.0"
+        "lucide-react": "catalog:"
     },
     "devDependencies": {
         "@types/react": "catalog:"

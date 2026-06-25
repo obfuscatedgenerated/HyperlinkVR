@@ -1,60 +1,10 @@
-import {SchemaForm} from "@viewportvr/ui-dom";
-import { AuthManifestSchema } from "@viewportvr/auth";
+import { DevToolsFormPage } from "@viewportvr/pages/devtools/form";
 import ReactDOM from "react-dom/client";
 
-
-const SCHEMAS = {
-    "AuthManifest": {schema: AuthManifestSchema, title: "Auth Manifest Generator"}
-} as Record<string, {schema: any, title: string}>;
-
-const params = new URLSearchParams(window.location.search);
-const schema_name = params.get("schema");
-const schema = schema_name ? SCHEMAS[schema_name] : null;
-const output_format = params.get("format") || "json";
-const output_filename = params.get("filename");
-
-const download_json = (data: any) => {
-    const blob = new Blob([JSON.stringify(data, null, 4)], {
-        type: "application/json"
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${output_filename}.json` || `${schema_name}_v${data.version}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-};
-
-const FORMATS = {
-    json: download_json
-} as Record<string, (data: any) => void>;
-
-const download_form = (data: any) => {
-    console.log("Downloading form data", data);
-    const format_func = FORMATS[output_format];
-    if (!format_func) {
-        console.error(`Unknown format: ${output_format}`);
-        return;
-    }
-    format_func(data);
-};
-
-const DevToolsFormUI = () => {
-    if (!schema) {
-        return <div>No schema found</div>;
-    }
-
-    if (!FORMATS[output_format]) {
-        return <div>Unknown format: {output_format}</div>;
-    }
-
+export const DevToolsFormUI = () => {
     return (
-        <SchemaForm
-            schema={schema.schema}
-            onSubmit={download_form}
-            title={schema.title}
-        />
-    );
+        <DevToolsFormPage />
+    )
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(<DevToolsFormUI />);

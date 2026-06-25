@@ -2,8 +2,13 @@
     "name": "@viewportvr/pages",
     "version": "0.0.1",
     "private": true,
-    "main": "src/index.ts",
-    "types": "src/index.ts",
+    "exports": {
+        ".": "./src/index.tsx",
+        "./login": "./src/login.tsx",
+        "./devtools": "./src/devtools/index.tsx",
+        "./devtools/watch": "./src/devtools/watch.tsx",
+        "./devtools/form": "./src/devtools/form.tsx"
+    },
     "scripts": {
         "build": "tsc --build",
         "typecheck": "tsc --noEmit"
@@ -12,6 +17,7 @@
         "@viewportvr/core": "workspace:*",
         "@viewportvr/react": "workspace:*",
         "@viewportvr/ui-dom": "workspace:*",
+        "@viewportvr/schema-form": "workspace:*",
         "@viewportvr/watch-ui": "workspace:*",
         "@viewportvr/auth": "workspace:*",
         "react": "catalog:",

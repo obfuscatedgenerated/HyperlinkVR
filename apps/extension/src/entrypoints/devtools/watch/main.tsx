@@ -1,6 +1,6 @@
 import "~/shared.css";
 
-import { DevToolsWatchPage } from "@viewportvr/pages";
+import { DevToolsWatchPage } from "@viewportvr/pages/devtools/watch";
 import ReactDOM from "react-dom/client";
 import { DefaultContextProviders } from "~/contexts/DefaultContextProviders";
 

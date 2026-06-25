@@ -1,0 +1,25 @@
+{
+    "name": "@viewportvr/schema-form",
+    "version": "0.0.1",
+    "private": true,
+    "main": "src/index.tsx",
+    "types": "src/index.tsx",
+    "scripts": {
+        "build": "tsc --build",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "react": "catalog:",
+        "zod": "catalog:",
+        "@autoform/mantine": "^3.0.0",
+        "@autoform/react": "^4.0.0",
+        "@autoform/zod": "^5.0.0",
+        "@mantine/core": "^7.17.8",
+        "@mantine/dates": "^7.17.8",
+        "react-hook-form": "^7.80.0",
+        "tailwind-preset-mantine": "^4.1.0"
+    },
+    "devDependencies": {
+        "@types/react": "catalog:"
+    }
+}
