@@ -1,23 +1,16 @@
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import {
-    PointerCursorModel,
-    PointerRayModel,
-    useRayPointer,
-    useTouchPointer,
-    useXRInputSourceStateContext,
-    XRSpace
-} from "@react-three/xr";
+import { PointerCursorModel, PointerRayModel, useRayPointer, useTouchPointer, useXRInputSourceStateContext, XRSpace } from "@react-three/xr";
 import { useStorage } from "@viewportvr/react";
 import { useEffect, useMemo, useRef } from "react";
-import { Mesh, Object3D, Quaternion, Vector3, Raycaster, ArrowHelper, SphereGeometry, MeshBasicMaterial, Group } from "three";
+import { ArrowHelper, Group, Mesh, MeshBasicMaterial, Object3D, Quaternion, Raycaster, SphereGeometry, Vector3 } from "three";
 
 import { get_asset_path } from "@viewportvr/asset-resolver";
 
 const ASSET_PKG = "vr-engine/assets";
 
-const left_hand = get_asset_path("hands/left.glb", ASSET_PKG);
-const right_hand = get_asset_path("hands/right.glb", ASSET_PKG);
+const left_hand = get_asset_path(import.meta.url, "hands/left.glb", ASSET_PKG);
+const right_hand = get_asset_path(import.meta.url, "hands/right.glb", ASSET_PKG);
 
 const FINGER_NAMES = ["middle", "ring", "pinky"];
 const SEGMENT_NAMES = ["proximal", "intermediate", "distal"];

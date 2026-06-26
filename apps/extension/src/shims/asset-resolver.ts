@@ -1,8 +1,9 @@
 import type { get_asset_path as AssetResolverType } from "@viewportvr/asset-resolver";
 
 export const get_asset_path: typeof AssetResolverType = (
-    path,
-    from_package = "assets"
+    script_path,
+    relative_path,
+    from_package
 ) => {
-    return new URL(`../../../../packages/${from_package}/${path}`, import.meta.url).href;
+    return new URL(`../../${from_package}/${relative_path}`, script_path).href;
 };

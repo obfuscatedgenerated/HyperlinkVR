@@ -5,7 +5,6 @@ export const CanvasResizer = ({ containerRef }: { containerRef: React.RefObject<
     // We only need 'gl' to force the canvas pixel dimensions
     const { gl } = useThree();
 
-    console.log("ManualResizer mounted, containerRef:", containerRef);
     useEffect(() => {
         if (!containerRef.current) return;
 

@@ -3,7 +3,8 @@
 
 declare module "@viewportvr/asset-resolver" {
     export function get_asset_path(
-        path: string,
+        script_path: string,
+        relative_path: string,
         from_package = "assets"
     ): string;
 }
