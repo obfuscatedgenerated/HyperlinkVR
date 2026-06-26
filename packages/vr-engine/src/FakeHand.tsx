@@ -5,13 +5,8 @@ import { useStorage } from "@viewportvr/react";
 import { useEffect, useMemo, useRef } from "react";
 import { ArrowHelper, Group, Mesh, MeshBasicMaterial, Object3D, Quaternion, Raycaster, SphereGeometry, Vector3 } from "three";
 
-import { get_asset_path } from "@viewportvr/asset-resolver";
-
-
-const ASSET_PKG = "vr-engine/assets";
-
-const left_hand = get_asset_path(import.meta.url, "hands/left.glb", ASSET_PKG);
-const right_hand = get_asset_path(import.meta.url, "hands/right.glb", ASSET_PKG);
+const left_hand = new URL("../assets/hands/left.glb", import.meta.url).href;
+const right_hand = new URL("../assets/hands/right.glb", import.meta.url).href;
 
 const FINGER_NAMES = ["middle", "ring", "pinky"];
 const SEGMENT_NAMES = ["proximal", "intermediate", "distal"];

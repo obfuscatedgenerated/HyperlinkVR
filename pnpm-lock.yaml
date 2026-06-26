@@ -115,6 +115,9 @@ importers:
 
   apps/extension:
     dependencies:
+      '@viewportvr/assets':
+        specifier: workspace:*
+        version: link:../../packages/assets
       '@viewportvr/auth':
         specifier: workspace:*
         version: link:../../packages/auth
@@ -170,9 +173,6 @@ importers:
       '@types/three':
         specifier: 'catalog:'
         version: 0.185.0
-      '@viewportvr/asset-resolver':
-        specifier: workspace:*
-        version: link:../../packages/asset-resolver
       '@wxt-dev/auto-icons':
         specifier: 'catalog:'
         version: 1.1.1(wxt@0.20.27(@types/node@20.11.5)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0))
@@ -188,7 +188,7 @@ importers:
 
   packages/@types-custom/troika-three-text: {}
 
-  packages/asset-resolver: {}
+  packages/assets: {}
 
   packages/auth:
     dependencies:
@@ -222,6 +222,9 @@ importers:
       '@react-three/uikit':
         specifier: 'catalog:'
         version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+      '@viewportvr/assets':
+        specifier: workspace:*
+        version: link:../assets
       '@viewportvr/auth':
         specifier: workspace:*
         version: link:../auth
@@ -247,9 +250,6 @@ importers:
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.3
-      '@viewportvr/asset-resolver':
-        specifier: workspace:*
-        version: link:../asset-resolver
 
   packages/platform-browser:
     dependencies:
@@ -387,9 +387,6 @@ importers:
       '@types/troika-three-text':
         specifier: workspace:*
         version: link:../@types-custom/troika-three-text
-      '@viewportvr/asset-resolver':
-        specifier: workspace:*
-        version: link:../asset-resolver
 
   packages/watch-ui:
     dependencies:

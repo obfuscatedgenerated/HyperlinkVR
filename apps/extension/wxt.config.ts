@@ -16,9 +16,7 @@ if (INCLUDE_IWER && ENVIRONMENT === "production") {
     throw new Error("Not allowed to pass INCLUDE_IWER=1 in production builds");
 }
 
-const aliases: Record<string, string> = {
-    "@viewportvr/asset-resolver": "./src/shims/asset-resolver.ts"
-}
+const aliases: Record<string, string> = {}
 
 if (!INCLUDE_IWER) {
     aliases["iwer"] =  "./src/shims/iwer.ts";

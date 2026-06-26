@@ -14,9 +14,8 @@ import { useActiveTab } from "~/hooks/useActiveTab";
 import { check_url_allowed } from "~/util/url_patterns";
 
 import { version } from "../../../package.json";
-import { get_asset_path } from "@viewportvr/asset-resolver";
 
-const bg = get_asset_path(import.meta.url, "bg.webp");
+const bg = new URL("../../../node_modules/@viewportvr/assets/bg.webp", import.meta.url).href;
 
 const Popup = () => {
     const [active, setActive] = useState(false);

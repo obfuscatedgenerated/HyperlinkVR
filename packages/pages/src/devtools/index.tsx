@@ -3,9 +3,7 @@ import { useMessageEngine, useStorage } from "@viewportvr/react";
 import { ToggleSwitch } from "@viewportvr/ui-dom";
 import { WATCH_UI_HEIGHT, WATCH_UI_WIDTH } from "@viewportvr/watch-ui";
 
-import { get_asset_path } from "@viewportvr/asset-resolver";
-
-const bg = get_asset_path(import.meta.url, "bg.webp");
+const bg = new URL("../../node_modules/@viewportvr/assets/bg.webp", import.meta.url).href;
 
 const ToolGroup = ({
     title,

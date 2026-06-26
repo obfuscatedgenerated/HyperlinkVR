@@ -18,6 +18,7 @@ export default {
         "^~(.*)$",
         "",
         "^[./]",
-        "@viewportvr/asset-resolver"
+        "@viewportvr/assets/*",
+        "@viewportvr/*/assets/*"
     ]
 };
