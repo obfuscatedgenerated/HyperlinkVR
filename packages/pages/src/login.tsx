@@ -1,19 +1,8 @@
-import {
-    check_stored_private_key,
-    is_private_key_in_session,
-    parse_identity,
-    resolve_identity,
-    signup_static,
-    store_auth_session,
-    type ActionableMethods,
-    type Identity,
-    type IdentityResolutionData,
-    type LoginAction,
-    type LoginMethod
-} from "@viewportvr/auth";
+import { check_stored_private_key, is_private_key_in_session, parse_identity, resolve_identity, signup_static, store_auth_session, type ActionableMethods, type Identity, type IdentityResolutionData, type LoginAction, type LoginMethod } from "@viewportvr/auth";
 import { useDebounce, useStorageEngine } from "@viewportvr/react";
-import { LoadingSpinner } from "@viewportvr/ui-dom";
+import { CenteredLoadingSpinner } from "@viewportvr/ui-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 
 const LandingPage = ({
     username,
@@ -179,7 +168,7 @@ const LoginFormStatic = ({ username }: FormProps) => {
     }
 
     if (success === null && !show_password_input) {
-        return <LoadingSpinner className="w-full h-full flex items-center justify-center" />;
+        return <CenteredLoadingSpinner />;
     }
 
     return (
@@ -270,7 +259,7 @@ const SignupFormStaticManual = ({ username, resolved_identity }: FormProps) => {
     }, [username, resolved_identity, local_storage, identity]);
 
     if (generating) {
-        return <LoadingSpinner className="w-full h-full flex items-center justify-center" />;
+        return <CenteredLoadingSpinner />;
     }
 
     if (passphrase) {
