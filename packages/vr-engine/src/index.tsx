@@ -1,25 +1,32 @@
+import { Text } from "@react-three/drei";
 import { Canvas, RootState } from "@react-three/fiber";
+import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
 import { createXRStore, PointerEvents, XR } from "@react-three/xr";
 import { TabSessionProvider } from "@viewportvr/react";
-import { memo, useCallback, useRef } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
+import { ErrorBoundary, type FallbackProps, getErrorMessage } from "react-error-boundary";
 import { WebGLRenderer } from "three";
-
-
+import { configureTextBuilder } from "troika-three-text";
 
 import { CanvasResizer } from "./CanvasResizer";
 import { DOMMirror } from "./DOMMirror";
 import { FakeHand } from "./FakeHand";
 import { LogoOverlay } from "./LogoOverlay";
-import { frame_transforms, SpectatorCameraController } from "./SpectatorCameraController";
 import { MixedRealityCameraController } from "./MixedRealityCameraController";
+import {
+    frame_transforms,
+    SpectatorCameraController
+} from "./SpectatorCameraController";
 import { URLBar } from "./URLBar";
 import { WristWatch } from "./WristWatch";
-import { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
 
+configureTextBuilder({
+    useWorker: false
+});
 
 export const xr_store = createXRStore({
     controller: FakeHand,
-    offerSession: false,
+    offerSession: false
 });
 
 // three.js's WebXRManager only calls `gl.makeXRCompatible()` lazily, on
@@ -33,7 +40,7 @@ export const xr_store = createXRStore({
 // a no-op, so the swap (if any) happens once, at mount, before you've
 // rendered anything that matters.
 // https://github.com/mrdoob/three.js/issues/30674
-const make_xr_compatible_renderer = ({canvas}: DefaultGLProps) => {
+const make_xr_compatible_renderer = ({ canvas }: DefaultGLProps) => {
     if (!("getContext" in canvas)) {
         throw new Error("Canvas does not support getContext");
     }
@@ -50,7 +57,75 @@ const make_xr_compatible_renderer = ({canvas}: DefaultGLProps) => {
     });
 };
 
-export const VRHost = memo(({on_xr_ready}: {on_xr_ready: () => void}) => {
+const VRErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
+    <group position={[0, 1.5, -2]}>
+        {/* Background Panel */}
+        <mesh>
+            <planeGeometry args={[2.5, 1.2]} />
+            <meshBasicMaterial color="#4a0000" /> {/* Dark red alert color */}
+        </mesh>
+
+        {/* Title Text */}
+        <Text
+            position={[0, 0.3, 0.01]}
+            fontSize={0.15}
+            color="white"
+            anchorY="middle">
+            Game Error
+        </Text>
+
+        {/* Actual Error Message */}
+        <Text
+            position={[0, 0, 0.01]}
+            fontSize={0.07}
+            color="#ffcccc"
+            maxWidth={2.2}
+            textAlign="center">
+            {getErrorMessage(error) || "An unexpected error occurred."}
+        </Text>
+
+        {/* Interactive Restart Button */}
+        <mesh
+            position={[0, -0.35, 0.01]}
+            onClick={resetErrorBoundary} // Your XR PointerEvents will trigger this!
+            onPointerOver={(e) => e.object.material.color.set("white")} // Hover effect
+            onPointerOut={(e) => e.object.material.color.set("#cccccc")}>
+            <planeGeometry args={[0.8, 0.25]} />
+            <meshBasicMaterial color="#cccccc" />
+
+            <Text position={[0, 0, 0.01]} fontSize={0.08} color="black">
+                Restart Session
+            </Text>
+        </mesh>
+    </group>
+);
+
+const FlatErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center z-50 text-white gap-8">
+        <h1 className="text-3xl font-bold">Game Error</h1>
+        <p className="text-lg text-red-400">{getErrorMessage(error) || "An unexpected error occurred."}</p>
+        <button
+            onClick={resetErrorBoundary}
+            className="px-6 py-3 bg-red-600 rounded hover:bg-red-700 transition cursor-pointer"
+        >
+            Restart Session
+        </button>
+    </div>
+);
+
+const VRHostInternal = memo(({ on_xr_ready }: { on_xr_ready: () => void }) => {
+    // gracefully end session on unmount to avoid renderer crash
+    useEffect(() => {
+        return () => {
+            const session = xr_store.getState().session;
+            if (session) {
+                session.end().catch((err: Error) => {
+                    console.error("Failed to end XR session on unmount:", err);
+                });
+            }
+        };
+    }, []);
+
     const canvas_container_ref = useRef<HTMLDivElement>(null);
 
     const handle_created = useCallback(
@@ -73,34 +148,47 @@ export const VRHost = memo(({on_xr_ready}: {on_xr_ready: () => void}) => {
         <TabSessionProvider>
             <div
                 className="w-full h-full max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)] relative"
-                ref={canvas_container_ref}
-            >
+                ref={canvas_container_ref}>
                 <LogoOverlay />
 
-                <Canvas gl={make_xr_compatible_renderer} onCreated={handle_created}>
+                <Canvas
+                    gl={make_xr_compatible_renderer}
+                    onCreated={handle_created}>
                     <CanvasResizer containerRef={canvas_container_ref} />
 
                     <XR store={xr_store}>
-                        <PointerEvents />
+                        <ErrorBoundary
+                            FallbackComponent={VRErrorFallback}
+                            onReset={() => window.location.reload()}>
+                            <PointerEvents />
 
-                        <color attach="background" args={["#111111"]} />
-                        <ambientLight intensity={0.5} />
-                        <pointLight position={[10, 10, 10]} />
+                            <color attach="background" args={["#111111"]} />
+                            <ambientLight intensity={0.5} />
+                            <pointLight position={[10, 10, 10]} />
 
-                        <URLBar
-                            position={[0, 3.25, -4]}
-                            height={0.25}
-                            height_of_dom_mirror={3}
-                        />
-                        <DOMMirror position={[0, 1.5, -4]} height={3} />
+                            <URLBar
+                                position={[0, 3.25, -4]}
+                                height={0.25}
+                                height_of_dom_mirror={3}
+                            />
+                            <DOMMirror position={[0, 1.5, -4]} height={3} />
 
-                        <WristWatch />
+                            <WristWatch />
 
-                        <SpectatorCameraController />
-                        {/*<MixedRealityCameraController />*/}
+                            <SpectatorCameraController />
+                            {/*<MixedRealityCameraController />*/}
+                        </ErrorBoundary>
                     </XR>
                 </Canvas>
             </div>
         </TabSessionProvider>
     );
 });
+
+export const VRHost = ({ on_xr_ready }: { on_xr_ready: () => void }) => (
+    <ErrorBoundary FallbackComponent={FlatErrorFallback} onReset={() => window.location.reload()}>
+        <VRHostInternal on_xr_ready={on_xr_ready} />
+    </ErrorBoundary>
+);
+
+// TODO: see if soft reset possible

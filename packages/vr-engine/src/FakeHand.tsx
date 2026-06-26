@@ -7,6 +7,7 @@ import { ArrowHelper, Group, Mesh, MeshBasicMaterial, Object3D, Quaternion, Rayc
 
 import { get_asset_path } from "@viewportvr/asset-resolver";
 
+
 const ASSET_PKG = "vr-engine/assets";
 
 const left_hand = get_asset_path(import.meta.url, "hands/left.glb", ASSET_PKG);

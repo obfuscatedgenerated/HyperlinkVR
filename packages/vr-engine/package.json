@@ -9,21 +9,22 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
+        "@react-three/drei": "catalog:",
+        "@react-three/fiber": "catalog:",
+        "@react-three/uikit": "^1.0.74",
+        "@react-three/uikit-default": "^1.0.74",
+        "@react-three/xr": "catalog:",
         "@viewportvr/react": "workspace:*",
         "@viewportvr/watch-ui": "workspace:*",
         "react": "catalog:",
         "react-dom": "catalog:",
+        "react-error-boundary": "^6.1.2",
         "three": "catalog:",
-        "@react-three/fiber": "catalog:",
-        "@react-three/drei": "catalog:",
-        "@react-three/xr": "catalog:",
-        "@react-three/uikit": "^1.0.74",
-        "@react-three/uikit-default": "^1.0.74",
         "troika-three-text": "catalog:"
     },
     "devDependencies": {
-        "@types/three": "catalog:",
         "@types/react": "catalog:",
+        "@types/three": "catalog:",
         "@types/troika-three-text": "workspace:*",
         "@viewportvr/asset-resolver": "workspace:*"
     }
