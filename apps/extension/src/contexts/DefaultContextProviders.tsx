@@ -1,16 +1,33 @@
 import { MessageEngine, WindowArgumentsStrategy } from "@viewportvr/core";
+import { URLParamsWindowArgumentsStrategy } from "@viewportvr/platform-browser";
 import {
     ExtensionMessageEngine,
     ExtensionStorage
 } from "@viewportvr/platform-extension";
 import {
     AuthSessionProvider,
-    ContextProviders,
     MessageEngineProvider,
     StorageEnginesContextType,
-    StorageEnginesProvider, WindowArgumentsStrategyProvider
+    StorageEnginesProvider,
+    WindowArgumentsStrategyProvider
 } from "@viewportvr/react";
-import { URLParamsWindowArgumentsStrategy } from "@viewportvr/platform-browser";
+
+let _default_messenger: MessageEngine | undefined;
+let _default_storage_engines: StorageEnginesContextType | undefined;
+let _default_window_args_strategy: WindowArgumentsStrategy<unknown> | undefined;
+
+const get_default_messenger = () =>
+    (_default_messenger ??= new ExtensionMessageEngine());
+
+const get_default_storage_engines = () =>
+    (_default_storage_engines ??= {
+        local: new ExtensionStorage("local"),
+        sync: new ExtensionStorage("sync"),
+        session: new ExtensionStorage("session")
+    });
+
+const get_default_window_args_strategy = () =>
+    (_default_window_args_strategy ??= new URLParamsWindowArgumentsStrategy());
 
 export const DefaultContextProviders = ({
     children,
@@ -23,62 +40,20 @@ export const DefaultContextProviders = ({
     storage_engines?: StorageEnginesContextType;
     window_args_strategy?: WindowArgumentsStrategy<unknown>;
 }) => {
-    // TODO: fallback more efficienlty. repvent rerender spam risk
-    if (!messenger) {
-        messenger = new ExtensionMessageEngine();
-    }
-
-    if (!storage_engines) {
-        // const local_storage = useMemo(() => new ExtensionStorage("local"), []);
-        // const sync_storage = useMemo(() => new ExtensionStorage("sync"), []);
-        // const session_storage = useMemo(
-        //     () => new ExtensionStorage("session"),
-        //     []
-        // );
-        // storage_engines = useMemo(
-        //     () => ({
-        //         local: local_storage,
-        //         sync: sync_storage,
-        //         session: session_storage
-        //     }),
-        //     [local_storage, sync_storage, session_storage]
-        // );
-
-        const local_storage = new ExtensionStorage("local");
-        const sync_storage = new ExtensionStorage("sync");
-        const session_storage = new ExtensionStorage("session");
-        storage_engines = {
-            local: local_storage,
-            sync: sync_storage,
-            session: session_storage
-        };
-    }
-
-    if (!window_args_strategy) {
-        window_args_strategy = new URLParamsWindowArgumentsStrategy();
-    }
+    const resolved_messenger = messenger ?? get_default_messenger();
+    const resolved_storage_engines =
+        storage_engines ?? get_default_storage_engines();
+    const resolved_window_args_strategy =
+        window_args_strategy ?? get_default_window_args_strategy();
 
     return (
-        <ContextProviders
-            providers={[
-                ({ children }) => (
-                    <MessageEngineProvider engine={messenger}>
-                        {children}
-                    </MessageEngineProvider>
-                ),
-                ({ children }) => (
-                    <StorageEnginesProvider engines={storage_engines}>
-                        {children}
-                    </StorageEnginesProvider>
-                ),
-                ({ children }) => (
-                    <WindowArgumentsStrategyProvider strategy={window_args_strategy}>
-                        {children}
-                    </WindowArgumentsStrategyProvider>
-                ),
-                AuthSessionProvider
-            ]}>
-            {children}
-        </ContextProviders>
+        <MessageEngineProvider engine={resolved_messenger}>
+            <StorageEnginesProvider engines={resolved_storage_engines}>
+                <WindowArgumentsStrategyProvider
+                    strategy={resolved_window_args_strategy}>
+                    <AuthSessionProvider>{children}</AuthSessionProvider>
+                </WindowArgumentsStrategyProvider>
+            </StorageEnginesProvider>
+        </MessageEngineProvider>
     );
 };

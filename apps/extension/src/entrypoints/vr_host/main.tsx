@@ -27,11 +27,19 @@ const SpectatorUI = () => {
     const [is_supported, setIsSupported] = useState<boolean | null>(false);
 
     const [xr_ready, setXRReady] = useState(false);
+    const handle_xr_ready = useCallback(() => setXRReady(true), []);
 
     const enter_vr = useCallback(() => {
         if (started_ref.current || !xr_ready) return;
 
-        xr_store.enterVR().then(() => setStarted(true)).catch(console.error);
+        started_ref.current = true; // guard against double-entry
+        xr_store
+            .enterVR()
+            .then(() => setStarted(true))
+            .catch((err) => {
+                console.error(err);
+                started_ref.current = false; // allow retry on failure
+            });
     }, [xr_ready]);
 
     useEffect(() => {
@@ -95,7 +103,7 @@ const SpectatorUI = () => {
                     </div>
                 )}
                 <div className="h-screen w-screen bg-black flex items-center justify-center">
-                    <VRHost on_xr_ready={() => setXRReady(true)} />
+                    <VRHost on_xr_ready={handle_xr_ready} />
                 </div>
             </main>
         </DefaultContextProviders>
