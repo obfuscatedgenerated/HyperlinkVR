@@ -1,0 +1,41 @@
+diff --git a/package.json b/package.json
+index d5218562cfe03029b7a285b822fadc48d55c19fe..9a080b0452ee222b772144c6aa04dc9d487fe574 100644
+--- a/package.json
++++ b/package.json
+@@ -12,22 +12,32 @@
+   "engines": {
+     "node": ">=18"
+   },
++  "main": "./dist/long.js",
++  "types": "./dist/long.d.ts",
+   "exports": {
+     "./all": {
++      "types": "./dist/all.d.ts",
+       "import": "./dist/all.js",
+-      "types": "./dist/all.d.ts"
++      "default": "./dist/all.js",
++      "require": "./dist/all.js"
+     },
+     "./long": {
++      "types": "./dist/long.d.ts",
+       "import": "./dist/long.js",
+-      "types": "./dist/long.d.ts"
++      "default": "./dist/long.js",
++        "require": "./dist/long.js"
+     },
+     "./short1": {
++      "types": "./dist/short1.d.ts",
+       "import": "./dist/short1.js",
+-      "types": "./dist/short1.d.ts"
++      "default": "./dist/short1.js",
++        "require": "./dist/short1.js"
+     },
+     "./short2": {
++      "types": "./dist/short2.d.ts",
+       "import": "./dist/short2.js",
+-      "types": "./dist/short2.d.ts"
++      "default": "./dist/short2.js",
++        "require": "./dist/short2.js"
+     }
+   },
+   "files": [

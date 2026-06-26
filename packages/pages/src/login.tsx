@@ -1,5 +1,6 @@
 import {
-    check_static_credentials,
+    check_stored_private_key,
+    is_private_key_in_session,
     parse_identity,
     resolve_identity,
     signup_static,
@@ -91,9 +92,12 @@ interface FormProps {
 }
 
 const LoginFormStatic = ({ username }: FormProps) => {
-    const storage = useStorageEngine("local");
+    const local_storage = useStorageEngine("local");
+    const session_storage = useStorageEngine("session");
 
     const [success, setSuccess] = useState<boolean | null>(null);
+    const [password, setPassword] = useState("");
+    const [show_password_input, setShowPasswordInput] = useState(false);
 
     const identity = useMemo(() => {
         const parsed = parse_identity(username);
@@ -106,44 +110,106 @@ const LoginFormStatic = ({ username }: FormProps) => {
         return parsed.identity;
     }, [username])!;
 
+    // on first launch, check if the user is already in a session state,a dn if so check and skip ahead
     useEffect(() => {
-        check_static_credentials(identity, storage).then(async (result) => {
-            if (result.success) {
+        if (!is_private_key_in_session(session_storage)) {
+            setShowPasswordInput(true);
+            return;
+        }
+
+        check_stored_private_key(identity, {
+            local: local_storage,
+            session: session_storage
+        }).then(async (success) => {
+            if (success) {
                 await store_auth_session(
                     {
                         identity,
                         method: "static",
-                        device: result.device,
                         authed_at: Date.now()
                     },
-                    storage
+                    session_storage
+                );
+
+                setSuccess(true);
+                setTimeout(() => {
+                    window.close();
+                }, 3000);
+            }
+        }).catch((err) => {
+            console.error("Error checking stored private key:", err);
+            setShowPasswordInput(true);
+        });
+    }, [identity, local_storage, session_storage]);
+
+    const submit = useCallback(() => {
+        check_stored_private_key(
+            identity,
+            { local: local_storage, session: session_storage },
+            { password }
+        ).then(async (success) => {
+            if (success) {
+                await store_auth_session(
+                    {
+                        identity,
+                        method: "static",
+                        authed_at: Date.now()
+                    },
+                    session_storage
                 );
             }
 
-            setSuccess(result.success);
+            setSuccess(success);
             setTimeout(() => {
                 window.close();
             }, 3000);
+        }).catch((err) => {
+            setSuccess(false);
+            setTimeout(() => {
+                window.close();
+            }, 3000);
+            // TODO: try again
         });
-    }, []);
+    }, [identity, password, local_storage, session_storage]);
 
-    if (success === null) {
-        return <LoadingSpinner />;
-    } else if (success === true) {
+    if (success === true) {
         return <p>Login successful!</p>;
-    } else {
+    } else if (success === false) {
         return <p>Login failed. Please try again in a new window.</p>;
     }
+
+    if (success === null && !show_password_input) {
+        return <LoadingSpinner className="w-full h-full flex items-center justify-center" />;
+    }
+
+    return (
+        <>
+            <h2>Login as {username}</h2>
+            <input
+                type="password"
+                placeholder="Passphrase"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+            />
+            <button onClick={submit}>Login</button>
+        </>
+    );
 };
 
 const LoginFormJWT = ({ username }: FormProps) => {
     return <p>Not implemented yet!</p>;
 };
 
-const SignupFormStaticManual = ({ username, resolved_identity }: FormProps) => {
-    const storage = useStorageEngine("local");
+const LoginFormPasskey = ({ username }: FormProps) => {
+    return <p>Not implemented yet!</p>;
+}
 
-    const record_dl_pressed_ref = useRef(false);
+const SignupFormStaticManual = ({ username, resolved_identity }: FormProps) => {
+    const local_storage = useStorageEngine("local");
+
+    const [generating, setGenerating] = useState(false);
+    const generating_lock_ref = useRef(false);
+    const [passphrase, setPassphrase] = useState("");
 
     const hint = useMemo(() => {
         if (!resolved_identity) {
@@ -173,23 +239,23 @@ const SignupFormStaticManual = ({ username, resolved_identity }: FormProps) => {
             return;
         }
 
-        if (record_dl_pressed_ref.current) {
-            return;
-        }
-        record_dl_pressed_ref.current = true;
-
-        if (await storage.get(`keystore:${username}`)) {
+        if (await local_storage.get(`keystore:${username}`)) {
             alert(
                 "A static identity record already exists for this username! Try logging in!"
             );
             return;
         }
 
-        // TODO: accept device label
-        const record = await signup_static(identity, storage);
+        if (generating_lock_ref.current) {
+            return;
+        }
+        generating_lock_ref.current = true;
+        setGenerating(true);
+
+        const {static_record, password} = await signup_static(identity, local_storage);
 
         // download the record as a json file
-        const blob = new Blob([JSON.stringify(record, null, 4)], {
+        const blob = new Blob([JSON.stringify(static_record, null, 4)], {
             type: "application/json"
         });
         const url = URL.createObjectURL(blob);
@@ -198,7 +264,44 @@ const SignupFormStaticManual = ({ username, resolved_identity }: FormProps) => {
         a.download = `${identity.name}.json`;
         a.click();
         URL.revokeObjectURL(url);
-    }, [username, resolved_identity, storage, identity]);
+
+        setPassphrase(password);
+    }, [username, resolved_identity, local_storage, identity]);
+
+    if (generating) {
+        return <LoadingSpinner className="w-full h-full flex items-center justify-center" />;
+    }
+
+    if (passphrase) {
+        return (
+            <>
+                <h2>Account created for {username}!</h2>
+                <hr />
+                <p>
+                    Your static identity record has been downloaded.
+                </p>
+                <p>
+                    This is your passphrase:
+                </p>
+                <p style={{ fontWeight: "bold", fontSize: "1.2em", fontFamily: "monospace" }}>
+                    {passphrase}
+                </p>
+                <p>
+                    Please store this passphrase in a secure place, such as a password manager. If you lose it, you may not be able to log in again.
+                </p>
+                <hr />
+                {hint && (
+                    <div>
+                        As a reminder, the host has provided the following instructions for submitting your static identity record:
+                        <p>{hint}</p>
+                    </div>
+                )}
+                <p>
+                    Once your identity is available on the host, you can log in using your username and passphrase.
+                </p>
+            </>
+        );
+    }
 
     return (
         <>
@@ -215,6 +318,8 @@ const SignupFormStaticManual = ({ username, resolved_identity }: FormProps) => {
             <button onClick={generate_and_download_record}>
                 Sign up and download record for {username}
             </button>
+
+            <p>Get ready to store a passphrase!</p>
         </>
         // <Suspense fallback={<LoadingSpinner />}>
         //     <h1>Creating account as {username}</h1>
@@ -244,6 +349,10 @@ const SignupFormJWT = (props: FormProps) => {
     return <LoginFormJWT {...props} />;
 };
 
+const SignupFormPasskey = (props: FormProps) => {
+    return <p>Not implemented yet!</p>;
+}
+
 type FormGroup = Record<LoginMethod, React.FC<FormProps>>;
 
 type Forms = Record<LoginAction, FormGroup>;
@@ -251,11 +360,13 @@ type Forms = Record<LoginAction, FormGroup>;
 const FORMS: Forms = {
     login: {
         static: LoginFormStatic,
-        jwt: LoginFormJWT
+        jwt: LoginFormJWT,
+        passkey: LoginFormPasskey
     },
     signup: {
         static: SignupFormStatic,
-        jwt: SignupFormJWT
+        jwt: SignupFormJWT,
+        passkey: SignupFormPasskey
     }
 };
 

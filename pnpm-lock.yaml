@@ -74,6 +74,15 @@ patchedDependencies:
   '@tailwindcss/oxide@4.3.1':
     hash: adaee549c69537cdd9ceb5b9384d1da927741fb9a0540133a953c7b14dcbb6dc
     path: patches/@tailwindcss__oxide@4.3.1.patch
+  '@wordlist/english-eff':
+    hash: b12b522321065e34d9182b6106a96499df2d1e7542f8a126be6a3e13c40690a6
+    path: patches/@wordlist__english-eff.patch
+  '@wordlist/random':
+    hash: e4f7fc367c5125132b9052a9d700e787a36fa178c35ce57cbf36610c9059fe55
+    path: patches/@wordlist__random.patch
+  argon2-browser:
+    hash: 3e0b10531fbd4833c4794e4b643c5316ae7f000b38276a3ef5be6d59e80f8cb2
+    path: patches/argon2-browser.patch
   jiti@2.7.0:
     hash: d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477
     path: patches/jiti@2.7.0.patch
@@ -186,9 +195,22 @@ importers:
       '@viewportvr/core':
         specifier: workspace:*
         version: link:../core
+      '@wordlist/english-eff':
+        specifier: ^1.0.1
+        version: 1.0.1(patch_hash=b12b522321065e34d9182b6106a96499df2d1e7542f8a126be6a3e13c40690a6)
+      '@wordlist/random':
+        specifier: ^5.0.0
+        version: 5.0.0(patch_hash=e4f7fc367c5125132b9052a9d700e787a36fa178c35ce57cbf36610c9059fe55)
+      argon2-browser:
+        specifier: ^1.18.0
+        version: 1.18.0(patch_hash=3e0b10531fbd4833c4794e4b643c5316ae7f000b38276a3ef5be6d59e80f8cb2)
       zod:
         specifier: 'catalog:'
         version: 4.4.3
+    devDependencies:
+      '@types/argon2-browser':
+        specifier: ^1.18.4
+        version: 1.18.4
 
   packages/core: {}
 
@@ -417,6 +439,10 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.11.5
 
 packages:
 
@@ -1784,6 +1810,9 @@ packages:
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
 
+  '@types/argon2-browser@1.18.4':
+    resolution: {integrity: sha512-K/PHAEKzdCY4mCRhgUTBcuTxeaJyLoPcd5pJ1UFSTb/FAPjj3TCK4EM/DvNmVtDzkQBMD5peJjtch3kVQDf4YQ==}
+
   '@types/draco3d@1.4.10':
     resolution: {integrity: sha512-AX22jp8Y7wwaBgAixaSvkoG4M/+PlAcm3Qs4OW8yT9DM4xUpWKeFhLueTAyZF39pviAdcDdeJoACapiAceqNcw==}
 
@@ -1875,6 +1904,14 @@ packages:
   '@webext-core/match-patterns@1.0.3':
     resolution: {integrity: sha512-NY39ACqCxdKBmHgw361M9pfJma8e4AZo20w9AY+5ZjIj1W2dvXC8J31G5fjfOGbulW9w4WKpT8fPooi0mLkn9A==}
 
+  '@wordlist/english-eff@1.0.1':
+    resolution: {integrity: sha512-ZgmJbl6qe7clQPy/dHqLDn2QJWIdMDI4m63iBzqOKckqtNKfq79rPqNk+nH3+ow6rij84soMN+DDPaUjVvAtQA==}
+    engines: {node: '>=18'}
+
+  '@wordlist/random@5.0.0':
+    resolution: {integrity: sha512-MZw3Nr1wjsCvq0onoJwbXKgwsN7ndJ74QVbTTvIwMOqCaATOgoIR85ovmCT/e2Bb+L/JSXxcRkvMV/K9yxBZmw==}
+    engines: {node: '>=18'}
+
   '@wxt-dev/auto-icons@1.1.1':
     resolution: {integrity: sha512-Dw2NKK51CCFurE95NptiEheuxVtkeX4vTQwEbhCkFVP9LzXNxOZTX9C9NAsGe6OfahelXlS51TW74hTSzsMILw==}
     peerDependencies:
@@ -1924,6 +1961,9 @@ packages:
   ansi-styles@6.2.3:
     resolution: {integrity: sha512-4Dj6M28JB+oAH8kFkTLUo+a2jwOFkuqb3yucU0CANcRRUbxS0cP0nZYCGjcc3BNXwRIsUVmDGgzawme7zvJHvg==}
     engines: {node: '>=12'}
+
+  argon2-browser@1.18.0:
+    resolution: {integrity: sha512-ImVAGIItnFnvET1exhsQB7apRztcoC5TnlSqernMJDUjbc/DLq3UEYeXFrLPrlaIl8cVfwnXb6wX2KpFf2zxHw==}
 
   array-differ@4.0.0:
     resolution: {integrity: sha512-Q6VPTLMsmXZ47ENG3V+wQyZS1ZxXMxFyYzA+Z/GMrJ6yIutAIEf9wTyroTzmGjNfox9/h3GdGBCVh43GVFx4Uw==}
@@ -5040,6 +5080,8 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
+  '@types/argon2-browser@1.18.4': {}
+
   '@types/draco3d@1.4.10': {}
 
   '@types/estree@1.0.9': {}
@@ -5161,6 +5203,10 @@ snapshots:
 
   '@webext-core/match-patterns@1.0.3': {}
 
+  '@wordlist/english-eff@1.0.1(patch_hash=b12b522321065e34d9182b6106a96499df2d1e7542f8a126be6a3e13c40690a6)': {}
+
+  '@wordlist/random@5.0.0(patch_hash=e4f7fc367c5125132b9052a9d700e787a36fa178c35ce57cbf36610c9059fe55)': {}
+
   '@wxt-dev/auto-icons@1.1.1(wxt@0.20.27(@types/node@20.11.5)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0))':
     dependencies:
       defu: 6.1.7
@@ -5209,6 +5255,8 @@ snapshots:
       color-convert: 2.0.1
 
   ansi-styles@6.2.3: {}
+
+  argon2-browser@1.18.0(patch_hash=3e0b10531fbd4833c4794e4b643c5316ae7f000b38276a3ef5be6d59e80f8cb2): {}
 
   array-differ@4.0.0: {}
 

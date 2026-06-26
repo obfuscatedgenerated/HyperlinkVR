@@ -1,9 +1,11 @@
+import tailwindcss from "@tailwindcss/vite";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "wxt";
 
-import tailwindcss from "@tailwindcss/vite";
+
 
 import pkg from "./package.json" with { type: "json" };
+
 
 // TODO: postcss plugin still used for mantine. seems to work but it shouldnt. might be build cache
 
@@ -47,16 +49,22 @@ export default defineConfig({
     vite: () => ({
         plugins: [
             tailwindcss(),
-            LOG_COMPILATION ? {
-                name: "comp-log",
-                enforce: "pre",
-                transform(code, id) {
-                    if (!id.includes("?vue") && !id.includes(".css") && !id.includes("\x00")) {
-                        console.log(`[Compiling] ${id}`);
-                    }
-                    return null;
-                },
-            } : undefined,
+            LOG_COMPILATION
+                ? {
+                      name: "comp-log",
+                      enforce: "pre",
+                      transform(code, id) {
+                          if (
+                              !id.includes("?vue") &&
+                              !id.includes(".css") &&
+                              !id.includes("\x00")
+                          ) {
+                              console.log(`[Compiling] ${id}`);
+                          }
+                          return null;
+                      }
+                  }
+                : undefined,
             {
                 name: "no-tsbuildinfo",
                 enforce: "post",
@@ -70,7 +78,9 @@ export default defineConfig({
             },
             visualizer((outputOptions) => {
                 const build_name = outputOptions.name
-                    ? outputOptions.name.replace(/[^a-z0-9]/gi, "-").toLowerCase()
+                    ? outputOptions.name
+                          .replace(/[^a-z0-9]/gi, "-")
+                          .toLowerCase()
                     : "extension";
 
                 return {
@@ -79,8 +89,10 @@ export default defineConfig({
                 };
             })
         ],
+        assetsInclude: ["**/*.wasm"],
         optimizeDeps: {
-            include: force_prebundle
+            include: force_prebundle,
+            exclude: ["argon2-browser"]
         }
     }),
 

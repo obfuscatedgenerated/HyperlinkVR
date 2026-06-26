@@ -2,6 +2,11 @@
     "extends": "../../tsconfig.base.json",
     "include": ["src/**/*"],
     "compilerOptions": {
-        "outDir": "dist"
+        "outDir": "dist",
+        "paths": {
+            "@wordlist/english-eff/*": ["./node_modules/@wordlist/english-eff/dist/*"],
+            "@wordlist/random": ["./node_modules/@wordlist/random/dist/index.d.ts"],
+            "@wordlist/random/*": ["./node_modules/@wordlist/random/dist/*"]
+        }
     }
 }

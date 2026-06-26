@@ -1,3 +1,31 @@
+packages:
+  - apps/*
+  - packages/*
+  - packages/@types-custom/*
+  - scripts/
+
+catalog:
+  '@react-three/drei': ^9.122.0
+  '@react-three/fiber': ^8.18.0
+  '@react-three/uikit': ^1.0.74
+  '@react-three/uikit-default': ^1.0.74
+  '@react-three/xr': ^6.6.30
+  '@tailwindcss/vite': ^4.3.1
+  '@types/node': 20.11.5
+  '@types/react': 18.2.48
+  '@types/react-dom': 18.2.18
+  '@types/three': ^0.184.1
+  '@wxt-dev/auto-icons': ^1.1.1
+  lucide-react: ^1.21.0
+  react: 18.2.0
+  react-dom: 18.2.0
+  tailwind-preset-mantine: 4.1.0
+  tailwindcss: ^4.1.4
+  three: ^0.184.0
+  troika-three-text: ^0.52.4
+  wxt: ^0.20.27
+  zod: ^4.4.3
+
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - '@swc/core'
@@ -9,38 +37,7 @@ onlyBuiltDependencies:
 patchedDependencies:
   '@pmndrs/uikit@1.0.74': patches/@pmndrs__uikit@1.0.74.patch
   '@tailwindcss/oxide@4.3.1': patches/@tailwindcss__oxide@4.3.1.patch
+  '@wordlist/english-eff': patches/@wordlist__english-eff.patch
+  '@wordlist/random': patches/@wordlist__random.patch
+  argon2-browser: patches/argon2-browser.patch
   jiti@2.7.0: patches/jiti@2.7.0.patch
-
-packages:
-  - "apps/*"
-  - "packages/*"
-  - "packages/@types-custom/*"
-  - "scripts/"
-
-catalog:
-   zod: "^4.4.3"
-
-   react: "18.2.0"
-   react-dom: "18.2.0"
-   "@types/react": "18.2.48"
-   "@types/react-dom": "18.2.18"
-   lucide-react: "^1.21.0"
-
-   tailwindcss: "^4.1.4"
-   "@tailwindcss/vite": "^4.3.1"
-
-   three: "^0.184.0"
-   "@types/three": "^0.184.1"
-   "@react-three/fiber": "^8.18.0"
-   "@react-three/drei": "^9.122.0"
-   "@react-three/xr": "^6.6.30"
-   "@react-three/uikit": "^1.0.74"
-   "@react-three/uikit-default": "^1.0.74"
-   "troika-three-text": "^0.52.4"
-
-   "@types/node": "20.11.5"
-
-   wxt: "^0.20.27"
-   "@wxt-dev/auto-icons": "^1.1.1"
-
-   "tailwind-preset-mantine": "4.1.0"

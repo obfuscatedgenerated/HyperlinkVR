@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const AUTH_METHODS = ["static", "jwt"] as const;
+export const AUTH_METHODS = ["static", "jwt", "passkey"] as const;
 
 
 export const JWK_EC_Schema = z.object({
@@ -20,13 +20,23 @@ export const JWK_OKP_Schema = z.object({
 });
 export type JWK_OKP = z.infer<typeof JWK_OKP_Schema>;
 
-export const DeviceRecordSchema = z.object({
-    device_id: z.string(),
-    label: z.string(),
-    added_at: z.number(),
-    public_key: z.union([JWK_EC_Schema, JWK_OKP_Schema])
+export const PasswordDerivAlgorithmNames = ["argon2"] as const;
+export type PasswordDerivAlgorithmName = (typeof PasswordDerivAlgorithmNames)[number];
+
+export const Argon2PasswordDerivCustomDataSchema = z.object({
+    salt: z.string(),
+    iv: z.string(),
 });
-export type DeviceRecord = z.infer<typeof DeviceRecordSchema>;
+
+export const StaticAuthRecordSchema = z.object({
+    password_deriv: z.object({
+        algorithm: z.enum(PasswordDerivAlgorithmNames),
+        custom: Argon2PasswordDerivCustomDataSchema
+    }),
+    encrypted_private_key: z.string(),
+    public_key: z.union([JWK_EC_Schema, JWK_OKP_Schema]) // TODO: give users the option to store private key themself instead of publishing ciphertext if they so wish
+});
+export type StaticAuthRecord = z.infer<typeof StaticAuthRecordSchema>;
 
 export const StaticIdentityRecordSchema_VERSION = 1;
 export const StaticIdentityRecordSchema = z.object({
@@ -38,7 +48,7 @@ export const StaticIdentityRecordSchema = z.object({
     identity: z.string(),
     created_at: z.number(),
     status: z.enum(["active", "suspended"]),
-    devices: z.array(DeviceRecordSchema)
+    auth: StaticAuthRecordSchema
 }).meta({
     name: "StaticIdentityRecord",
     version: StaticIdentityRecordSchema_VERSION,
