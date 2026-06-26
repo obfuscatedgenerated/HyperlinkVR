@@ -10,6 +10,10 @@ interface BaseActionMessage extends BaseMessage {
     action: string;
 }
 
+interface BaseWebSDKActionMessage extends BaseActionMessage {
+    action: `SDK_${string}`;
+}
+
 interface BaseEventMessage extends BaseMessage {
     type: string;
 }
@@ -40,11 +44,19 @@ interface CreateWindowAction extends BaseActionMessage {
     height?: number;
 }
 
+interface WebSDKAuthQueryAction extends BaseWebSDKActionMessage {
+    action: "SDK_AUTH_QUERY";
+}
+
+export type WebSDKActionMessage =
+    WebSDKAuthQueryAction;
+
 export type ActionMessage =
     StartStreamAction |
     LaunchAction |
     ClickAction |
-    CreateWindowAction;
+    CreateWindowAction |
+    WebSDKActionMessage;
 
 
 interface StreamEvent extends BaseEventMessage {

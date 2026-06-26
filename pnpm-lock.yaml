@@ -145,6 +145,9 @@ importers:
       '@viewportvr/watch-ui':
         specifier: workspace:*
         version: link:../../packages/watch-ui
+      '@viewportvr/web-sdk':
+        specifier: workspace:*
+        version: link:../../packages/web-sdk
       lucide-react:
         specifier: 'catalog:'
         version: 1.21.0(react@19.2.7)
@@ -430,6 +433,15 @@ importers:
       '@types/troika-three-text':
         specifier: workspace:*
         version: link:../@types-custom/troika-three-text
+
+  packages/web-sdk:
+    dependencies:
+      '@viewportvr/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@viewportvr/core':
+        specifier: workspace:*
+        version: link:../core
 
   scripts:
     dependencies:

@@ -4,7 +4,7 @@ import { URL_PATTERNS } from "~/util/url_patterns";
 
 export default defineContentScript({
     matches: URL_PATTERNS,
-    allFrames: true, // changed from all_frames
+    allFrames: true, // TODO: do we really want this?
     main() {
         let debug_clicks = false;
 

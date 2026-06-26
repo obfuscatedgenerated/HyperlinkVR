@@ -226,3 +226,5 @@ export default defineBackground(() => {
 
     // TODO: tab hopping
 });
+
+// TODO: should some of this be abstracted to a package? i think the sdk handling mostly could be when it comes around. anything not requiring special backend privileges can be abstracted

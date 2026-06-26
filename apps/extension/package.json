@@ -21,6 +21,7 @@
         "@viewportvr/vr-engine": "workspace:*",
         "@viewportvr/watch-ui": "workspace:*",
         "@viewportvr/assets": "workspace:*",
+        "@viewportvr/web-sdk": "workspace:*",
         "lucide-react": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:",
