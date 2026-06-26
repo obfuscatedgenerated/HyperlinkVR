@@ -11,6 +11,7 @@ import { DOMMirror } from "./DOMMirror";
 import { FakeHand } from "./FakeHand";
 import { LogoOverlay } from "./LogoOverlay";
 import { frame_transforms, SpectatorCameraController } from "./SpectatorCameraController";
+import { MixedRealityCameraController } from "./MixedRealityCameraController";
 import { URLBar } from "./URLBar";
 import { WristWatch } from "./WristWatch";
 import { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
@@ -72,7 +73,8 @@ export const VRHost = memo(({on_xr_ready}: {on_xr_ready: () => void}) => {
         <TabSessionProvider>
             <div
                 className="w-full h-full max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)] relative"
-                ref={canvas_container_ref}>
+                ref={canvas_container_ref}
+            >
                 <LogoOverlay />
 
                 <Canvas gl={make_xr_compatible_renderer} onCreated={handle_created}>
@@ -94,9 +96,8 @@ export const VRHost = memo(({on_xr_ready}: {on_xr_ready: () => void}) => {
 
                         <WristWatch />
 
-                        <SpectatorCameraController
-                            frame_transform={frame_transforms.first_person()}
-                        />
+                        <SpectatorCameraController />
+                        {/*<MixedRealityCameraController />*/}
                     </XR>
                 </Canvas>
             </div>

@@ -49,7 +49,7 @@ export const frame_transforms: Record<string, (...args: any[]) => CameraControll
     }
 }
 
-export const SpectatorCameraController = ({frame_transform}: {frame_transform: CameraControllerTransform}) => {
+export const SpectatorCameraController = ({frame_transform = frame_transforms.first_person()}: {frame_transform?: CameraControllerTransform}) => {
     const { size } = useThree();
 
     const spec_camera = useMemo(() => {

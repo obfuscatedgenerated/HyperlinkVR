@@ -1,24 +1,17 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
-import {
-    CapsuleGeometry,
-    DepthTexture,
-    Mesh,
-    MeshBasicMaterial,
-    OrthographicCamera,
-    PerspectiveCamera,
-    Plane,
-    PlaneGeometry,
-    ShaderMaterial,
-    Vector3,
-    WebGLRenderTarget
-} from "three";
+import { CapsuleGeometry, DepthTexture, Mesh, MeshBasicMaterial, OrthographicCamera, PerspectiveCamera, Plane, PlaneGeometry, ShaderMaterial, Vector3, WebGLRenderTarget } from "three";
 
-import type { CameraControllerTransform } from "./SpectatorCameraController";
+
+
+import {
+    CameraControllerTransform,
+    frame_transforms
+} from "./SpectatorCameraController";
 
 export interface MixedRealityCameraControllerProps {
-    first_person_transform: CameraControllerTransform;
-    third_person_transform: CameraControllerTransform;
+    first_person_transform?: CameraControllerTransform;
+    third_person_transform?: CameraControllerTransform;
 }
 
 const PLAYER_CAPSULE_LAYER_TP = 1;
@@ -38,8 +31,11 @@ void main() {
 }`;
 
 export const MixedRealityCameraController = ({
-    first_person_transform,
-    third_person_transform
+    first_person_transform = frame_transforms.first_person(),
+    third_person_transform = frame_transforms.third_person({
+        position_ref: { current: [0, 0, 0] as unknown as Vector3 },
+        quaternion_ref: { current: [0, 0, 0, 1] as unknown as Vector3 }
+    })
 }: MixedRealityCameraControllerProps) => {
     const { size, gl } = useThree();
 
@@ -245,4 +241,8 @@ export const MixedRealityCameraController = ({
         gl.setRenderTarget(render_target);
         gl.xr.enabled = xr_state;
     }, 1);
+
+    return null;
 };
+
+// TODO: needs fixes

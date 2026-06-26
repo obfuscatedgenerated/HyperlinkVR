@@ -19,27 +19,31 @@ import { DefaultContextProviders } from "~/contexts/DefaultContextProviders";
 
 
 
-
+type LoadPhase = "idle" | "starting" | "started";
 
 const SpectatorUI = () => {
-    const started_ref = useRef(false);
-    const [started, setStarted] = useState(false);
+    const starting_ref = useRef(false);
+    const [phase, setPhase] = useState<LoadPhase>("idle");
+
     const [is_supported, setIsSupported] = useState<boolean | null>(false);
 
     const [xr_ready, setXRReady] = useState(false);
     const handle_xr_ready = useCallback(() => setXRReady(true), []);
 
     const enter_vr = useCallback(() => {
-        if (started_ref.current || !xr_ready) return;
+        if (starting_ref.current || !xr_ready) return;
 
-        started_ref.current = true; // guard against double-entry
+        starting_ref.current = true; // guard against double-entry
         xr_store
             .enterVR()
-            .then(() => setStarted(true))
+            .then(() => setPhase("started"))
             .catch((err) => {
                 console.error(err);
-                started_ref.current = false; // allow retry on failure
+                starting_ref.current = false; // allow retry on failure
+                setPhase("idle");
             });
+
+        setPhase("starting");
     }, [xr_ready]);
 
     useEffect(() => {
@@ -83,10 +87,16 @@ const SpectatorUI = () => {
         );
     }
 
+    const button_text = is_supported
+        ? phase === "starting"
+            ? <LoadingSpinner />
+            : "Enter VR"
+        : "No VR device detected!";
+
     return (
         <DefaultContextProviders>
             <main className="font-sans">
-                {!started && (
+                {phase !== "started" && (
                     <div className="bg-black/80 backdrop-blur-md absolute inset-0 flex flex-col items-center justify-center z-50 text-white gap-8">
                         <h1 className="font-title text-3xl">ViewportVR</h1>
 
@@ -94,10 +104,9 @@ const SpectatorUI = () => {
                             <button
                                 className="px-4 py-2 bg-blue-600 rounded-lg hover:not-disabled:bg-blue-700 transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
                                 onClick={enter_vr}
-                                disabled={!is_supported}>
-                                {is_supported
-                                    ? "Enter VR"
-                                    : "No VR device detected!"}
+                                disabled={!is_supported || phase === "starting"}
+                            >
+                                {button_text}
                             </button>
                         ) : <LoadingSpinner />}
                     </div>
