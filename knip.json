@@ -7,9 +7,10 @@
         "apps/extension": {
             "entry": [
                 "src/entrypoints/background.ts",
-                "src/entrypoints/input_injection.content.ts",
+                "src/entrypoints/*.content.ts",
                 "src/entrypoints/**/main.tsx"
             ],
+            "ignore": "src/shims/**/*.ts",
             "project": ["src/**/*.{ts,tsx}", "wxt.config.ts"]
         },
         "packages/*": {
