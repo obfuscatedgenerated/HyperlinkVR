@@ -27,6 +27,10 @@ export const AvatarTorso = () => {
         euler.z = 0;
         quat.setFromEuler(euler);
 
+        // move slightly behind the new forward direction
+        const forward = new Vector3(0, 0, -1).applyQuaternion(quat);
+        pos.add(forward.multiplyScalar(-0.05));
+
         torso_scene.position.copy(pos);
         torso_scene.quaternion.copy(quat);
 
