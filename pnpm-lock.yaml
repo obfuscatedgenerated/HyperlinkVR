@@ -21,6 +21,9 @@ catalogs:
     '@react-three/uikit-default':
       specifier: ^1.0.74
       version: 1.0.74
+    '@react-three/uikit-lucide':
+      specifier: ^1.0.74
+      version: 1.0.74
     '@react-three/xr':
       specifier: ^6.6.30
       version: 6.6.30
@@ -435,12 +438,18 @@ importers:
       '@react-three/uikit-default':
         specifier: 'catalog:'
         version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+      '@react-three/uikit-lucide':
+        specifier: 'catalog:'
+        version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
       '@react-three/xr':
         specifier: 'catalog:'
         version: 6.6.30(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
       '@viewportvr/react':
         specifier: workspace:*
         version: link:../react
+      '@viewportvr/types':
+        specifier: workspace:*
+        version: link:../types
       react:
         specifier: 'catalog:'
         version: 19.2.7
@@ -1602,6 +1611,9 @@ packages:
 
   '@react-three/uikit-default@1.0.74':
     resolution: {integrity: sha512-aS3V+BgjmcNKxUE2pJuWwRC6mx1AO9DKYH1g+EJS31op/rYlSJKxaEpH9m5STHcDxC5CiLHodNropuTEtceheg==}
+
+  '@react-three/uikit-lucide@1.0.74':
+    resolution: {integrity: sha512-v7LE9oKeaEqKKPPQPRxzCWXsmi5yMqk+w6Egh0ycRVZzKDUnYRHc6xTkS24znqhN6zyLoAmpxoW8ryZeKBC5eg==}
 
   '@react-three/uikit@1.0.74':
     resolution: {integrity: sha512-OCprhz7S+Io2CV7iotxLA1vpU9OeJeOy5kxOXZ/G9pmWYo7FfMoy/9BRWUaMR0mhcXbi1IOkyPRF5Ndae6Yywg==}
@@ -4858,6 +4870,18 @@ snapshots:
   '@react-three/uikit-default@1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))':
     dependencies:
       '@pmndrs/uikit-default': 1.0.74(three@0.185.0)
+      '@react-three/uikit': 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
+    transitivePeerDependencies:
+      - '@react-three/fiber'
+      - '@types/react'
+      - immer
+      - react
+      - three
+      - use-sync-external-store
+
+  '@react-three/uikit-lucide@1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))':
+    dependencies:
+      '@pmndrs/uikit-lucide': 1.0.74(three@0.185.0)
       '@react-three/uikit': 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
     transitivePeerDependencies:
       - '@react-three/fiber'

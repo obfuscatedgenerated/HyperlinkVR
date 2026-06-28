@@ -10,6 +10,7 @@
     },
     "dependencies": {
         "@viewportvr/react": "workspace:*",
+        "@viewportvr/types": "workspace:*",
         "react": "catalog:",
         "react-dom": "catalog:",
         "three": "catalog:",
@@ -18,6 +19,7 @@
         "@react-three/xr": "catalog:",
         "@react-three/uikit": "catalog:",
         "@react-three/uikit-default": "catalog:",
+        "@react-three/uikit-lucide": "catalog:",
         "troika-three-text": "catalog:"
     },
     "devDependencies": {
