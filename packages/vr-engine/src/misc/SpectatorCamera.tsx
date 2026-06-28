@@ -32,7 +32,7 @@ export const SpectatorCamera = () => {
             throw new Error(`Unknown spectator_view mode: ${mode}`);
         }
     }, [mode]);
-
+// TODO: might want to actually hide from the first person cam too for MR mode
     return (
         <>
             <LayerGroup
