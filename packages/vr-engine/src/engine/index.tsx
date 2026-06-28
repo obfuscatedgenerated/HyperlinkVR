@@ -1,4 +1,4 @@
-import { MeshReflectorMaterial, Text } from "@react-three/drei";
+import { Text } from "@react-three/drei";
 import { Canvas, RootState } from "@react-three/fiber";
 import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
 import { createXRStore, PointerEvents, XR } from "@react-three/xr";
@@ -15,12 +15,11 @@ import { URLBar } from "../browser/URLBar";
 import { LogoOverlay } from "../misc/LogoOverlay";
 import { SpectatorCamera } from "../misc/SpectatorCamera";
 import { AvatarHand } from "../player/AvatarHand";
-import { AvatarHead } from "../player/AvatarHead";
-import { AvatarTorso } from "../player/AvatarTorso";
 import { WristWatch } from "../player/WristWatch";
 import { CameraSetup } from "../render/CameraSetup";
 import { CanvasResizer } from "../render/CanvasResizer";
 import { ReflectiveMirror } from "../misc/ReflectiveMirror";
+import { Avatar } from "../player/Avatar";
 
 
 configureTextBuilder({
@@ -164,8 +163,11 @@ const VRHostInternal = memo(({ on_xr_ready }: { on_xr_ready: () => void }) => {
                     <XR store={xr_store}>
                         <ErrorBoundary
                             FallbackComponent={VRErrorFallback}
-                            onReset={() => window.location.reload()}>
+                            onReset={() => window.location.reload()}
+                        >
                             <PointerEvents />
+
+                            <Avatar />
 
                             <color attach="background" args={["#111111"]} />
                             <ambientLight intensity={0.5} />
@@ -177,10 +179,6 @@ const VRHostInternal = memo(({ on_xr_ready }: { on_xr_ready: () => void }) => {
                                 height_of_dom_mirror={3}
                             />
                             <DOMMirror position={[0, 1.5, -4]} height={3} />
-
-                            <AvatarHead />
-                            <AvatarTorso />
-
                             <ReflectiveMirror width={0.75} height={1.25} position={[2, 1, 0]} rotation={[0, -Math.PI/2, 0]} />
 
                             <WristWatch />
