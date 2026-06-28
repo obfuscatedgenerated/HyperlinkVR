@@ -21,6 +21,7 @@ import { SpectatorCamera } from "../misc/SpectatorCamera";
 import { URLBar } from "../browser/URLBar";
 import { WristWatch } from "../player/WristWatch";
 import {AvatarHead} from "../player/AvatarHead";
+import { AvatarTorso } from "../player/AvatarTorso";
 
 configureTextBuilder({
     useWorker: false
@@ -177,13 +178,9 @@ const VRHostInternal = memo(({ on_xr_ready }: { on_xr_ready: () => void }) => {
                             />
                             <DOMMirror position={[0, 1.5, -4]} height={3} />
 
-                            {/*block near the player to test foreground clipping*/}
-                            <mesh position={[0.5, 1.5, 0]}>
-                                <boxGeometry args={[0.1, 0.1, 0.1]} />
-                                <meshStandardMaterial color="red" opacity={0.5} depthWrite={false} transparent={true} />
-                            </mesh>
-
                             <AvatarHead />
+                            <AvatarTorso />
+
                             <WristWatch />
 
                             <SpectatorCamera />
