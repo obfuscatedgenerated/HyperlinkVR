@@ -63,6 +63,8 @@ export const watch_setting = <K extends SettingKey>(
     );
 };
 
+// TODO: storage is often ratelimited. have local cache but perform debounce on true values. should that be here, or lower in storage engines? or higher in the ui?
+
 // builds a settings tree nested by breadcrumbs for the specified platform (or omitted if missing) TODO: does this belong in types?
 export const build_breadcrumb_settings_tree = (
     settings_obj: Record<string, Setting<any>>,

@@ -32,7 +32,7 @@ const SettingSubtree = ({index, tree}: {index: string, tree: SettingsTree}) => {
 const TabButton = ({label, active, on_click}: {label: string, active: boolean, on_click: () => void}) => {
     return (
         <button
-            className={`cursor-pointer px-4 py-2 rounded-t-md ${active ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"}`}
+            className={`cursor-pointer px-4 py-2 rounded-t-md text-xl ${active ? "bg-blue-600 text-white" : "bg-gray-700 text-gray-300 hover:bg-gray-600"}`}
             onClick={on_click}
         >
             {label}
@@ -61,7 +61,7 @@ export const SettingsPage = () => {
             <div className="w-full h-full p-6 bg-black/50 backdrop-blur-md">
                 <h1 className="text-white text-3xl font-title mb-8">Settings</h1>
 
-                <div>
+                <div className="flex gap-2">
                     {Object.keys(tree.subtrees).map(subtab => (
                         <TabButton
                             key={subtab}
