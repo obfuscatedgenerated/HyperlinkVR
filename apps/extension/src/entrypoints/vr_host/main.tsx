@@ -1,23 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom/client";
 
-
-
-
-
-
 import "~/shared.css";
-
-
 
 import { LoadingSpinner } from "@viewportvr/ui-dom";
 import { VRHost, xr_store } from "@viewportvr/vr-engine";
 
-
-
 import { DefaultContextProviders } from "~/contexts/DefaultContextProviders";
-
-
 
 type LoadPhase = "idle" | "starting" | "started";
 
@@ -87,11 +76,15 @@ const SpectatorUI = () => {
         );
     }
 
-    const button_text = is_supported
-        ? phase === "starting"
-            ? <LoadingSpinner />
-            : "Enter VR"
-        : "No VR device detected!";
+    const button_text = is_supported ? (
+        phase === "starting" ? (
+            <LoadingSpinner />
+        ) : (
+            "Enter VR"
+        )
+    ) : (
+        "No VR device detected!"
+    );
 
     return (
         <DefaultContextProviders>
@@ -104,11 +97,14 @@ const SpectatorUI = () => {
                             <button
                                 className="px-4 py-2 bg-blue-600 rounded-lg hover:not-disabled:bg-blue-700 transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
                                 onClick={enter_vr}
-                                disabled={!is_supported || phase === "starting"}
-                            >
+                                disabled={
+                                    !is_supported || phase === "starting"
+                                }>
                                 {button_text}
                             </button>
-                        ) : <LoadingSpinner />}
+                        ) : (
+                            <LoadingSpinner />
+                        )}
                     </div>
                 )}
                 <div className="h-screen w-screen bg-black flex items-center justify-center">

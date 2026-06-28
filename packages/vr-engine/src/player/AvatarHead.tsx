@@ -1,11 +1,11 @@
 import { useGLTF } from "@react-three/drei";
 
-import { LayerGroup } from "./LayerGroup";
-import { Layer } from "./layers";
+import { LayerGroup } from "../render/LayerGroup";
+import { Layer } from "../render/layers";
 import {useFrame} from "@react-three/fiber";
 
 
-const head = new URL("../assets/head/head.glb", import.meta.url).href;
+const head = new URL("../../assets/player/head/head.glb", import.meta.url).href;
 
 export const AvatarHead = () => {
     const {scene: head_scene} = useGLTF(head);

@@ -4,12 +4,12 @@ import { PointerCursorModel, PointerRayModel, useRayPointer, useTouchPointer, us
 import { useSetting } from "@viewportvr/react";
 import { useEffect, useMemo, useRef } from "react";
 import { ArrowHelper, Group, Mesh, MeshBasicMaterial, Object3D, Quaternion, Raycaster, SphereGeometry, Vector3 } from "three";
-import {LayerGroup} from "./LayerGroup";
+import {LayerGroup} from "../render/LayerGroup";
 
-import {Layer} from "./layers";
+import {Layer} from "../render/layers";
 
-const left_hand = new URL("../assets/hands/left.glb", import.meta.url).href;
-const right_hand = new URL("../assets/hands/right.glb", import.meta.url).href;
+const left_hand = new URL("../../assets/player/hands/left.glb", import.meta.url).href;
+const right_hand = new URL("../../assets/player/hands/right.glb", import.meta.url).href;
 
 const FINGER_NAMES = ["middle", "ring", "pinky"];
 const SEGMENT_NAMES = ["proximal", "intermediate", "distal"];

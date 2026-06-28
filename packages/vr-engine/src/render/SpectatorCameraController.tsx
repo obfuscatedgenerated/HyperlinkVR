@@ -3,7 +3,7 @@ import { useEffect, useMemo, type RefObject } from "react";
 import { PerspectiveCamera, Vector3, type Object3D, type Quaternion, type WebGLRenderer, type WebXRArrayCamera } from "three";
 
 import { Layer } from "./layers";
-import { Eye } from "./types";
+import { Eye } from "../types";
 
 
 // TODO: params kinda redundant (having current, as well as being able to mod in place) but will keep as is for consistency for now

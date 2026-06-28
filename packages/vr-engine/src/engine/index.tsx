@@ -10,17 +10,17 @@ import {
     type FallbackProps
 } from "react-error-boundary";
 import { WebGLRenderer } from "three";
-import { configureTextBuilder } from "troika-three-text";
+import { configureTextBuilder } from "@types/troika-three-text";
 
-import { CameraSetup } from "./CameraSetup";
-import { CanvasResizer } from "./CanvasResizer";
-import { DOMMirror } from "./DOMMirror";
-import { AvatarHand } from "./AvatarHand";
-import { LogoOverlay } from "./LogoOverlay";
-import { SpectatorCamera } from "./SpectatorCamera";
-import { URLBar } from "./URLBar";
-import { WristWatch } from "./WristWatch";
-import {AvatarHead} from "./AvatarHead";
+import { CameraSetup } from "../render/CameraSetup";
+import { CanvasResizer } from "../render/CanvasResizer";
+import { DOMMirror } from "../browser/DOMMirror";
+import { AvatarHand } from "../player/AvatarHand";
+import { LogoOverlay } from "../misc/LogoOverlay";
+import { SpectatorCamera } from "../misc/SpectatorCamera";
+import { URLBar } from "../browser/URLBar";
+import { WristWatch } from "../player/WristWatch";
+import {AvatarHead} from "../player/AvatarHead";
 
 configureTextBuilder({
     useWorker: false

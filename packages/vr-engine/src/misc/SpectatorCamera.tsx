@@ -1,16 +1,16 @@
-import { Grabbable } from "./grabbables";
+import { Grabbable } from "../util/grabbables";
 import { useSetting } from "@viewportvr/react";
 import { useMemo, useRef } from "react";
 import type { Group } from "three";
 
 
-import { LayerGroup } from "./LayerGroup";
-import { Layer } from "./layers";
-import { MixedRealityCameraController } from "./MixedRealityCameraController";
-import { camera_controller_configs, SpectatorCameraController } from "./SpectatorCameraController";
+import { LayerGroup } from "../render/LayerGroup";
+import { Layer } from "../render/layers";
+import { MixedRealityCameraController } from "../render/MixedRealityCameraController";
+import { camera_controller_configs, SpectatorCameraController } from "../render/SpectatorCameraController";
 import { useGLTF } from "@react-three/drei";
 
-const camera = new URL("../assets/camera/camera.glb", import.meta.url).href;
+const camera = new URL("../../../assets/misc/camera/camera.glb", import.meta.url).href;
 
 export const SpectatorCamera = () => {
     const [mode] = useSetting("spectator_view");
