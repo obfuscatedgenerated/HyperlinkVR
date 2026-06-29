@@ -1,8 +1,9 @@
 import { useGLTF } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 
+import { useAvatarMaterials } from "../hooks/useAvatar";
 import { LayerGroup } from "../render/LayerGroup";
 import { Layer } from "../render/layers";
-import {useFrame} from "@react-three/fiber";
 
 
 const head = new URL("../../assets/player/head/head.glb", import.meta.url).href;
@@ -15,6 +16,9 @@ export const AvatarHead = () => {
         camera.getWorldPosition(head_scene.position);
         camera.getWorldQuaternion(head_scene.quaternion);
     });
+
+    // apply skin colour
+    useAvatarMaterials(head_scene);
     
     return (
         <LayerGroup layers={[Layer.PlayerModel_Head]}>

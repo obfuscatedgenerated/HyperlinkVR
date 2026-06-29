@@ -4,9 +4,11 @@ import { PointerCursorModel, PointerRayModel, useRayPointer, useTouchPointer, us
 import { useSetting } from "@viewportvr/react";
 import { useEffect, useMemo, useRef } from "react";
 import { ArrowHelper, Group, Mesh, MeshBasicMaterial, Object3D, Quaternion, Raycaster, SphereGeometry, Vector3 } from "three";
-import {LayerGroup} from "../render/LayerGroup";
 
-import {Layer} from "../render/layers";
+import { useAvatarMaterials } from "../hooks/useAvatar";
+import { LayerGroup } from "../render/LayerGroup";
+import { Layer } from "../render/layers";
+
 
 const left_hand = new URL("../../assets/player/hands/left.glb", import.meta.url).href;
 const right_hand = new URL("../../assets/player/hands/right.glb", import.meta.url).href;
@@ -31,9 +33,11 @@ export const AvatarHand = () => {
     const state = useXRInputSourceStateContext("controller");
     const handedness = state.inputSource.handedness; // "left" or "right"
 
-    const { scene: handScene } = useGLTF(
+    const { scene: hand_scene } = useGLTF(
         handedness === "left" ? left_hand : right_hand
     );
+
+    useAvatarMaterials(hand_scene);
 
     // which hand is the watch on?
     const [watch_hand] = useSetting("watch_hand");
@@ -60,9 +64,9 @@ export const AvatarHand = () => {
 
     // 1. SAVE THE RESTING QUATERNIONS/POSITIONS, then build FK chains.
     useEffect(() => {
-        if (!handScene) return;
+        if (!hand_scene) return;
 
-        handScene.traverse((node: any) => {
+        hand_scene.traverse((node: any) => {
             if (node.isBone && !node.userData.initialQuaternion) {
                 node.userData.initialQuaternion = node.quaternion.clone();
                 node.userData.initialPosition = node.position.clone();
@@ -79,7 +83,7 @@ export const AvatarHand = () => {
 
         FINGER_NAMES.forEach((finger) => {
             const bones = SEGMENT_NAMES.map((seg) =>
-                handScene.getObjectByName(`${finger}-finger-phalanx-${seg}`)
+                hand_scene.getObjectByName(`${finger}-finger-phalanx-${seg}`)
             );
             if (bones.some((b) => !b)) return;
 
@@ -96,7 +100,7 @@ export const AvatarHand = () => {
         chainsRef.current = chains;
 
         const thumbBones = ["proximal", "distal"].map((seg) =>
-            handScene.getObjectByName(`thumb-phalanx-${seg}`)
+            hand_scene.getObjectByName(`thumb-phalanx-${seg}`)
         );
         thumbChainRef.current = thumbBones.every(Boolean)
             ? thumbBones.map((bone: any) => {
@@ -109,7 +113,7 @@ export const AvatarHand = () => {
                   };
               })
             : null;
-    }, [handScene]);
+    }, [hand_scene]);
 
     const math = useMemo(
         () => ({
@@ -141,7 +145,7 @@ export const AvatarHand = () => {
     );
 
     useFrame((rootState, frameDelta, xrFrame) => {
-        if (!handScene || !xrFrame || !chainsRef.current) return;
+        if (!hand_scene || !xrFrame || !chainsRef.current) return;
 
         const xr = rootState.gl.xr;
         const session = xr.getSession();
@@ -159,7 +163,7 @@ export const AvatarHand = () => {
 
         // glue the touch ray to the fingertip
         if (touchOriginRef.current && touchOriginRef.current.parent) {
-            const indexTipBone = handScene.getObjectByName(
+            const indexTipBone = hand_scene.getObjectByName(
                 "index-finger-phalanx-distal"
             );
             if (indexTipBone) {
@@ -411,7 +415,7 @@ export const AvatarHand = () => {
     return (
         <LayerGroup layers={[Layer.PlayerModel_TorsoAndHands]}>
             <group rotation={[Math.PI / 2, 0, 0]} pointerEvents="none">
-                <primitive object={handScene} />
+                <primitive object={hand_scene} />
             </group>
 
             <group ref={touchOriginRef} />

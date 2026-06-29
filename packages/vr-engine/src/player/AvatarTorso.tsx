@@ -5,6 +5,7 @@ import { Quaternion, Vector3 } from "three";
 
 
 
+import { useAvatarMaterials } from "../hooks/useAvatar";
 import { Layer, LayerGroup } from "../render";
 
 
@@ -20,6 +21,10 @@ const LEAN_SCALE = 3;
 
 export const AvatarTorso = () => {
     const { scene: torso_scene } = useGLTF(torso);
+
+   useAvatarMaterials(torso_scene);
+
+   // TODO: load clothing layer
 
     // a point that lags slightly behind the true camera position, to lean the torso from the base towards locomotion
     const lean_lag_anchor_ref = useRef<Vector3 | null>(null);

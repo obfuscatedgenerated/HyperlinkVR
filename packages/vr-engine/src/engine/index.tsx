@@ -20,6 +20,7 @@ import { ReflectiveMirror } from "../misc/ReflectiveMirror";
 import { Player } from "../player/Player";
 import {XROriginProvider} from "../contexts";
 import {SpectatorCamera} from "../misc";
+import { SkinPalette } from "../misc/SkinPalette";
 
 
 configureTextBuilder({
@@ -182,6 +183,8 @@ const VRHostInternal = memo(({ on_xr_ready }: { on_xr_ready: () => void }) => {
                                     height_of_dom_mirror={3}
                                 />
                                 <DOMMirror position={[0, 1.5, -4]} height={3} />
+
+                                <SkinPalette box_size={0.05} position={[2, 1.75, 0]} rotation={[0, -Math.PI/2, 0]} />
                                 <ReflectiveMirror width={0.75} height={1.25} position={[2, 1, 0]} rotation={[0, -Math.PI/2, 0]} />
 
                                 <SpectatorCamera />

@@ -18,7 +18,11 @@ export class ExtensionStorage<T extends StorageKind> implements StorageEngine {
     }
 
     async set<V>(key: string, value: V): Promise<void> {
+        console.log(`Setting storage key "${key}" to value:`, value);
         await browser.storage[this.kind].set({ [key]: value });
+        if (browser.runtime.lastError) {
+            throw new Error(browser.runtime.lastError.message);
+        }
     }
 
     async remove(key: string): Promise<void> {
