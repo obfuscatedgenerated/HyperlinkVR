@@ -7,8 +7,13 @@ import * as sdk from "@viewportvr/web-sdk";
 export default defineContentScript({
     matches: URL_PATTERNS,
     world: "MAIN",
+    runAt: "document_start",
     main() {
-        (globalThis as any).viewportvr = sdk;
+        Object.defineProperty(window, "viewportvr", {
+            value: sdk,
+            writable: false,
+            configurable: false,
+        });
 
         // TODO: opt out with well-known data
     }
