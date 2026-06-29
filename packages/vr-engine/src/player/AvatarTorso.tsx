@@ -2,10 +2,14 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { Euler, Quaternion, Vector3 } from "three";
 
+
+
 import { Layer, LayerGroup } from "../render";
 
 
 const torso = new URL("../../assets/player/torso/torso.glb", import.meta.url).href;
+
+const Y_AXIS = new Vector3(0, 1, 0);
 
 export const AvatarTorso = () => {
     const { scene: torso_scene } = useGLTF(torso);
@@ -22,14 +26,13 @@ export const AvatarTorso = () => {
 
         // rotate torso to match camera rotation, but only on the y-axis
         // TODO lag rotation slightlky
-        const euler = new Euler().setFromQuaternion(quat);
-        euler.x = 0;
-        euler.z = 0;
-        quat.setFromEuler(euler);
+        const forward = new Vector3(0, 0, -1).applyQuaternion(quat);
+        const yaw = Math.atan2(-forward.x, -forward.z);
+        quat.setFromAxisAngle(Y_AXIS, yaw);
 
         // move slightly behind the new forward direction
-        const forward = new Vector3(0, 0, -1).applyQuaternion(quat);
-        pos.add(forward.multiplyScalar(-0.05));
+        const flat_forward = new Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+        pos.add(flat_forward.multiplyScalar(-0.05));
 
         torso_scene.position.copy(pos);
         torso_scene.quaternion.copy(quat);
