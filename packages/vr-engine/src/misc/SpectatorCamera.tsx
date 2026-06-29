@@ -56,3 +56,5 @@ export const SpectatorCamera = () => {
         </>
     );
 };
+// TODO: option to toggle between follow origin and staying static with trigger (show text that faces you with "Following")
+// TODO: fix position of grabbable and the actual camera with locomotion now enabled
