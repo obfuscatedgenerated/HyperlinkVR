@@ -13,7 +13,7 @@ const RENDER_RES_HEIGHT = 2048;
 export const ReflectiveMirror = ({
     width,
     height,
-    tint_color = 0x889999,
+    tint_color = 0xffffff,
     position,
     rotation
 }: {
