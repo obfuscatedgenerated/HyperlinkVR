@@ -1,6 +1,6 @@
 import { CircleUserRound } from "lucide-react";
 import { useAuthSession, useMessageEngine } from "@hyperlinkvr/react";
-import { Avatar } from "./Avatar";
+import { ProfilePicture } from "./ProfilePicture";
 
 export const ProfileButton = () => {
     const auth_session = useAuthSession();
@@ -8,7 +8,7 @@ export const ProfileButton = () => {
 
     if (auth_session) {
         // TODO: option to log out or open some profile
-        return <Avatar avatar_url={auth_session.avatar_url} username={auth_session.username} />
+        return <ProfilePicture avatar_url={auth_session.avatar_url} username={auth_session.username} />
     }
 
     return (

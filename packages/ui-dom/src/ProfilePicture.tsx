@@ -1,4 +1,4 @@
-export const Avatar = ({avatar_url, username, className = "w-10 h-10"}: {avatar_url?: string, username?: string, className?: string}) => {
+export const ProfilePicture = ({avatar_url, username, className = "w-10 h-10"}: {avatar_url?: string, username?: string, className?: string}) => {
     if (avatar_url) {
         return (
             <img src={avatar_url} className={`${className} rounded-full`} />

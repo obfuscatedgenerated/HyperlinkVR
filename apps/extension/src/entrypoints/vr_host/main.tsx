@@ -3,12 +3,24 @@ import ReactDOM from "react-dom/client";
 
 import "~/shared.css";
 
-import { LoadingSpinner } from "@hyperlinkvr/ui-dom";
+import { LoadingSpinner, ProfilePicture} from "@hyperlinkvr/ui-dom";
 import { VRHost, xr_store } from "@hyperlinkvr/vr-engine";
 
 import { DefaultContextProviders } from "~/contexts/DefaultContextProviders";
+import {useAuthSession} from "@hyperlinkvr/react";
 
 type LoadPhase = "idle" | "starting" | "started";
+
+const LoginHint = () => {
+    const auth_session = useAuthSession();
+
+    return (
+        <div className="absolute top-4 right-4 text-sm text-gray-400 flex items-center gap-2">
+            <span>Logged in as <span className="font-semibold">{auth_session ? auth_session.username : "Guest"}</span></span>
+            <ProfilePicture username={auth_session?.username} avatar_url={auth_session?.avatar_url} className="w-6 h-6" />
+        </div>
+    );
+}
 
 const SpectatorUI = () => {
     const starting_ref = useRef(false);
@@ -91,6 +103,8 @@ const SpectatorUI = () => {
             <main className="font-sans">
                 {phase !== "started" && (
                     <div className="bg-black/80 backdrop-blur-md absolute inset-0 flex flex-col items-center justify-center z-50 text-white gap-8">
+                        <LoginHint />
+
                         <h1 className="font-title text-3xl">HyperlinkVR</h1>
 
                         {xr_ready ? (
