@@ -15,21 +15,6 @@ export default defineContentScript({
             configurable: false,
         });
 
-        // on recieving HVRSDK_READY event, dispatch DOM event
-        // also set a window property to indicate that the sdk is ready, in case their code loaded after the event fired
-        window.addEventListener("message", (event) => {
-            if (event.type !== "HVRSDK_READY") {
-                return;
-            }
-
-            window.dispatchEvent(new CustomEvent("hyperlinkvr_ready"));
-            Object.defineProperty(window, "hyperlinkvr_ready", {
-                value: true,
-                writable: false,
-                configurable: false,
-            });
-        });
-
         // TODO: opt out with well-known data
     }
 });
