@@ -255,7 +255,7 @@ export interface AuthSession extends AuthSessionToStore {
 
 export const store_auth_session = async (
     session: AuthSessionToStore,
-    storage: StorageEngine<"session">
+    storage: StorageEngine<"local">
 ): Promise<AuthSession> => {
     const to_commit = session as AuthSession;
 
@@ -270,13 +270,11 @@ export const store_auth_session = async (
 }
 
 export const read_auth_session = async (
-    storage: StorageEngine<"session">
+    storage: StorageEngine<"local">
 ): Promise<AuthSession | null> => {
     const session = await storage.get<AuthSession>("auth_session");
     return session || null;
 }
-
-// TODO: could put this auth state in local, then offer to log back into same account
 
 // TODO: force impls to expose a fixed interface (e.g. signup, try_login etc)
 // TODO: force lowercase names? any other restrictions? and dont forget to normalise the host part to lowercase as well

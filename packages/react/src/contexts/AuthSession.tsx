@@ -14,7 +14,7 @@ export const AuthSessionProvider = ({
     children: React.ReactNode;
 }) => {
     const [auth_session] = useStorage<AuthSession | null>(
-        "session",
+        "local",
         "auth_session",
         null
     );

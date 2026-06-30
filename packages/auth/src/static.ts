@@ -214,6 +214,7 @@ export const generate_static_identity_record = async (identity: Identity, auth: 
     });
 }
 
+// stores the encrypted private key to allow logging back in without retrieving record. not the same as the decrypted key in the auth state
 export const store_encrypted_private_key = async (identity: Identity, encrypted_private_key: EncryptedPrivateKey, storage: StorageEngine<"local">) => {
     const key_identifier = `keystore:${identity.name}@${identity.host}`;
 
@@ -261,7 +262,7 @@ export const signup_static = async (identity: Identity, local_storage: StorageEn
     return {static_record, password, public_key};
 }
 
-export const is_private_key_in_session = async (storage: StorageEngine<"session">): Promise<boolean> => {
+export const is_private_key_in_session = async (storage: StorageEngine<"local">): Promise<boolean> => {
     const live_key = await storage.get<JsonWebKey | undefined>("auth_session_static_key");
     return !!live_key;
 }
@@ -270,7 +271,7 @@ export const request_private_key = async (
     identity: Identity,
     storage: {
         local: StorageEngine<"local">,
-        session: StorageEngine<"session">
+        // session: StorageEngine<"session">
     },
     params?: {
         password?: string;
@@ -278,7 +279,7 @@ export const request_private_key = async (
     }
 ): Promise<JsonWebKey | null> => {
     if (!params?.force_password) {
-        const live_key = await storage.session.get<JsonWebKey | undefined>("auth_session_static_key");
+        const live_key = await storage.local.get<JsonWebKey | undefined>("auth_session_static_key");
         if (live_key) {
             return live_key;
         }
@@ -337,8 +338,8 @@ export const request_private_key = async (
     
     try {
         const private_key = await decrypt_private_key(encrypted_private_key, params.password);
-        // store the private key in session storage for future use
-        await storage.session.set("auth_session_static_key", private_key);
+        // store the decrypted private key for later use
+        await storage.local.set("auth_session_static_key", private_key);
         return private_key;
     } catch (error) {
         console.error("Failed to decrypt private key:", error);
@@ -350,7 +351,7 @@ export const check_stored_private_key = async (
     identity: Identity,
     storage: {
         local: StorageEngine<"local">;
-        session: StorageEngine<"session">;
+        //session: StorageEngine<"session">;
     },
     params?: {
         challenge?: string;

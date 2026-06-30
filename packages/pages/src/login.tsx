@@ -128,7 +128,7 @@ const LoginFormStatic = ({ username, resolved_identity }: FormProps) => {
                         public_key: resolved_identity.public_key.key as JsonWebKey,
                         authed_at: Date.now()
                     },
-                    session_storage
+                    local_storage
                 );
 
                 setSuccess(true);
@@ -173,7 +173,7 @@ const LoginFormStatic = ({ username, resolved_identity }: FormProps) => {
                         public_key: resolved_identity.public_key.key as JsonWebKey,
                         authed_at: Date.now()
                     },
-                    session_storage
+                    local_storage
                 );
             }
 

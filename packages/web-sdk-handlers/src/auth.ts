@@ -15,7 +15,7 @@ export const query: Handler<"HVRSDK_AUTH_QUERY"> = async ({ message }) => {
 };
 
 export const whoami: Handler<"HVRSDK_AUTH_WHOAMI"> = async ({ storage }) => {
-    const auth_session = await read_auth_session(storage.session);
+    const auth_session = await read_auth_session(storage.local);
     if (!auth_session) {
         return {
             for: "HVRSDK_AUTH_WHOAMI",
