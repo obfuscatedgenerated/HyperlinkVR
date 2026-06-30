@@ -121,7 +121,12 @@ interface TabClosedEvent extends BaseEventMessage { // TODO: rename to sessioncl
     tab: number; // TODO sbr
 }
 
-export type WebSDKEventMessage = never;
+interface WebSDKReadyEventMessage extends BaseWebSDKEventMessage {
+    type: "HVRSDK_READY";
+}
+
+export type WebSDKEventMessage =
+    WebSDKReadyEventMessage;
 
 export type EventMessage =
     StreamEvent |

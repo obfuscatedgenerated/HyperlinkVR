@@ -6,6 +6,7 @@ import type {WebSDKActionMessage, WebSDKReplyMessage, MaybeWithCorrelation, With
 
 export default defineContentScript({
     matches: URL_PATTERNS,
+    runAt: "document_start",
     main() {
         window.addEventListener("message", (event) => {
             if (!("data" in event) || !event.data || typeof event.data !== "object") {
@@ -40,10 +41,17 @@ export default defineContentScript({
             }
         });
 
-        // special case: always forward HVRSDK_RTC_OFFER and ICE_CANDIDATE messages from the background to the page since they arent reply based
+        // special cases:
+        // - always forward HVRSDK_RTC_OFFER and ICE_CANDIDATE messages from the background to the page since they arent reply based
+        // - fire event on HVRSDK_READY event to let tab know they can connect (forward to injection and they'll make a DOM event)
         chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             if (msg.for === "HVRSDK_RTC_OFFER" || msg.action === "HVRSDK_RTC_ICE_CANDIDATE") {
                 console.log("Forwarding HVRSDK_RTC message to page", msg);
+                window.postMessage(msg, window.location.origin);
+            }
+
+            if (msg.type === "HVRSDK_READY") {
+                console.log("HVRSDK ready");
                 window.postMessage(msg, window.location.origin);
             }
         });

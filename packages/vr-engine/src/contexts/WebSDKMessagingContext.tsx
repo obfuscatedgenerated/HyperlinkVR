@@ -93,6 +93,11 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
         };
 
         unlisten = messenger.listen(handle_message);
+        messenger.send({
+            type: "HVRSDK_READY",
+            target: "cs",
+            tab: id
+        });
 
         return () => {
             if (unlisten) {
