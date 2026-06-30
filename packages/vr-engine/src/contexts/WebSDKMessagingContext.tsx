@@ -194,7 +194,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
                 if (handlers) {
                     handlers.forEach((handler) => {
                         handler(data, (reply_message: NamedReply<any>) => {
-                            data_channel.send(JSON.stringify(reply_message));
+                            data_channel.send(JSON.stringify({...reply_message, correlation_id: data.correlation_id}));
                         });
                     });
                 }
