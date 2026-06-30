@@ -1,4 +1,4 @@
-import { useMessageEngine, useTabSession } from "@hyperlinkvr/react";
+import { useMessageEngine, useStorageEngines, useTabSession } from "@hyperlinkvr/react";
 import { NamedAction, NamedReply, WebSDKActionMessage, WebSDKActionName, WebSDKEventMessage } from "@hyperlinkvr/types";
 import { builtin_handlers, Handler } from "@hyperlinkvr/web-sdk-handlers";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
@@ -114,13 +114,15 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
         };
     }, [url]);
 
+    const storage = useStorageEngines();
+
     const action_map_ref = useRef<Map<WebSDKActionName, Set<(message: NamedAction<any>, reply: (message: NamedReply<any>) => void) => void>>>(new Map());
     useEffect(() => {
         // add built in handlers
         for (const action_name in builtin_handlers) {
             const handler = (message: NamedAction<any>, reply: (message: NamedReply<any>) => void) => {
                 const handler_fn = builtin_handlers[action_name as WebSDKActionName] as Handler<any>;
-                handler_fn({ message }).then((response) => {
+                handler_fn({ message, storage }).then((response) => {
                     if (response) {
                         reply(response);
                     }
