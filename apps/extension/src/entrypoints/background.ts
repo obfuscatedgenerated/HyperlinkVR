@@ -91,12 +91,27 @@ export default defineBackground(() => {
         console.table([msg, sender.url]);
 
         // handle web sdk messages (which expect direct replies for correlation)
-        if (msg.action && msg.action.startsWith("HVRSDK_")) {
+        if (msg.action && msg.action.startsWith("HVRSDK_") && msg.target !== "cs") {
+            // any rtc lifecycle messages should be deferred to the rtc host instead to facilitate direct connection
+            if (msg.action.startsWith("HVRSDK_RTC_")) {
+                console.log("(deferred to vr host)", msg);
+                dropped = false;
+                return;
+            }
+
+            // otherwise we assume this is for us
             handle_web_sdk({
                 message: msg,
                 storage: storage_engines
             })
-                .then(sendResponse)
+                .then((response) => {
+                    if (response) {
+                        sendResponse(response);
+                    } else {
+                        // we were asked to handle a message which should be deferred to the vr host over rtc
+                        sendResponse({ error: "Message must be sent over RTC" });
+                    }
+                })
                 .catch((error) => {
                     // TODO: handle errors in web-sdk to prevent freeze
                     console.error(

@@ -22,15 +22,29 @@ export default defineContentScript({
                     delete sdk_message.correlation_id;
                 }
 
+                // add url to any HVRSDK_RTC_ messages
+                if (sdk_message.action.startsWith("HVRSDK_RTC_")) {
+                    console.log("Adding url to sdk message", sdk_message.action, window.location.href);
+                    (sdk_message as any).url = window.location.href;
+                }
+
                 chrome.runtime.sendMessage(sdk_message, (response) => {
                     if (response && correlation_id) {
                         const response_with_correlation: WithCorrelation<WebSDKReplyMessage> = {
                             ...response,
                             correlation_id
                         };
-                        window.postMessage(response_with_correlation, "*");
+                        window.postMessage(response_with_correlation, window.location.origin);
                     }
                 });
+            }
+        });
+
+        // special case: always forward HVRSDK_RTC_OFFER and ICE_CANDIDATE messages from the background to the page since they arent reply based
+        chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+            if (msg.for === "HVRSDK_RTC_OFFER" || msg.action === "HVRSDK_RTC_ICE_CANDIDATE") {
+                console.log("Forwarding HVRSDK_RTC message to page", msg);
+                window.postMessage(msg, window.location.origin);
             }
         });
     }

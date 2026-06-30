@@ -43,6 +43,11 @@ const force_prebundle = [
 
 const LOG_COMPILATION = process.env.LOG_COMPILATION === "true" || process.env.LOG_COMPILATION === "1";
 
+// dev extension ID: fjmemngcdmokahnlanbkljldfmnhagbf
+const DEV_PUBKEY = "MD8BIjANCgYJKj9IPz8NCgEBAQUAAz8BDwAwPwENCgI/AQEAP2ZIP295Pz8/PwdEPz8Wdz8/PzQ/bnc/MD8/KD8TPz9PWD9pP28/aSQNCj8/Pz9pPz8yPz8/Pwx6JXw/KT8/Pz8/KEstaTUnFj8oP0c/GEQAPw0KPz8/QBM/XjIBPyM/e29GUUpBPz8/P38/P115YSoJZgU/M3cgP312dRE/Pz9mPz8/Dj8TPz8/P38uUz8/Uj8/aj8/JD8/TjYPPz8RZRwWcj8qP0I/P1NcUT8/Pyc5Pz9DJj8/a18/JFtbEz8xWD98MEE/Pz9CP2IZYz90Pz9TEj9UVxJPPz8/Pz8/Pz8/Pz8NCj9lP1ljeB5QGncSPz8/Pyw/Pz8yMj53WVB0PwY/PwIDAQABDQo=";
+
+const PROD_PUBKEY = "";
+
 export default defineConfig({
     vite: () => ({
         plugins: [
@@ -112,13 +117,18 @@ export default defineConfig({
             "contextMenus",
             "tabCapture",
             "activeTab",
-            "offscreen",
-            "debugger",
+            //"debugger", TODO: implement debug input sidecar
             "storage"
         ],
         content_security_policy: {
             extension_pages:
                 `script-src 'self'${ENVIRONMENT === "production" ? "" : " http://localhost:8097"} 'wasm-unsafe-eval'; object-src 'self';`
+        },
+        key: ENVIRONMENT === "production" ? PROD_PUBKEY : DEV_PUBKEY,
+        browser_specific_settings: {
+            gecko: {
+                id: ENVIRONMENT === "production" ? "@hyperlinkvr/extension" : "@hyperlinkvr/extension(dev)",
+            }
         }
     },
 

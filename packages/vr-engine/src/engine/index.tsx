@@ -21,6 +21,7 @@ import { Player } from "../player/Player";
 import {XROriginProvider} from "../contexts";
 import {SpectatorCamera} from "../misc";
 import { SkinPalette } from "../misc/SkinPalette";
+import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
 
 
 configureTextBuilder({
@@ -152,47 +153,49 @@ const VRHostInternal = memo(({ on_xr_ready }: { on_xr_ready: () => void }) => {
 
     return (
         <TabSessionProvider>
-            <div
-                className="w-full h-full max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)] relative"
-                ref={canvas_container_ref}>
-                <LogoOverlay />
+            <WebSDKMessagingProvider>
+                <div
+                    className="w-full h-full max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)] relative"
+                    ref={canvas_container_ref}>
+                    <LogoOverlay />
 
-                <Canvas
-                    gl={make_xr_compatible_renderer}
-                    onCreated={handle_created}>
-                    <CameraSetup />
-                    <CanvasResizer containerRef={canvas_container_ref} />
+                    <Canvas
+                        gl={make_xr_compatible_renderer}
+                        onCreated={handle_created}>
+                        <CameraSetup />
+                        <CanvasResizer containerRef={canvas_container_ref} />
 
-                    <XR store={xr_store}>
-                        <ErrorBoundary
-                            FallbackComponent={VRErrorFallback}
-                            onReset={() => window.location.reload()}
-                        >
-                            <PointerEvents />
+                        <XR store={xr_store}>
+                            <ErrorBoundary
+                                FallbackComponent={VRErrorFallback}
+                                onReset={() => window.location.reload()}
+                            >
+                                <PointerEvents />
 
-                            <XROriginProvider value={player_ref}>
-                                <Player ref={player_ref} />
+                                <XROriginProvider value={player_ref}>
+                                    <Player ref={player_ref} />
 
-                                <color attach="background" args={["#111111"]} />
-                                <ambientLight intensity={0.5} />
-                                <pointLight position={[10, 10, 10]} />
+                                    <color attach="background" args={["#111111"]} />
+                                    <ambientLight intensity={0.5} />
+                                    <pointLight position={[10, 10, 10]} />
 
-                                <URLBar
-                                    position={[0, 3.25, -4]}
-                                    height={0.25}
-                                    height_of_dom_mirror={3}
-                                />
-                                <DOMMirror position={[0, 1.5, -4]} height={3} />
+                                    <URLBar
+                                        position={[0, 3.25, -4]}
+                                        height={0.25}
+                                        height_of_dom_mirror={3}
+                                    />
+                                    <DOMMirror position={[0, 1.5, -4]} height={3} />
 
-                                <SkinPalette box_size={0.05} position={[2, 1.75, 0]} rotation={[0, -Math.PI/2, 0]} />
-                                <ReflectiveMirror width={0.75} height={1.25} position={[2, 1, 0]} rotation={[0, -Math.PI/2, 0]} />
+                                    <SkinPalette box_size={0.05} position={[2, 1.75, 0]} rotation={[0, -Math.PI/2, 0]} />
+                                    <ReflectiveMirror width={0.75} height={1.25} position={[2, 1, 0]} rotation={[0, -Math.PI/2, 0]} />
 
-                                <SpectatorCamera />
-                            </XROriginProvider>
-                        </ErrorBoundary>
-                    </XR>
-                </Canvas>
-            </div>
+                                    <SpectatorCamera />
+                                </XROriginProvider>
+                            </ErrorBoundary>
+                        </XR>
+                    </Canvas>
+                </div>
+            </WebSDKMessagingProvider>
         </TabSessionProvider>
     );
 });

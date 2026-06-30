@@ -238,12 +238,6 @@ importers:
 
   packages/pages:
     dependencies:
-      '@react-three/fiber':
-        specifier: 'catalog:'
-        version: 9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
-      '@react-three/uikit':
-        specifier: 'catalog:'
-        version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
       '@hyperlinkvr/assets':
         specifier: workspace:*
         version: link:../assets
@@ -265,6 +259,12 @@ importers:
       '@hyperlinkvr/watch-ui':
         specifier: workspace:*
         version: link:../watch-ui
+      '@react-three/fiber':
+        specifier: 'catalog:'
+        version: 9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
+      '@react-three/uikit':
+        specifier: 'catalog:'
+        version: 1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))
       react:
         specifier: 'catalog:'
         version: 19.2.7
@@ -374,6 +374,18 @@ importers:
 
   packages/vr-engine:
     dependencies:
+      '@hyperlinkvr/react':
+        specifier: workspace:*
+        version: link:../react
+      '@hyperlinkvr/types':
+        specifier: workspace:*
+        version: link:../types
+      '@hyperlinkvr/watch-ui':
+        specifier: workspace:*
+        version: link:../watch-ui
+      '@hyperlinkvr/web-sdk-handlers':
+        specifier: workspace:*
+        version: link:../web-sdk-handlers
       '@react-three/drei':
         specifier: 'catalog:'
         version: 10.7.7(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(@types/three@0.185.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
@@ -392,12 +404,6 @@ importers:
       '@react-three/xr':
         specifier: 'catalog:'
         version: 6.6.30(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
-      '@hyperlinkvr/react':
-        specifier: workspace:*
-        version: link:../react
-      '@hyperlinkvr/watch-ui':
-        specifier: workspace:*
-        version: link:../watch-ui
       react:
         specifier: 'catalog:'
         version: 19.2.7
@@ -426,6 +432,12 @@ importers:
 
   packages/watch-ui:
     dependencies:
+      '@hyperlinkvr/react':
+        specifier: workspace:*
+        version: link:../react
+      '@hyperlinkvr/types':
+        specifier: workspace:*
+        version: link:../types
       '@react-three/drei':
         specifier: 'catalog:'
         version: 10.7.7(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(@types/three@0.185.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
@@ -444,12 +456,6 @@ importers:
       '@react-three/xr':
         specifier: 'catalog:'
         version: 6.6.30(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
-      '@hyperlinkvr/react':
-        specifier: workspace:*
-        version: link:../react
-      '@hyperlinkvr/types':
-        specifier: workspace:*
-        version: link:../types
       react:
         specifier: 'catalog:'
         version: 19.2.7

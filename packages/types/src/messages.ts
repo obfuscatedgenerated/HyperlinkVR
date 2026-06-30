@@ -19,6 +19,10 @@ interface BaseEventMessage extends BaseMessage {
     type: string;
 }
 
+interface BaseWebSDKEventMessage extends BaseEventMessage {
+    type: `HVRSDK_${string}`;
+}
+
 interface BaseReplyMessage extends BaseMessage {
     for: string;
 }
@@ -64,9 +68,26 @@ interface WebSDKAuthWhoAmIAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_AUTH_WHOAMI";
 }
 
+interface WebSDKRTCRequestAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_RTC_REQUEST";
+}
+
+interface WebSDKRTCIceCandidateAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_RTC_ICE_CANDIDATE";
+    candidate: RTCIceCandidateInit;
+}
+
+interface WebSDKRTCAnswerAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_RTC_ANSWER";
+    answer: RTCSessionDescriptionInit;
+}
+
 export type WebSDKActionMessage =
     WebSDKAuthQueryAction
-    | WebSDKAuthWhoAmIAction;
+    | WebSDKAuthWhoAmIAction
+    | WebSDKRTCRequestAction
+    | WebSDKRTCIceCandidateAction
+    | WebSDKRTCAnswerAction;
 
 export type ActionMessage =
     StartStreamAction |
@@ -100,11 +121,14 @@ interface TabClosedEvent extends BaseEventMessage { // TODO: rename to sessioncl
     tab: number; // TODO sbr
 }
 
+export type WebSDKEventMessage = never;
+
 export type EventMessage =
     StreamEvent |
     DimensionsUpdateEvent |
     URLUpdateEvent |
-    TabClosedEvent;
+    TabClosedEvent |
+    WebSDKEventMessage;
 
 interface WebSDKAuthQueryReplyMessage extends BaseWebSDKReplyMessage {
     for: "HVRSDK_AUTH_QUERY";
@@ -116,15 +140,21 @@ interface WebSDKAuthWhoAmIReplyMessage extends BaseWebSDKReplyMessage {
     info: PrivateAuthInfo | null;
 }
 
+interface WebSDKRTCOfferReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_RTC_OFFER"; // technically not how for is meant to work but its a special case
+    offer: RTCSessionDescriptionInit;
+}
+
 export type WebSDKReplyMessage =
     WebSDKAuthQueryReplyMessage
-    | WebSDKAuthWhoAmIReplyMessage;
+    | WebSDKAuthWhoAmIReplyMessage
+    | WebSDKRTCOfferReplyMessage;
 
 export type ReplyMessage =
     WebSDKReplyMessage;
 
 export type Message = ActionMessage | EventMessage | ReplyMessage;
-export type WebSDKMessage = WebSDKActionMessage | WebSDKReplyMessage;
+export type WebSDKMessage = WebSDKActionMessage | WebSDKReplyMessage | WebSDKEventMessage;
 
 export type WithCorrelation<T extends WebSDKMessage> = T & { correlation_id: string };
 export type MaybeWithCorrelation<T extends WebSDKMessage> = T & {
