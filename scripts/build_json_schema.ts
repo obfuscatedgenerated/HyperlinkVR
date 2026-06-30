@@ -12,7 +12,7 @@ const EXPORT_TO_JSON = [
 ];
 
 
-const SCHEMA_URL_BASE = "https://vvr.ollieg.codes/schemas";
+const SCHEMA_URL_BASE = "https://hyperlink.surf/schemas";
 
 const OUTPUT_DIR = path.join(__dirname, "../schemas");
 

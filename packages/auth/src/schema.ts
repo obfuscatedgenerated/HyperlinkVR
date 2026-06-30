@@ -43,7 +43,7 @@ export const StaticIdentityRecordSchema = z.object({
     $schema: z
         .string()
         .optional()
-        .default(`https://vvr.ollieg.codes/schemas/StaticIdentityRecord_v${StaticIdentityRecordSchema_VERSION}.json`),
+        .default(`https://hyperlink.surf/schemas/StaticIdentityRecord_v${StaticIdentityRecordSchema_VERSION}.json`),
     version: z.number().int().min(1).max(StaticIdentityRecordSchema_VERSION),
     identity: z.string(),
     created_at: z.number(),
@@ -65,7 +65,7 @@ export const AuthManifestSchema = z
             .string()
             .optional()
             .default(
-                `https://vvr.ollieg.codes/schemas/AuthManifest_v${AuthManifestSchema_VERSION}.json`
+                `https://hyperlink.surf/schemas/AuthManifest_v${AuthManifestSchema_VERSION}.json`
             ),
         version: z.number().int().min(1).max(AuthManifestSchema_VERSION),
 
