@@ -32,6 +32,8 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
     const data_channel_ref = useRef<RTCDataChannel | null>(null);
     const [connected, setConnected] = useState(false);
 
+    const sent_ready_for_url_ref = useRef<string | null>(null);
+
     // TODO: this code kinda sucks, same for how the background handles it. but it works :)
 
     useEffect(() => {
@@ -93,11 +95,14 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
         };
 
         unlisten = messenger.listen(handle_message);
-        messenger.send({
-            type: "HVRSDK_READY",
-            target: "cs",
-            tab: id
-        });
+        if (sent_ready_for_url_ref.current !== url) {
+            messenger.send({
+                type: "HVRSDK_READY",
+                target: "cs",
+                tab: id
+            });
+            sent_ready_for_url_ref.current = url;
+        }
 
         return () => {
             if (unlisten) {

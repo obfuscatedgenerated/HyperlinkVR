@@ -9,8 +9,12 @@ export default defineContentScript({
     world: "MAIN",
     runAt: "document_start",
     main() {
+        const {bind_messages, ...sdk_rest} = sdk;
+
+        bind_messages();
+
         Object.defineProperty(window, "hyperlinkvr", {
-            value: sdk,
+            value: sdk_rest,
             writable: false,
             configurable: false,
         });
