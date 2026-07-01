@@ -1,3 +1,6 @@
+import type { CreatedEngineObject, EngineObjectDispatch } from "@hyperlinkvr/vr-engine-schemas";
+
+
 import type { Identity, PrivateAuthInfo, PublicAuthInfo } from "./auth";
 import type { WindowArguments, WindowIntent } from "./windowing";
 
@@ -82,12 +85,19 @@ interface WebSDKRTCAnswerAction extends BaseWebSDKActionMessage {
     answer: RTCSessionDescriptionInit;
 }
 
+interface WebSDKCreateEngineObjectAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_CREATE_ENGINE_OBJECT";
+    object: EngineObjectDispatch;
+}
+
+
 export type WebSDKActionMessage =
     WebSDKAuthQueryAction
     | WebSDKAuthWhoAmIAction
     | WebSDKRTCRequestAction
     | WebSDKRTCIceCandidateAction
-    | WebSDKRTCAnswerAction;
+    | WebSDKRTCAnswerAction
+    | WebSDKCreateEngineObjectAction;
 
 export type ActionMessage =
     StartStreamAction |
@@ -150,10 +160,16 @@ interface WebSDKRTCOfferReplyMessage extends BaseWebSDKReplyMessage {
     offer: RTCSessionDescriptionInit;
 }
 
+interface WebSDKObjectCreatedReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_CREATE_ENGINE_OBJECT";
+    object: CreatedEngineObject;
+}
+
 export type WebSDKReplyMessage =
     WebSDKAuthQueryReplyMessage
     | WebSDKAuthWhoAmIReplyMessage
-    | WebSDKRTCOfferReplyMessage;
+    | WebSDKRTCOfferReplyMessage
+    | WebSDKObjectCreatedReplyMessage;
 
 export type ReplyMessage =
     WebSDKReplyMessage;

@@ -10,7 +10,8 @@
     },
     "dependencies": {
         "@hyperlinkvr/auth": "workspace:*",
-        "@hyperlinkvr/types": "workspace:*"
+        "@hyperlinkvr/types": "workspace:*",
+        "@hyperlinkvr/vr-engine-schemas": "workspace:*"
     },
     "devDependencies": {}
 }

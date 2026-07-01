@@ -1,5 +1,5 @@
 {
-    "name": "@hyperlinkvr/types",
+    "name": "@hyperlinkvr/vr-engine-schemas",
     "version": "0.0.1",
     "private": true,
     "main": "src/index.ts",
@@ -9,6 +9,7 @@
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
-        "@hyperlinkvr/vr-engine-schemas": "workspace:*"
-    }
+        "zod": "catalog:"
+    },
+    "devDependencies": {}
 }

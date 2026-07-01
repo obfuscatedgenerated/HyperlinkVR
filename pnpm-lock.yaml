@@ -348,7 +348,11 @@ importers:
         specifier: 'catalog:'
         version: 4.1.0(@mantine/core@7.17.8(@mantine/hooks@7.17.8(react@19.2.7))(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(tailwindcss@4.3.1)
 
-  packages/types: {}
+  packages/types:
+    dependencies:
+      '@hyperlinkvr/vr-engine-schemas':
+        specifier: workspace:*
+        version: link:../vr-engine-schemas
 
   packages/ui-dom:
     dependencies:
@@ -430,6 +434,12 @@ importers:
         specifier: workspace:*
         version: link:../@types-custom/troika-three-text
 
+  packages/vr-engine-schemas:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
+
   packages/watch-ui:
     dependencies:
       '@hyperlinkvr/react':
@@ -487,6 +497,9 @@ importers:
       '@hyperlinkvr/types':
         specifier: workspace:*
         version: link:../types
+      '@hyperlinkvr/vr-engine-schemas':
+        specifier: workspace:*
+        version: link:../vr-engine-schemas
 
   packages/web-sdk-handlers:
     dependencies:
