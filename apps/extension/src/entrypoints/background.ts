@@ -8,7 +8,7 @@ import { defineBackground } from "#imports";
 import { check_url_allowed, URL_PATTERNS } from "~/util/url_patterns";
 
 
-
+// TODO: this whole script deserves a rewrite
 
 
 export default defineBackground(() => {
