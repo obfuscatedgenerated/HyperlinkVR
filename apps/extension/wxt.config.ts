@@ -115,8 +115,7 @@ export default defineConfig({
     },
 
     manifest: {
-        name: `HyperlinkVR - ${pkg.description}`,
-        short_name: "HyperlinkVR",
+        name: "HyperlinkVR",
         version: pkg.version,
         description: pkg.description,
         homepage_url: pkg.homepage,
