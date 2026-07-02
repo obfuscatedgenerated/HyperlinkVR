@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" class="hyperlinkvr-logo">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A0B2E" />
+      <stop offset="100%" stop-color="#4B1D52" />
+    </linearGradient>
+    <filter id="glow" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <rect style="display:block" x="24" y="24" width="464" height="464" rx="120" ry="120" fill="url(#bgGrad)" />
+
+  <g transform="rotate(-20 256 256)">
+    <ellipse cx="256" cy="256" rx="190" ry="75" fill="none" style="stroke:#40E0D0" stroke-width="3" stroke-dasharray="12 8" opacity="0.4"/>
+    <circle cx="66" cy="256" r="6" style="fill:#40E0D0;filter:url(#glow)" />
+    <circle cx="446" cy="256" r="8" style="fill:#40E0D0;filter:url(#glow)" />
+    <circle cx="160" cy="191" r="5" style="fill:#40E0D0" />
+  </g>
+
+  <g transform="rotate(35 256 256)">
+    <ellipse cx="256" cy="256" rx="210" ry="60" fill="none" style="stroke:#40E0D0" stroke-width="2" opacity="0.2"/>
+    <circle cx="46" cy="256" r="5" style="fill:#40E0D0" />
+    <circle cx="466" cy="256" r="7" style="fill:#40E0D0;filter:url(#glow)" />
+    <circle cx="256" cy="316" r="5" style="fill:#40E0D0" opacity="0.8"/>
+  </g>
+
+  <g style="display:block">
+    <path d="M 216 160 V 112 A 12 12 0 0 1 228 100 H 284 A 12 12 0 0 1 296 112 V 160" fill="none" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 76 220 H 52 A 12 12 0 0 0 40 232 V 280 A 12 12 0 0 0 52 292 H 76" fill="none" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M 436 220 H 460 A 12 12 0 0 1 472 232 V 280 A 12 12 0 0 1 460 292 H 436" fill="none" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+    <path style="fill:#150926" d="M 116 160 H 396 A 40 40 0 0 1 436 200 V 312 A 40 40 0 0 1 396 352 H 296 A 48 48 0 0 0 216 352 H 116 A 40 40 0 0 1 76 312 V 200 A 40 40 0 0 1 116 160 Z" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <path style="stroke:#40E0D0;filter:url(#glow)" d="M 226 216 L 186 256 L 226 296" fill="none" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+  <path style="stroke:#40E0D0;filter:url(#glow)" d="M 286 216 L 326 256 L 286 296" fill="none" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

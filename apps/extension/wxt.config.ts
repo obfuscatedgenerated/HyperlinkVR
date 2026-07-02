@@ -48,12 +48,12 @@ const DEV_PUBKEY = "MD8BIjANCgYJKj9IPz8NCgEBAQUAAz8BDwAwPwENCgI/AQEAP2ZIP295Pz8/
 
 // prod extension ID: dpiedhlnbehmphhiihhgibaodpbhdbln
 const PROD_PUBKEY =
-    "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiLLiapetqs49GqoOHlBQ\n" +
-    "Tc7AyemSb98BCBZ2nqjkeWSqVn0uxAnNlHjrGSuBIqe8mVn7jKtPtszyDWe2oG3J\n" +
-    "M+wx56ReF/H0LYZbtxC+tfbGveDvIb516Wl7GGQBrFapk+ynKUvYDpo4msloyLby\n" +
-    "Ty4Iw44ZaLzAEQsk7rFacGJZwEi700fVEkSlfhUW4+EzjQfZvLFDvHsyDnRCoRfA\n" +
-    "My+s/byaqY14Zme4TzXqgwLYB+NBbz4MLzlW4iJX8uObz9+U5wHxw9O7B6tN367U\n" +
-    "wqHFxGHnPNTWZtbWCvc5ZVFPQUU9vMM2vPCzrLgt92oTk5cBnKhivvenR7Pd/T9m\n" +
+    "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiLLiapetqs49GqoOHlBQ" +
+    "Tc7AyemSb98BCBZ2nqjkeWSqVn0uxAnNlHjrGSuBIqe8mVn7jKtPtszyDWe2oG3J" +
+    "M+wx56ReF/H0LYZbtxC+tfbGveDvIb516Wl7GGQBrFapk+ynKUvYDpo4msloyLby" +
+    "Ty4Iw44ZaLzAEQsk7rFacGJZwEi700fVEkSlfhUW4+EzjQfZvLFDvHsyDnRCoRfA" +
+    "My+s/byaqY14Zme4TzXqgwLYB+NBbz4MLzlW4iJX8uObz9+U5wHxw9O7B6tN367U" +
+    "wqHFxGHnPNTWZtbWCvc5ZVFPQUU9vMM2vPCzrLgt92oTk5cBnKhivvenR7Pd/T9m" +
     "aQIDAQAB";
 
 export default defineConfig({
@@ -146,7 +146,7 @@ export default defineConfig({
 
     //@ts-ignore
     autoIcons: {
-        baseIconPath: "./assets/icon.svg",
+        baseIconPath: "../../../packages/assets/hyperlinkvr_no_vars.svg",
         sizes: [16, 32, 48, 96, 128],
         developmentIndicator: "overlay"
     },

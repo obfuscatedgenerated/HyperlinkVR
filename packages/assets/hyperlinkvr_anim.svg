@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" style="--use-bg-display: var(--bg-display, block); --use-headset-display: var(--headset-display, block); --use-headset-fill: var(--headset-fill, #150926); --use-accent-color: var(--accent-color, #40E0D0); --use-glow-filter: var(--glow-filter, url(#glow)); --use-orbit-play-state: var(--orbit-play-state, running);">
+   <style>
+     @keyframes orbit-path {
+       0% { offset-distance: 0%; }
+       100% { offset-distance: 100%; }
+     }
+   </style>
+   <defs>
+     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+       <stop offset="0%" stop-color="#1A0B2E" />
+       <stop offset="100%" stop-color="#4B1D52" />
+     </linearGradient>
+     <filter id="glow" x="-200%" y="-200%" width="500%" height="500%">
+       <feGaussianBlur stdDeviation="6" result="blur" />
+       <feComposite in="SourceGraphic" in2="blur" operator="over" />
+     </filter>
+   </defs>
+   
+   <rect style="display:var(--use-bg-display)" x="24" y="24" width="464" height="464" rx="120" ry="120" fill="url(#bgGrad)" />
+   
+   <path d="M 77.46 320.98 A 190 75 -20 1 1 434.54 191.02 A 190 75 -20 1 1 77.46 320.98" fill="none" style="stroke:var(--use-accent-color)" stroke-width="3" stroke-dasharray="12 8" opacity="0.4"/>
+   <circle cx="0" cy="0" r="6" style="fill:var(--use-accent-color); filter:var(--use-glow-filter); offset-rotate: 0deg; offset-path: path('M 77.46 320.98 A 190 75 -20 1 1 434.54 191.02 A 190 75 -20 1 1 77.46 320.98'); animation: orbit-path 12s linear 0s infinite; animation-play-state: var(--use-orbit-play-state);" />
+   <circle cx="0" cy="0" r="8" style="fill:var(--use-accent-color); filter:var(--use-glow-filter); offset-rotate: 0deg; offset-path: path('M 77.46 320.98 A 190 75 -20 1 1 434.54 191.02 A 190 75 -20 1 1 77.46 320.98'); animation: orbit-path 12s linear -6s infinite; animation-play-state: var(--use-orbit-play-state);" />
+   
+   <path d="M 83.98 135.55 A 210 60 35 1 1 428.02 376.45 A 210 60 35 1 1 83.98 135.55" fill="none" style="stroke:var(--use-accent-color)" stroke-width="2" opacity="0.2"/>
+   <circle cx="0" cy="0" r="5" style="fill:var(--use-accent-color); offset-rotate: 0deg; offset-path: path('M 83.98 135.55 A 210 60 35 1 1 428.02 376.45 A 210 60 35 1 1 83.98 135.55'); animation: orbit-path 15s linear 0s infinite; animation-play-state: var(--use-orbit-play-state);" />
+   <circle cx="0" cy="0" r="7" style="fill:var(--use-accent-color); filter:var(--use-glow-filter); offset-rotate: 0deg; offset-path: path('M 83.98 135.55 A 210 60 35 1 1 428.02 376.45 A 210 60 35 1 1 83.98 135.55'); animation: orbit-path 15s linear -7.5s infinite; animation-play-state: var(--use-orbit-play-state);" />
+   <g style="display:var(--use-headset-display)">
+     <path d="M 216 160 V 112 A 12 12 0 0 1 228 100 H 284 A 12 12 0 0 1 296 112 V 160" fill="none" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+     <path d="M 76 220 H 52 A 12 12 0 0 0 40 232 V 280 A 12 12 0 0 0 52 292 H 76" fill="none" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+     <path d="M 436 220 H 460 A 12 12 0 0 1 472 232 V 280 A 12 12 0 0 1 460 292 H 436" fill="none" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+     <path style="fill:var(--use-headset-fill)" d="M 116 160 H 396 A 40 40 0 0 1 436 200 V 312 A 40 40 0 0 1 396 352 H 296 A 48 48 0 0 0 216 352 H 116 A 40 40 0 0 1 76 312 V 200 A 40 40 0 0 1 116 160 Z" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+   </g>
+   
+   <path style="stroke:var(--use-accent-color); filter:var(--use-glow-filter)" d="M 226 216 L 186 256 L 226 296" fill="none" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+   <path style="stroke:var(--use-accent-color); filter:var(--use-glow-filter)" d="M 286 216 L 326 256 L 286 296" fill="none" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
