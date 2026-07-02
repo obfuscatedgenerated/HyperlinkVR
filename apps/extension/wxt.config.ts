@@ -46,7 +46,15 @@ const LOG_COMPILATION = process.env.LOG_COMPILATION === "true" || process.env.LO
 // dev extension ID: fjmemngcdmokahnlanbkljldfmnhagbf
 const DEV_PUBKEY = "MD8BIjANCgYJKj9IPz8NCgEBAQUAAz8BDwAwPwENCgI/AQEAP2ZIP295Pz8/PwdEPz8Wdz8/PzQ/bnc/MD8/KD8TPz9PWD9pP28/aSQNCj8/Pz9pPz8yPz8/Pwx6JXw/KT8/Pz8/KEstaTUnFj8oP0c/GEQAPw0KPz8/QBM/XjIBPyM/e29GUUpBPz8/P38/P115YSoJZgU/M3cgP312dRE/Pz9mPz8/Dj8TPz8/P38uUz8/Uj8/aj8/JD8/TjYPPz8RZRwWcj8qP0I/P1NcUT8/Pyc5Pz9DJj8/a18/JFtbEz8xWD98MEE/Pz9CP2IZYz90Pz9TEj9UVxJPPz8/Pz8/Pz8/Pz8NCj9lP1ljeB5QGncSPz8/Pyw/Pz8yMj53WVB0PwY/PwIDAQABDQo=";
 
-const PROD_PUBKEY = undefined;
+// prod extension ID: dpiedhlnbehmphhiihhgibaodpbhdbln
+const PROD_PUBKEY =
+    "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAiLLiapetqs49GqoOHlBQ\n" +
+    "Tc7AyemSb98BCBZ2nqjkeWSqVn0uxAnNlHjrGSuBIqe8mVn7jKtPtszyDWe2oG3J\n" +
+    "M+wx56ReF/H0LYZbtxC+tfbGveDvIb516Wl7GGQBrFapk+ynKUvYDpo4msloyLby\n" +
+    "Ty4Iw44ZaLzAEQsk7rFacGJZwEi700fVEkSlfhUW4+EzjQfZvLFDvHsyDnRCoRfA\n" +
+    "My+s/byaqY14Zme4TzXqgwLYB+NBbz4MLzlW4iJX8uObz9+U5wHxw9O7B6tN367U\n" +
+    "wqHFxGHnPNTWZtbWCvc5ZVFPQUU9vMM2vPCzrLgt92oTk5cBnKhivvenR7Pd/T9m\n" +
+    "aQIDAQAB";
 
 export default defineConfig({
     vite: () => ({
