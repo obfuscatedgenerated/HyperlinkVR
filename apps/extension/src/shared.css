@@ -1,5 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Michroma&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans&display=swap");
+/*TODO: add fonts direct to bundle*/
 
 @import "tailwindcss";
 @source "../../../packages/**/*.{ts,tsx}";
