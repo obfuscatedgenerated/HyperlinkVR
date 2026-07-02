@@ -19,6 +19,6 @@ export default defineContentScript({
             configurable: false,
         });
 
-        // TODO: opt out with well-known data
+        // TODO: opt out with well-known data or the meta tag
     }
 });

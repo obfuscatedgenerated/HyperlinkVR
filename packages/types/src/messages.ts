@@ -90,6 +90,11 @@ interface WebSDKCreateEngineObjectAction extends BaseWebSDKActionMessage {
     object: EngineObjectDispatch;
 }
 
+interface WebSDKMetaAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_META";
+    content: "supported" | "defer" | "disable";
+}
+
 
 export type WebSDKActionMessage =
     WebSDKAuthQueryAction
@@ -97,7 +102,8 @@ export type WebSDKActionMessage =
     | WebSDKRTCRequestAction
     | WebSDKRTCIceCandidateAction
     | WebSDKRTCAnswerAction
-    | WebSDKCreateEngineObjectAction;
+    | WebSDKCreateEngineObjectAction
+    | WebSDKMetaAction;
 
 export type ActionMessage =
     StartStreamAction |

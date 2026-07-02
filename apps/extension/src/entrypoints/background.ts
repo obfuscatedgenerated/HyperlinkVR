@@ -81,10 +81,16 @@ export default defineBackground(() => {
         }
     });
 
+    // TODO: only allow 1 open at a time and just navigate/change tab if launching again (to prevent message routing issues with multiple vr hosts open at once)
+
     // resolve background url to safe ones (converting ../ to actual back steps) for comparison
     const REAL_HOST_URL = new URL(VR_HOST_URL, location.href).href;
 
     // TODO: move to core settings fetcher and message engine for consistency
+
+    chrome.action.setBadgeTextColor({
+        color: "#fff"
+    });
 
     chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         let dropped = true;
@@ -95,6 +101,23 @@ export default defineBackground(() => {
             // any rtc lifecycle messages should be deferred to the rtc host instead to facilitate direct connection
             if (msg.action.startsWith("HVRSDK_RTC_")) {
                 console.log("(deferred to vr host)", msg);
+                dropped = false;
+                return;
+            }
+
+            if (msg.action === "HVRSDK_META") {
+                // TODO: should there be an option that calls openPopup to indicate only vr content exists, or is that obnoxious
+
+                if (msg.content === "disable") {
+                    chrome.action.setBadgeText({
+                        tabId: sender.tab.id,
+                    });
+                } else {
+                    chrome.action.setBadgeText({
+                        tabId: sender.tab.id,
+                        text: "✓"
+                    });
+                }
                 dropped = false;
                 return;
             }
@@ -129,7 +152,7 @@ export default defineBackground(() => {
         }
 
         // handle messages meant directly for the background script
-        // TODO: clean up and use switch
+        // TODO: clean up and use switch/command pattern
         if (msg.action === "HVR_START_STREAM") {
             chrome.tabCapture.getMediaStreamId(
                 { targetTabId: msg.tab },
