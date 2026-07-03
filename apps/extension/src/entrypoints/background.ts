@@ -8,6 +8,9 @@ import { defineBackground } from "#imports";
 import { check_url_allowed, URL_PATTERNS } from "~/util/url_patterns";
 
 
+
+
+
 // TODO: this whole script deserves a rewrite
 
 
@@ -243,10 +246,12 @@ export default defineBackground(() => {
                     active_session.tab_id === sender.tab?.id &&
                     active_session.ready_port !== null;
 
-                chrome.tabs.sendMessage(sender.tab.id!, {
-                    type: "HVRSDK_READY",
-                    ready: ready
-                });
+                if (ready) {
+                    chrome.tabs.sendMessage(sender.tab.id!, {
+                        type: "HVRSDK_READY"
+                    });
+                }
+
                 dropped = false;
                 return;
             }

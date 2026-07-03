@@ -9,6 +9,7 @@ export default defineContentScript({
     world: "MAIN",
     runAt: "document_start",
     main() {
+        console.log("Injecting HyperlinkVR SDK into page context");
         const {bind_messages, ...sdk_rest} = sdk;
 
         bind_messages();
