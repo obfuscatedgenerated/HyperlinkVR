@@ -4,6 +4,8 @@ import { z } from "zod";
 
 
 
+// TODO: collider offsets. and is collider combo possible?
+
 export const BoxColliderSchema = z.object({
     type: z.literal("box"),
     size: z.tuple([z.number(), z.number(), z.number()])
@@ -23,20 +25,30 @@ export const CapsuleColliderSchema = z.object({
 });
 export type CapsuleCollider = z.infer<typeof CapsuleColliderSchema>;
 
+export const CustomMeshApproximationSchema = z.enum(["hull", "trimesh"]).default("hull");
+export type CustomMeshApproximation = z.infer<typeof CustomMeshApproximationSchema>;
+
 export const CustomMeshColliderSchema = z.object({
     type: z.literal("custom-mesh"),
     mesh: z.url({
         protocol: /^https?$/,
         hostname: z.regexes.domain
-    })
+    }),
+    approximation: CustomMeshApproximationSchema.optional()
 });
 export type CustomMeshCollider = z.infer<typeof CustomMeshColliderSchema>;
 
-export const CopyVisualMeshColliderSchema = z.object({
-    type: z.literal("copy-visual-mesh")
+export const MeshApproximationSchema = z
+    .enum(["hull", "trimesh", "cuboid", "ball"])
+    .default("hull");
+export type MeshApproximation = z.infer<typeof MeshApproximationSchema>;
+
+export const AutoColliderSchema = z.object({
+    type: z.literal("auto"),
+    approximation: MeshApproximationSchema.optional()
 });
-export type CopyVisualMeshCollider = z.infer<
-    typeof CopyVisualMeshColliderSchema
+export type AutoCollider = z.infer<
+    typeof AutoColliderSchema
 >;
 
 export const ColliderSchema = z.discriminatedUnion("type", [
@@ -44,7 +56,7 @@ export const ColliderSchema = z.discriminatedUnion("type", [
     SphereColliderSchema,
     CapsuleColliderSchema,
     CustomMeshColliderSchema,
-    CopyVisualMeshColliderSchema
+    AutoColliderSchema
 ]);
 export type Collider = z.infer<typeof ColliderSchema>;
 
@@ -353,3 +365,4 @@ export type CreatedEngineObjectInput = z.input<typeof CreatedEngineObjectSchema>
 // TODO: dispatch object modifications
 // TODO: dispatch object destruction
 // TODO: prefab for dom mirror
+// TODO: support parenting

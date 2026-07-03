@@ -1,3 +1,3 @@
 export * from "./objects";
 
-// TODO: player monitors
+// TODO: setting player monitors, player physics etc

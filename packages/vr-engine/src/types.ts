@@ -10,4 +10,5 @@ export enum Eye {
 export type RendererComponentProps<T extends CreatedEngineObject["object"]> = Omit<T, "type"> & {
     root_ref: React.RefObject<Group | null>;
     user_data_ref: React.RefObject<CreatedEngineObject["user_data"]>;
+    id: CreatedEngineObject["id"];
 }

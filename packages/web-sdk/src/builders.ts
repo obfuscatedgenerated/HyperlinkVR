@@ -26,6 +26,8 @@ import {
     HexNumericalColor,
     HexNumericalColorSchema,
     Interaction,
+    MeshApproximation,
+    CustomMeshApproximation,
     Monitor,
     MonitorSchema,
     PhysicsSystem,
@@ -50,7 +52,10 @@ class BaseBuilder<InternalType> {
         this._internal = initial;
     }
 
-    static from_data<B extends BaseBuilder<any>, D>(this: new (data: D) => B, data: D): B {
+    static from_data<B extends BaseBuilder<any>, D>(
+        this: new (data: D) => B,
+        data: D
+    ): B {
         return new this(JSON.parse(JSON.stringify(data)));
     }
 
@@ -150,7 +155,7 @@ export class FixedRigidBodyBuilder extends RigidBodyBuilder {
 
 export class ColliderBuilder extends BaseBuilder<Collider> {
     constructor() {
-        super({ type: "copy-visual-mesh" });
+        super({ type: "auto" });
     }
 
     box(size: [number, number, number]) {
@@ -168,13 +173,13 @@ export class ColliderBuilder extends BaseBuilder<Collider> {
         return this;
     }
 
-    custom_mesh(mesh_url: string) {
-        this._internal = { type: "custom-mesh", mesh: mesh_url };
+    custom_mesh(mesh_url: string, approximation?: CustomMeshApproximation) {
+        this._internal = { type: "custom-mesh", mesh: mesh_url, approximation };
         return this;
     }
 
-    copy_visual_mesh() {
-        this._internal = { type: "copy-visual-mesh" };
+    auto(approximation?: MeshApproximation) {
+        this._internal = { type: "auto", approximation };
         return this;
     }
 

@@ -31,6 +31,7 @@ export const EngineObjectRenderer = ({data}: {data: CreatedEngineObject}) => {
             <RendererComponent
                 root_ref={root_ref}
                 user_data_ref={user_data_ref}
+                id={data.id}
                 {...obj_rest}
             />
         </group>
