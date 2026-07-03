@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useMessageEngine } from "./engines";
 import { useWindowArguments } from "./windowing";
-import type { Message } from "@hyperlinkvr/types";
+import type { EventMessage } from "@hyperlinkvr/types";
 
 export interface TabSessionContextValue {
     id: number;
@@ -38,11 +38,13 @@ export const TabSessionProvider = ({
 
     // listen for tab close
     useEffect(() => {
-        const handle_message = async (msg: Message) => {
-            // TODO: switch
+        const channel = messenger.connect<never, EventMessage>(`hvr-tab-session:${tab}`);
+
+        const unlisten = channel.listen(async (msg) => {
+            // still watch for tab close via the general broadcast channel
             if (msg.type === "HVR_TAB_CLOSED" && msg.tab === tab) {
-                // just close for now as tab hopping isnt yet implemented
                 window.close();
+                return;
             }
 
             if (msg.type === "HVR_URL_UPDATE") {
@@ -50,17 +52,14 @@ export const TabSessionProvider = ({
             }
 
             if (msg.type === "HVR_DIMENSIONS_UPDATE") {
-                setDimensions({
-                    width: msg.width,
-                    height: msg.height
-                });
+                setDimensions({ width: msg.width, height: msg.height });
             }
+        });
+
+        return () => {
+            unlisten();
+            channel.disconnect();
         };
-
-        // TODO: actively fetch url and dimensions in case missed, currently a race
-
-        const unlisten = messenger.listen(handle_message);
-        return () => unlisten();
     }, [messenger, tab]);
 
     return (

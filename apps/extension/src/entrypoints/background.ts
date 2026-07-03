@@ -50,6 +50,60 @@ export default defineBackground(() => {
         return url.href;
     };
 
+    interface ActiveSession {
+        tab_id: number;
+        window_id: number;
+        ready_port: chrome.runtime.Port | null;
+    }
+
+    // only one vr host is allowed at a time to prvent sync issues
+    let active_session: ActiveSession | null = null;
+
+    const resolve_real_host_url = () => new URL(VR_HOST_URL, location.href).href;
+    const REAL_HOST_URL = resolve_real_host_url();
+
+    const launch_vr_host = (tab_id: number) => {
+        if (active_session) {
+            if (active_session.tab_id === tab_id) {
+                // already open for this tab, just refocus it
+                chrome.windows.update(active_session.window_id, { focused: true });
+                return;
+            }
+
+            // a session is already active for a different tab, bring it forward instead
+            // TODO: should we offer to transfer the session to this tab?
+            console.warn(
+                "HyperlinkVR session already active for tab",
+                active_session.tab_id,
+                "- ignoring launch request for tab",
+                tab_id
+            );
+            chrome.windows.update(active_session.window_id, { focused: true });
+            return;
+        }
+
+        chrome.windows.create(
+            {
+                url: `${VR_HOST_URL}?tab=${tab_id}`,
+                type: "popup",
+                width: VR_HOST_WIDTH,
+                height: VR_HOST_HEIGHT
+            },
+            (win) => {
+                if (!win?.id) {
+                    console.error("Failed to create VR host window");
+                    return;
+                }
+
+                active_session = {
+                    tab_id,
+                    window_id: win.id,
+                    ready_port: null
+                };
+            }
+        );
+    };
+
     chrome.contextMenus.removeAll(() => {
         chrome.contextMenus.create(
             {
@@ -72,24 +126,64 @@ export default defineBackground(() => {
                 return;
             }
 
-            chrome.windows.create({
-                url: `${VR_HOST_URL}?tab=${tab?.id}`,
-                type: "popup",
-                width: VR_HOST_WIDTH,
-                height: VR_HOST_HEIGHT
-            });
+            if (!tab?.id) {
+                console.error("No tab id available for HyperlinkVR launch");
+                return;
+            }
+
+            launch_vr_host(tab.id);
         }
     });
 
-    // TODO: only allow 1 open at a time and just navigate/change tab if launching again (to prevent message routing issues with multiple vr hosts open at once)
-
-    // resolve background url to safe ones (converting ../ to actual back steps) for comparison
-    const REAL_HOST_URL = new URL(VR_HOST_URL, location.href).href;
-
-    // TODO: move to core settings fetcher and message engine for consistency
-
     chrome.action.setBadgeTextColor({
         color: "#fff"
+    });
+
+    // hvr-ready:<tab_id>: opened by the VR host's WebSDKMessagingProvider for the duration of its RTC session to signal it is ready to receive connections
+    // hvr-tab-session:<tab_id>: opened by TabSessionProvider on mount, so we can push the url and dimensions specifically when ready
+    chrome.runtime.onConnect.addListener((port) => {
+        const ready_match = port.name.match(/^hvr-ready:(\d+)$/);
+        if (ready_match) {
+            const tab_id = parseInt(ready_match[1], 10);
+
+            if (!active_session || active_session.tab_id !== tab_id) {
+                port.disconnect();
+                return;
+            }
+
+            active_session.ready_port = port;
+            chrome.tabs.sendMessage(tab_id, { type: "HVR_READY" }).catch(() => {});
+
+            port.onDisconnect.addListener(() => {
+                if (active_session?.tab_id === tab_id) {
+                    active_session.ready_port = null;
+                }
+            });
+            return;
+        }
+
+        const session_match = port.name.match(/^hvr-tab-session:(\d+)$/);
+        if (session_match) {
+            const tab_id = parseInt(session_match[1], 10);
+
+            chrome.tabs.get(tab_id, (tab) => {
+                if (chrome.runtime.lastError || !tab) return;
+
+                port.postMessage({
+                    type: "HVR_URL_UPDATE",
+                    tab: tab_id,
+                    url: tab.url
+                });
+
+                port.postMessage({
+                    type: "HVR_DIMENSIONS_UPDATE",
+                    tab: tab_id,
+                    width: tab.width,
+                    height: tab.height
+                });
+            });
+            return;
+        }
     });
 
     chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -151,6 +245,18 @@ export default defineBackground(() => {
             return true;
         }
 
+        // is the VR host currently ready for this sender's tab? (pull, for late-loading content scripts)
+        if (msg.action === "HVR_QUERY_READY") {
+            const ready =
+                !!active_session &&
+                active_session.tab_id === sender.tab?.id &&
+                active_session.ready_port !== null;
+
+            sendResponse({ ready });
+            dropped = false;
+            return;
+        }
+
         // handle messages meant directly for the background script
         // TODO: clean up and use switch/command pattern
         if (msg.action === "HVR_START_STREAM") {
@@ -200,12 +306,7 @@ export default defineBackground(() => {
                     return;
                 }
 
-                chrome.windows.create({
-                    url: `${VR_HOST_URL}?tab=${tab.id}`,
-                    type: "popup",
-                    width: VR_HOST_WIDTH,
-                    height: VR_HOST_HEIGHT
-                });
+                launch_vr_host(tab.id!);
             });
 
             dropped = false;
@@ -285,6 +386,17 @@ export default defineBackground(() => {
             type: "HVR_TAB_CLOSED",
             tab: tabId
         });
+
+        if (active_session?.tab_id === tabId) {
+            active_session = null;
+        }
+    });
+
+    // clear the active session if its window is closed directly
+    chrome.windows.onRemoved.addListener((window_id) => {
+        if (active_session?.window_id === window_id) {
+            active_session = null;
+        }
     });
 
     const handle_click = (msg: any) => {

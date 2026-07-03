@@ -1,3 +1,4 @@
+import type { MessageChannel } from "@hyperlinkvr/core";
 import { useMessageEngine, useStorageEngines, useTabSession } from "@hyperlinkvr/react";
 import { NamedAction, NamedReply, WebSDKActionMessage, WebSDKActionName, WebSDKEventMessage } from "@hyperlinkvr/types";
 import { builtin_handlers, Handler } from "@hyperlinkvr/web-sdk-handlers";
@@ -30,13 +31,16 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
 
     const peer_connection_ref = useRef<RTCPeerConnection | null>(null);
     const data_channel_ref = useRef<RTCDataChannel | null>(null);
+    const ready_port_ref = useRef<MessageChannel | null>(null);
     const [connected, setConnected] = useState(false);
-
-    const sent_ready_for_url_ref = useRef<string | null>(null);
 
     // TODO: this code kinda sucks, same for how the background handles it. but it works :)
 
     useEffect(() => {
+        // the existence of this port tells the background script that the host is ready for connections
+        // not used for any messages
+        ready_port_ref.current = messenger.connect(`hvr-ready:${id}`)
+
         let unlisten: (() => void) | null = null;
 
         // listen for VVRSDK_RTC_REQUEST messages from the correct url. if we get one, start initiating a connection and send an offer back to the page
@@ -72,6 +76,13 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
                     }
                 };
 
+                data_channel.onclose = () => {
+                    console.log("Data channel closed");
+                    data_channel_ref.current = null;
+
+                    setConnected(false);
+                };
+
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer);
 
@@ -95,14 +106,6 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
         };
 
         unlisten = messenger.listen(handle_message);
-        if (sent_ready_for_url_ref.current !== url) {
-            messenger.send({
-                type: "HVRSDK_READY",
-                target: "cs",
-                tab: id
-            });
-            sent_ready_for_url_ref.current = url;
-        }
 
         return () => {
             if (unlisten) {
@@ -111,6 +114,9 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
             }
 
             setConnected(false);
+
+            ready_port_ref.current?.disconnect();
+            ready_port_ref.current = null;
 
             if (data_channel_ref.current) {
                 data_channel_ref.current.close();

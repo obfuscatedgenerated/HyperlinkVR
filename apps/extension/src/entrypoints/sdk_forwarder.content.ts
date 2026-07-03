@@ -1,8 +1,13 @@
+import type { MaybeWithCorrelation, WebSDKActionMessage, WebSDKReplyMessage, WithCorrelation } from "@hyperlinkvr/types";
 import { defineContentScript } from "#imports";
+
+
 
 import { URL_PATTERNS } from "~/util/url_patterns";
 
-import type {WebSDKActionMessage, WebSDKReplyMessage, MaybeWithCorrelation, WithCorrelation} from "@hyperlinkvr/types";
+
+
+
 
 export default defineContentScript({
     matches: URL_PATTERNS,
@@ -40,6 +45,20 @@ export default defineContentScript({
                 });
             }
         });
+
+        // query ready state on load as the page may be loaded after the vr host is already ready
+        chrome.runtime.sendMessage(
+            { action: "HVR_QUERY_READY" },
+            (response) => {
+                if (chrome.runtime.lastError) return;
+                if (response?.ready) {
+                    window.postMessage(
+                        { type: "HVRSDK_READY" },
+                        window.location.origin
+                    );
+                }
+            }
+        );
 
         // special cases:
         // - always forward HVRSDK_RTC_OFFER and ICE_CANDIDATE messages from the background to the page since they arent reply based

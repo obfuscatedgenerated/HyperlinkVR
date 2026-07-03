@@ -27,6 +27,7 @@
         "@react-three/uikit-default": "^1.0.74",
         "@react-three/xr": "catalog:",
         "@react-three/handle": "catalog:",
+        "@hyperlinkvr/core": "workspace:*",
         "@hyperlinkvr/types": "workspace:*",
         "@hyperlinkvr/react": "workspace:*",
         "@hyperlinkvr/watch-ui": "workspace:*",
