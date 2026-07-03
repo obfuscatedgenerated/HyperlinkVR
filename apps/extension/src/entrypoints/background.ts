@@ -152,7 +152,7 @@ export default defineBackground(() => {
             }
 
             active_session.ready_port = port;
-            chrome.tabs.sendMessage(tab_id, { type: "HVR_READY" }).catch(() => {});
+            chrome.tabs.sendMessage(tab_id, { type: "HVRSDK_READY" }).catch(() => {});
 
             port.onDisconnect.addListener(() => {
                 if (active_session?.tab_id === tab_id) {
@@ -194,7 +194,27 @@ export default defineBackground(() => {
         if (msg.action && msg.action.startsWith("HVRSDK_") && msg.target !== "cs") {
             // any rtc lifecycle messages should be deferred to the rtc host instead to facilitate direct connection
             if (msg.action.startsWith("HVRSDK_RTC_")) {
-                console.log("(deferred to vr host)", msg);
+                // authorize + stamp, then forward to the host explicitly.
+                // do NOT let the host consume the raw page broadcast anymore.
+                if (!active_session || active_session.tab_id !== sender.tab?.id) {
+                    console.warn("Rejecting RTC message from non-session tab", sender.tab?.id);
+                    dropped = false;
+                    return;
+                }
+
+                let origin: string | undefined;
+                try {
+                    origin = sender.origin ?? (sender.url ? new URL(sender.url).origin : undefined);
+                } catch { origin = undefined; }
+
+                chrome.runtime.sendMessage({
+                    ...msg,
+                    target: "vr-host",
+                    stamped: true,
+                    tab: sender.tab.id,
+                    origin
+                });
+
                 dropped = false;
                 return;
             }
@@ -212,6 +232,21 @@ export default defineBackground(() => {
                         text: "✓"
                     });
                 }
+                dropped = false;
+                return;
+            }
+
+            // is the VR host currently ready for this sender's tab? (pull, for late-loading content scripts)
+            if (msg.action === "HVRSDK_QUERY_READY") {
+                const ready =
+                    !!active_session &&
+                    active_session.tab_id === sender.tab?.id &&
+                    active_session.ready_port !== null;
+
+                chrome.tabs.sendMessage(sender.tab.id!, {
+                    type: "HVRSDK_READY",
+                    ready: ready
+                });
                 dropped = false;
                 return;
             }
@@ -243,18 +278,6 @@ export default defineBackground(() => {
 
             // tell cs to wait for the response!
             return true;
-        }
-
-        // is the VR host currently ready for this sender's tab? (pull, for late-loading content scripts)
-        if (msg.action === "HVR_QUERY_READY") {
-            const ready =
-                !!active_session &&
-                active_session.tab_id === sender.tab?.id &&
-                active_session.ready_port !== null;
-
-            sendResponse({ ready });
-            dropped = false;
-            return;
         }
 
         // handle messages meant directly for the background script

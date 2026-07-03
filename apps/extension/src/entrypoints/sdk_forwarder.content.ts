@@ -46,20 +46,6 @@ export default defineContentScript({
             }
         });
 
-        // query ready state on load as the page may be loaded after the vr host is already ready
-        chrome.runtime.sendMessage(
-            { action: "HVR_QUERY_READY" },
-            (response) => {
-                if (chrome.runtime.lastError) return;
-                if (response?.ready) {
-                    window.postMessage(
-                        { type: "HVRSDK_READY" },
-                        window.location.origin
-                    );
-                }
-            }
-        );
-
         // special cases:
         // - always forward HVRSDK_RTC_OFFER and ICE_CANDIDATE messages from the background to the page since they arent reply based
         // - fire event on HVRSDK_READY event to let tab know they can connect (forward to injection and they'll make a DOM event)
@@ -74,5 +60,8 @@ export default defineContentScript({
                 window.postMessage(msg, window.location.origin);
             }
         });
+
+        // query ready state on load as the page may be loaded after the vr host is already ready
+        chrome.runtime.sendMessage({ action: "HVRSDK_QUERY_READY" },);
     }
 });

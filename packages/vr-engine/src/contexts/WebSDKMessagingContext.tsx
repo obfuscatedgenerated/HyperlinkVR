@@ -34,20 +34,53 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
     const ready_port_ref = useRef<MessageChannel | null>(null);
     const [connected, setConnected] = useState(false);
 
+    const storage = useStorageEngines();
+
+    const action_map_ref = useRef<Map<WebSDKActionName, Set<(message: NamedAction<any>, reply: (message: NamedReply<any>) => void) => void>>>(new Map());
+
+    const handle_data_channel_message = useCallback((event: MessageEvent) => {
+        const data = JSON.parse(event.data) as any;
+        if ("action" in data) {
+            const handlers = action_map_ref.current.get(data.action);
+            if (handlers) {
+                handlers.forEach((handler) => {
+                    handler(data, (reply_message: NamedReply<any>) => {
+                        data_channel_ref.current?.send(JSON.stringify({ ...reply_message, correlation_id: data.correlation_id }));
+                    });
+                });
+            }
+        }
+    }, []);
+
     // TODO: this code kinda sucks, same for how the background handles it. but it works :)
 
     useEffect(() => {
-        // the existence of this port tells the background script that the host is ready for connections
+        // the existence of this port tells the background script that the host is ready for RTC connections
         // not used for any messages
-        ready_port_ref.current = messenger.connect(`hvr-ready:${id}`)
+        ready_port_ref.current = messenger.connect(`hvr-ready:${id}`);
 
         let unlisten: (() => void) | null = null;
 
-        // listen for VVRSDK_RTC_REQUEST messages from the correct url. if we get one, start initiating a connection and send an offer back to the page
         const handle_message = async (data: WebSDKActionMessage) => {
-            if (!("url" in data) || data.url !== url) {
+            if (!("target" in data) || data.target !== "vr-host" || (data as any).tab !== id) {
                 return;
-            } else if (data.action === "HVRSDK_RTC_REQUEST") {
+            }
+
+            if (data.action === "HVRSDK_RTC_REQUEST") {
+                // a navigation or reconnect supersedes any existing connection.
+                // single-session in the background guarantees this request is for
+                // our tab, so there's no url/tab gate needed here.
+                // TODO: re-add a tab-id gate if multi-session ever returns
+                if (data_channel_ref.current) {
+                    data_channel_ref.current.removeEventListener("message", handle_data_channel_message);
+                    data_channel_ref.current.close();
+                    data_channel_ref.current = null;
+                }
+                if (peer_connection_ref.current) {
+                    peer_connection_ref.current.close();
+                    peer_connection_ref.current = null;
+                }
+
                 const pc = new RTCPeerConnection({ iceServers: [] });
                 peer_connection_ref.current = pc;
 
@@ -62,24 +95,19 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
                     }
                 };
 
-                // make data channel
-                const data_channel = peer_connection_ref.current.createDataChannel("web-sdk");
+                const data_channel = pc.createDataChannel("web-sdk");
                 data_channel_ref.current = data_channel;
+                data_channel.addEventListener("message", handle_data_channel_message);
 
                 data_channel.onopen = () => {
                     console.log("Data channel open");
                     setConnected(true);
-
-                    if (unlisten) {
-                        unlisten();
-                        unlisten = null;
-                    }
                 };
 
                 data_channel.onclose = () => {
                     console.log("Data channel closed");
+                    data_channel.removeEventListener("message", handle_data_channel_message);
                     data_channel_ref.current = null;
-
                     setConnected(false);
                 };
 
@@ -119,6 +147,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
             ready_port_ref.current = null;
 
             if (data_channel_ref.current) {
+                data_channel_ref.current.removeEventListener("message", handle_data_channel_message);
                 data_channel_ref.current.close();
                 data_channel_ref.current = null;
             }
@@ -128,11 +157,8 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
                 peer_connection_ref.current = null;
             }
         };
-    }, [url]);
+    }, [id, handle_data_channel_message]);
 
-    const storage = useStorageEngines();
-
-    const action_map_ref = useRef<Map<WebSDKActionName, Set<(message: NamedAction<any>, reply: (message: NamedReply<any>) => void) => void>>>(new Map());
     useEffect(() => {
         // add built in handlers
         for (const action_name in builtin_handlers) {
@@ -177,8 +203,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
                     handlers.delete(handler);
                 }
             };
-        }
-    , []);
+        }, []);
 
     const wait_for_action = useCallback(
         <M extends WebSDKActionName>(action_filter: M) => {
@@ -191,8 +216,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
                     unsubscribe();
                 });
             });
-        }
-    , [on_action]);
+        }, [on_action]);
 
     const emit_event = useCallback((message: WebSDKEventMessage) => {
         if (!peer_connection_ref.current || !data_channel_ref.current || data_channel_ref.current.readyState !== "open") {
@@ -201,33 +225,6 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
 
         data_channel_ref.current.send(JSON.stringify(message));
     }, []);
-
-    useEffect(() => {
-        if (!peer_connection_ref.current || !data_channel_ref.current) {
-            return;
-        }
-
-        const data_channel = data_channel_ref.current;
-
-        const handle_message = (event: MessageEvent) => {
-            const data = JSON.parse(event.data) as any;
-            if ("action" in data) {
-                const handlers = action_map_ref.current.get(data.action);
-                if (handlers) {
-                    handlers.forEach((handler) => {
-                        handler(data, (reply_message: NamedReply<any>) => {
-                            data_channel.send(JSON.stringify({...reply_message, correlation_id: data.correlation_id}));
-                        });
-                    });
-                }
-            }
-        };
-
-        data_channel.addEventListener("message", handle_message);
-        return () => {
-            data_channel.removeEventListener("message", handle_message);
-        };
-    }, [connected]);
 
     return (
         <WebSDKMessagingContext.Provider value={{ wait_for_action, on_action, emit_event, connected }}>
