@@ -121,5 +121,5 @@ export const ObjectPhysics = ({
     );
 };
 
-// TODO: floor collider
+// TODO: option to ignore player collisions, and option to allow players to pass through objects
 // TODO: player interactions with physics

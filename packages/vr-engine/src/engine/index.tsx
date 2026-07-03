@@ -25,6 +25,7 @@ import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
 import { EngineObjectSync } from "./EngineObjectSync";
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { Physics } from "@react-three/rapier";
+import { FloorCollider } from "../world/FloorCollider";
 
 
 configureTextBuilder({
@@ -180,6 +181,8 @@ const VRHostInternal = memo(({ on_xr_ready }: { on_xr_ready: () => void }) => {
                                 <PointerEvents />
 
                                 <Physics interpolate gravity={[0, -9.81, 0]}>
+                                    <FloorCollider />
+
                                     <XROriginProvider value={player_ref}>
                                         <Player ref={player_ref} />
 
