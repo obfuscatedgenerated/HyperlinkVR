@@ -40,7 +40,7 @@ import {
     TransformInput,
     TriggerVolumeInteraction,
     TriggerVolumeInteractionInput,
-    TriggerVolumeInteractionSchema
+    TriggerVolumeInteractionSchema, GrabCollider
 } from "@hyperlinkvr/vr-engine-schemas";
 
 import { send_via_rtc } from "./messenger";
@@ -193,6 +193,11 @@ export class GrabbableInteractionBuilder extends BaseBuilder<GrabbableInteractio
         super({
             type: "grabbable"
         });
+    }
+
+    set_grab_collider(collider: GrabCollider) {
+        this._internal.collider = collider;
+        return this;
     }
 
     set_grab_distance(distance: number) {

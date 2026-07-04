@@ -154,8 +154,32 @@ export const GrabOffsetSchema = z.object({
 export type GrabOffset = z.infer<typeof GrabOffsetSchema>;
 export type GrabOffsetInput = z.input<typeof GrabOffsetSchema>;
 
+export const AutoBoundingBoxColliderSchema = z.object({
+    type: z.literal("auto-bounding-box")
+});
+export type AutoBoundingBoxCollider = z.infer<
+    typeof AutoBoundingBoxColliderSchema
+>;
+
+export const AutoBoundingSphereColliderSchema = z.object({
+    type: z.literal("auto-bounding-sphere")
+});
+export type AutoBoundingSphereCollider = z.infer<
+    typeof AutoBoundingSphereColliderSchema
+>;
+
+export const GrabColliderSchema = z.discriminatedUnion("type", [
+    AutoBoundingBoxColliderSchema,
+    AutoBoundingSphereColliderSchema,
+    BoxColliderSchema,
+    SphereColliderSchema,
+    CapsuleColliderSchema
+]);
+export type GrabCollider = z.infer<typeof GrabColliderSchema>;
+
 export const GrabbableInteractionSchema = z.object({
     type: z.literal("grabbable"),
+    collider: GrabColliderSchema.default({ type: "auto-bounding-box" }),
     grab_distance: z.number().positive().optional(),
     grab_offset: GrabOffsetSchema.optional(),
     sticky: z.boolean().default(true),

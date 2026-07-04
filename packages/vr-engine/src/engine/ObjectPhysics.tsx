@@ -2,6 +2,7 @@ import { Collider, PhysicsSystem, RigidBody as RigidBodyConfig } from "@hyperlin
 import { useGLTF } from "@react-three/drei";
 import { BallCollider, CapsuleCollider, CuboidCollider, MeshCollider, RapierRigidBody, RigidBody } from "@react-three/rapier";
 import { useEffect, useRef } from "react";
+import {useObjectRefs} from "../contexts/ObjectRefsContext";
 
 const RB_TYPE = {
     fixed: "fixed",
@@ -76,15 +77,17 @@ const useExplicitMass = (
 
 export const ObjectPhysics = ({
     physics,
-    id,
     children
 }: {
     physics: PhysicsSystem;
-    id: string;
     children: React.ReactNode;
 }) => {
+    const refs = useObjectRefs();
+
     const rb = physics.rigid_body ?? { type: "fixed" as const };
-    const rb_ref = useRef<RapierRigidBody>(null);
+
+    const local_ref = useRef<RapierRigidBody>(null);
+    const rb_ref = refs.rigid_body || local_ref;
 
     const collider: Collider = rb.collider ?? {
         type: "auto",
