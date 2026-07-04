@@ -231,10 +231,19 @@ export type TriggerVolumeInteractionInput = z.input<
     typeof TriggerVolumeInteractionSchema
 >;
 
+export const FollowPlayerInteractionSchema = z.object({
+    type: z.literal("follow-player"),
+    enabled: z.boolean().default(true),
+    snap_on_release: z.boolean().default(false) // if true, disabling follow will make the object obey its position coordinates rather than freezing in place. likely irrelevant for most implementations
+});
+export type FollowPlayerInteraction = z.infer<typeof FollowPlayerInteractionSchema>;
+export type FollowPlayerInteractionInput = z.input<typeof FollowPlayerInteractionSchema>;
+
 export const InteractionSchema = z.discriminatedUnion("type", [
     GrabbableInteractionSchema,
     ControllerButtonInteractionSchema,
-    TriggerVolumeInteractionSchema
+    TriggerVolumeInteractionSchema,
+    FollowPlayerInteractionSchema
 ]);
 export type Interaction = z.infer<typeof InteractionSchema>;
 export type InteractionInput = z.input<typeof InteractionSchema>;

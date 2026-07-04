@@ -1,49 +1,10 @@
 import type { NamedReply } from "@hyperlinkvr/types";
-import {
-    AxesBasedMonitorInput,
-    AxisRange,
-    ButtonPrefab,
-    ButtonPrefabInput,
-    ButtonPrefabSchema,
-    Collider,
-    ColliderSchema,
-    ControllerButtonInteraction,
-    ControllerButtonInteractionInput,
-    ControllerButtonInteractionSchema,
-    ControllerButtonWhenListen,
-    CreatedEngineObject,
-    CustomObject,
-    CustomObjectInput,
-    CustomObjectSchema,
-    EngineObject,
-    EngineObjectDispatch,
-    EngineObjectDispatchInput,
-    EngineObjectDispatchSchema,
-    GrabbableInteraction,
-    GrabbableInteractionInput,
-    GrabbableInteractionSchema,
-    GrabOffsetInput,
-    HexNumericalColor,
-    HexNumericalColorSchema,
-    Interaction,
-    MeshApproximation,
-    CustomMeshApproximation,
-    Monitor,
-    MonitorSchema,
-    PhysicsSystem,
-    PhysicsSystemInput,
-    PhysicsSystemSchema,
-    RigidBody,
-    RigidBodyInput,
-    RigidBodySchema,
-    RigidBodyType,
-    TransformInput,
-    TriggerVolumeInteraction,
-    TriggerVolumeInteractionInput,
-    TriggerVolumeInteractionSchema, GrabCollider
-} from "@hyperlinkvr/vr-engine-schemas";
+import { AxesBasedMonitorInput, AxisRange, ButtonPrefab, ButtonPrefabInput, ButtonPrefabSchema, Collider, ColliderSchema, ControllerButtonInteraction, ControllerButtonInteractionInput, ControllerButtonInteractionSchema, ControllerButtonWhenListen, CreatedEngineObject, CustomMeshApproximation, CustomObject, CustomObjectInput, CustomObjectSchema, EngineObject, EngineObjectDispatch, EngineObjectDispatchInput, EngineObjectDispatchSchema, FollowPlayerInteractionInput, FollowPlayerInteractionSchema, GrabbableInteraction, GrabbableInteractionInput, GrabbableInteractionSchema, GrabCollider, GrabOffsetInput, HexNumericalColor, HexNumericalColorSchema, Interaction, MeshApproximation, Monitor, MonitorSchema, PhysicsSystem, PhysicsSystemInput, PhysicsSystemSchema, RigidBody, RigidBodyInput, RigidBodySchema, RigidBodyType, TransformInput, TriggerVolumeInteraction, TriggerVolumeInteractionInput, TriggerVolumeInteractionSchema } from "@hyperlinkvr/vr-engine-schemas";
+
+
 
 import { send_via_rtc } from "./messenger";
+
 
 class BaseBuilder<InternalType> {
     protected _internal: InternalType;
@@ -313,6 +274,27 @@ export class TriggerVolumeInteractionBuilder extends BaseBuilder<TriggerVolumeIn
 
     build(): TriggerVolumeInteraction {
         return TriggerVolumeInteractionSchema.parse(this._internal);
+    }
+}
+
+export class FollowPlayerInteractionBuilder extends BaseBuilder<FollowPlayerInteractionInput> {
+    constructor() {
+        super({ type: "follow-player" } as FollowPlayerInteractionInput);
+    }
+
+    set_enabled(enabled: boolean) {
+        this._internal.enabled = enabled;
+        return this;
+    }
+
+    // if true, disabling follow will make the object obey its position coordinates rather than freezing in place. likely irrelevant for most implementations
+    snaps_on_release(snap: boolean = true) {
+        this._internal.snap_on_release = snap;
+        return this;
+    }
+
+    build(): FollowPlayerInteractionInput {
+        return FollowPlayerInteractionSchema.parse(this._internal);
     }
 }
 

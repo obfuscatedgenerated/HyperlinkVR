@@ -16,6 +16,19 @@ enum RigidBodyType {
     KinematicVelocityBased = 3
 }
 
+const excluded_from_bounds = (o: Object3D): boolean => {
+    let cur: Object3D | null = o;
+    while (cur) {
+        if (
+            cur.userData._is_outline_effect ||
+            cur.userData._exclude_from_bounds // TODO: expose this flag in some way to the sdk when object parenting is introduced
+        )
+            return true;
+        cur = cur.parent;
+    }
+    return false;
+};
+
 export const useOutlineEffect = (
     target_ref: RefObject<Object3D | null>,
     enabled: boolean,
@@ -28,7 +41,7 @@ export const useOutlineEffect = (
         // 1. Collect all valid meshes into an array first
         const meshes: Mesh[] = [];
         target.traverse((child) => {
-            if ((child as Mesh).isMesh && !child.userData._is_outline_effect) {
+            if ((child as Mesh).isMesh && !excluded_from_bounds(child)) {
                 meshes.push(child as Mesh);
             }
         });
@@ -93,7 +106,7 @@ const compute_local_bounds = (target: Object3D): Box3 | null => {
 
     target.traverse((child) => {
         const mesh = child as Mesh;
-        if (!mesh.isMesh || child.userData._is_outline_effect) return; // skip outline shells
+        if (!mesh.isMesh || excluded_from_bounds(child)) return;
         if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
         if (!mesh.geometry.boundingBox) return;
         childBox.copy(mesh.geometry.boundingBox);
@@ -262,9 +275,6 @@ export const useGrabbable = (
             } else {
                 distance = handPos.distanceTo(objPos);
             }
-
-            // TEMP: remove once distances are confirmed sane
-            console.log(`Distance from ${controller.inputSource.handedness} hand to object: ${distance}`);
 
             if (distance < nearby_trigger_distance) {
                 currentlyNear.add(controller.inputSource);

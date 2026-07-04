@@ -1,14 +1,18 @@
-import { Grabbable } from "../util/grabbables";
 import { useSetting } from "@hyperlinkvr/react";
-import { useMemo, useRef } from "react";
+import { Text, useGLTF } from "@react-three/drei";
+import { useMemo, useRef, useState } from "react";
 import type { Group } from "three";
 
 
+
+import { FollowPlayer } from "../interaction/FollowPlayer";
+import { Grabbable } from "../interaction/Grabbable";
 import { LayerGroup } from "../render/LayerGroup";
 import { Layer } from "../render/layers";
 import { MixedRealityCameraController } from "../render/MixedRealityCameraController";
 import { camera_controller_configs, SpectatorCameraController } from "../render/SpectatorCameraController";
-import { useGLTF } from "@react-three/drei";
+import { XRBillboard } from "../interaction";
+
 
 const camera = new URL("../../assets/misc/camera/camera.glb", import.meta.url).href;
 
@@ -16,6 +20,8 @@ export const SpectatorCamera = () => {
     const [mode] = useSetting("spectator_view");
 
     const [horiz_fov] = useSetting("third_person_fov");
+    const [follow_player, setFollowPlayer] = useState(true);
+    // TODO: option to look at what the player is holding automatically?
 
     const {scene: camera_scene} = useGLTF(camera);
 
@@ -39,13 +45,26 @@ export const SpectatorCamera = () => {
                 layers={[Layer.ThirdPerson_ForceHide]}
                 visible={mode !== "first_person"}
             >
-                <Grabbable
-                    position={[0.5, 1.5, 0.1]}
+                <FollowPlayer
+                    enabled={follow_player}
+                    position={[0.5, 2, 0.1]}
                     rotation={[0, Math.PI /12, 0]}
-                    ref={camera_model_ref}
                 >
-                    <primitive object={camera_scene} />
-                </Grabbable>
+                    <Grabbable
+                        ref={camera_model_ref}
+                    >
+                        {follow_player && (
+                            <XRBillboard
+                                position={[0, -0.1, 0]}
+                                userData={{_exclude_from_bounds: true}}
+                            >
+                                <Text fontSize={0.025} textAlign="center">Following{"\n"}Grab and press trigger to toggle (TODO)</Text>
+                            </XRBillboard>
+                        )}
+
+                        <primitive object={camera_scene} />
+                    </Grabbable>
+                </FollowPlayer>
             </LayerGroup>
 
             {mode !== "mixed_reality" ? (
