@@ -46,19 +46,20 @@ export const SpectatorCamera = () => {
                 visible={mode !== "first_person"}
             >
                 <FollowPlayer
-                    enabled={follow_player}
-                    position={[0.5, 2, 0.1]}
-                    rotation={[0, Math.PI /12, 0]}
+                    enabled={mode === "mixed_reality" || follow_player}
+                    position={[0.5, 1, 0.1]}
+                    rotation={[0, Math.PI/12, 0]}
                 >
                     <Grabbable
                         ref={camera_model_ref}
+                        on_trigger_start={() => setFollowPlayer(!follow_player)}
                     >
-                        {follow_player && (
+                        {mode !== "mixed_reality" && (
                             <XRBillboard
                                 position={[0, -0.1, 0]}
                                 userData={{_exclude_from_bounds: true}}
                             >
-                                <Text fontSize={0.025} textAlign="center">Following{"\n"}Grab and press trigger to toggle (TODO)</Text>
+                                <Text fontSize={0.025} textAlign="center">{follow_player ? "Following" : "Static"}{"\n"}Grab and press trigger to toggle</Text>
                             </XRBillboard>
                         )}
 

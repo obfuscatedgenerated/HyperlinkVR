@@ -175,13 +175,17 @@ export const useGrabbable = (
         nearby_trigger_distance = 0.4,
         collider,
         on_nearby_start,
-        on_nearby_end
+        on_nearby_end,
+        on_trigger_start,
+        on_trigger_end
     }: {
         grab_distance?: number,
         nearby_trigger_distance?: number,
         collider?: GrabCollider,
         on_nearby_start?: (input: XRInputSource) => void,
-        on_nearby_end?: (input: XRInputSource) => void
+        on_nearby_end?: (input: XRInputSource) => void,
+        on_trigger_start?: (input: XRInputSource) => void,
+        on_trigger_end?: (input: XRInputSource) => void
     } = {}
 ) => {
     const leftController = useXRInputSourceState('controller', 'left');
@@ -224,6 +228,8 @@ export const useGrabbable = (
         }
         return region_tester.current;
     };
+
+    const is_trigger_held = useRef(false);
 
     useFrame((state, delta, frame) => {
         if (!frame || !target_ref.current || !xr_origin_ref?.current) return;
@@ -326,7 +332,22 @@ export const useGrabbable = (
 
             if (grabbingSource.current === controller.inputSource) {
                 activeHandMatrix = handMatrix;
+
+                const trigger_pressed = controller.gamepad["xr-standard-trigger"]?.state === "pressed";
+                if (trigger_pressed && !is_trigger_held.current) {
+                    console.log("Trigger pressed on grab");
+                    is_trigger_held.current = true;
+                    on_trigger_start?.(controller.inputSource);
+                } else if (!trigger_pressed && is_trigger_held.current) {
+                    is_trigger_held.current = false;
+                    on_trigger_end?.(controller.inputSource);
+                }
             }
+        }
+
+        if (!grabbingSource.current && is_trigger_held.current) {
+            is_trigger_held.current = false;
+            on_trigger_end?.(grabbingSource.current!);
         }
 
         for (const input of nearbyInputs.current) {
@@ -399,6 +420,8 @@ interface GrabbableProps extends ComponentProps<"group"> {
     // TODO: add remaining props from useGrabbable and GrabbableInteraction
     on_nearby_start?: (input: XRInputSource) => void;
     on_nearby_end?: (input: XRInputSource) => void;
+    on_trigger_start?: (input: XRInputSource) => void;
+    on_trigger_end?: (input: XRInputSource) => void; // TODO: unite these with the wider controller button interaction
 }
 
 export const Grabbable = (props: GrabbableProps) => {
@@ -432,7 +455,9 @@ export const Grabbable = (props: GrabbableProps) => {
         nearby_trigger_distance: props.nearby_trigger_distance || props.grab_distance,
         collider,
         on_nearby_start: handle_nearby_start,
-        on_nearby_end: handle_nearby_end
+        on_nearby_end: handle_nearby_end,
+        on_trigger_start: props.on_trigger_start,
+        on_trigger_end: props.on_trigger_end
     });
 
     useOutlineEffect(target_ref, is_nearby);
