@@ -33,6 +33,7 @@ configureTextBuilder({
 
 export const xr_store = createXRStore({
     controller: AvatarHand,
+    handTracking: false,
     offerSession: false
 });
 
