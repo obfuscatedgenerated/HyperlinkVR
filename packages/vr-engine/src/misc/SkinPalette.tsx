@@ -3,7 +3,7 @@ import { MeshStandardMaterial } from "three";
 
 
 
-import { skin_tones, SkinType, SkinWarmth, avatarContext, useStoredAvatarProperty } from "../contexts/AvatarContext";
+import { skin_tones, SkinType, SkinWarmth, useAvatar, useStoredAvatarProperty } from "../contexts/AvatarContext";
 
 
 const SkinPaletteOption = ({skin_type, skin_warmth, on_click, chosen, box_size, position}: {
@@ -46,7 +46,7 @@ interface SkinPaletteProps extends ComponentProps<"group"> {
 export const SkinPalette = ({box_size = 0.1, spacing = 0.1, ...rest}: SkinPaletteProps) => {
     // const [skin_type, setSkinType] = useStoredAvatarProperty("skin_type");
     // const [skin_warmth, setSkinWarmth] = useStoredAvatarProperty("skin_warmth");
-    const [avatar, setAvatar] = avatarContext();
+    const [avatar, setAvatar] = useAvatar();
 
     // form a grid of skin tones on horizontal, and skin warmth on vertical
     return (

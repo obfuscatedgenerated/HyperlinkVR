@@ -1,11 +1,11 @@
 import { ColorPicker } from "./ColorPicker";
 import { SkinPalette } from "./SkinPalette";
 import { ReflectiveMirror } from "./ReflectiveMirror";
-import { avatarContext } from "../contexts/AvatarContext";
+import { useAvatar } from "../contexts/AvatarContext";
 import { ComponentProps } from "react";
 
 export const AvatarMirror = (props: ComponentProps<"group">) => {
-    const [avatar, setAvatar] = avatarContext();
+    const [avatar, setAvatar] = useAvatar();
 
     return (
         <group {...props}>

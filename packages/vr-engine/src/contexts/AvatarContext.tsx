@@ -140,7 +140,7 @@ export const AvatarProvider = ({ children }: { children: React.ReactNode }) => {
     );
 }
 
-export const avatarContext = () => {
+export const useAvatar = () => {
     const context = useContext(AvatarContext);
     if (!context) {
         throw new Error("useAvatar must be used within an AvatarProvider");
@@ -149,7 +149,7 @@ export const avatarContext = () => {
 }
 
 export const useRetrievedAvatarProperty = <K extends keyof RetrievedAvatar>(property: K) => {
-    const [avatar] = avatarContext();
+    const [avatar] = useAvatar();
     return avatar[property];
 }
 
@@ -181,7 +181,7 @@ export const useRetrievedAvatarProperty = <K extends keyof RetrievedAvatar>(prop
 // TODO: avatar slots
 
 export const useAvatarMaterials = (scene: Object3D) => {
-    const [avatar] = avatarContext();
+    const [avatar] = useAvatar();
 
     const skin_material = useMemo(
         () =>
