@@ -36,6 +36,8 @@ export interface StoredAvatar {
     skin_type: SkinType;
     skin_warmth: SkinWarmth;
 
+    hair_hex: number;
+
     nail_hex?: number;
 }
 
@@ -46,6 +48,7 @@ export interface RetrievedAvatar extends StoredAvatar {
 const default_avatar: StoredAvatar = {
     skin_type: "unset",
     skin_warmth: "base",
+    hair_hex: 0xffffff,
 };
 
 export const stored_to_retrieved_avatar = (stored: StoredAvatar): RetrievedAvatar => {
@@ -63,6 +66,8 @@ export const retrieved_to_stored_avatar = (retrieved: RetrievedAvatar): StoredAv
     return {
         skin_type: retrieved.skin_type,
         skin_warmth: retrieved.skin_warmth,
+        hair_hex: retrieved.hair_hex,
+        nail_hex: retrieved.nail_hex,
     };
 }
 
@@ -128,13 +133,34 @@ export const useAvatarMaterials = (scene: Object3D) => {
         []
     );
     useEffect(() => {
+        if (avatar.skin_hex === undefined) {
+            return;
+        }
+
         skin_material.color.setHex(avatar.skin_hex);
     }, [avatar.skin_hex, skin_material]);
+
+    const hair_material = useMemo(
+        () =>
+            new MeshStandardMaterial({
+                color: 0x000000,
+                roughness: 0.4,
+            }),
+        []
+    );
+    useEffect(() => {
+        if (avatar.hair_hex === undefined) {
+            return;
+        }
+
+        hair_material.color.setHex(avatar.hair_hex);
+    }, [avatar.hair_hex, hair_material]);
 
     // TODO: combine these into a shared material somehow? maybe context instead of hook? idk
 
     const replacements = useMemo(() => ({
-        "Mat_Skin": skin_material
+        "Mat_Skin": skin_material,
+        "Mat_Hair": hair_material,
     }), []);
 
     // replace materials in the scene with the dynamic materials
@@ -144,14 +170,16 @@ export const useAvatarMaterials = (scene: Object3D) => {
                 if (Array.isArray(object.material)) {
                     // array of materials
 
-                    object.material = object.material.map(
-                        (mat) =>
-                            // @ts-ignore
-                            replacements[mat.name] || mat
-                    );
+                    object.material = object.material.map((mat) => {
+                        console.log(
+                            `Replacing material ${object.material.name} with dynamic material`
+                        );
+                        // @ts-ignore
+                        return replacements[mat.name] || mat;
+                    });
                 } else if (object.material.name in replacements) {
                     // single material
-
+                    console.log(`Replacing material ${object.material.name} with dynamic material`);
                     // @ts-ignore
                     object.material = replacements[object.material.name];
                 }

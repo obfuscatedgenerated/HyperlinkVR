@@ -7,6 +7,7 @@ import { Layer } from "../render/layers";
 import { AvatarExpression } from "./AvatarExpression";
 import { useRef } from "react";
 import { Group } from "three";
+import { AvatarHair } from "./AvatarHair";
 
 
 const head = new URL("../../assets/player/head/head.glb", import.meta.url).href;
@@ -28,6 +29,8 @@ export const AvatarHead = () => {
     
     return (
         <LayerGroup ref={group_ref} layers={[Layer.PlayerModel_Head]}>
+            <AvatarHair />
+
             <primitive object={head_scene} />
 
             <AvatarExpression />
