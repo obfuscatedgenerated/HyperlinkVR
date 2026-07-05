@@ -59,20 +59,22 @@ export const Player = ({ref = null}: {ref?: React.Ref<Group>}) => {
                 <XROrigin ref={origin_ref}>
                     <WristWatch />
 
-                    <group name="ExpressionTest" visible={show_expression_test}>
-                        <Text
-                            position={[0, 2, -1]}
-                            fontSize={0.1}
-                            color="white"
-                            anchorX="center"
-                            anchorY="middle"
-                        >
-                            Mouth Expression Test
-                        </Text>
-                        <MouthTest mouth_name="default" position={[-0.5, 1.5, -1]} />
-                        <MouthTest mouth_name="big_smile" position={[0, 1.5, -1]} />
-                        <MouthTest mouth_name="wobbly_frown" position={[0.5, 1.5, -1]} />
-                    </group>
+                    {show_expression_test && (
+                        <group name="ExpressionTest">
+                            <Text
+                                position={[0, 2, -1]}
+                                fontSize={0.1}
+                                color="white"
+                                anchorX="center"
+                                anchorY="middle"
+                            >
+                                Mouth Expression Test
+                            </Text>
+                            <MouthTest mouth_name="default" position={[-0.5, 1.5, -1]} />
+                            <MouthTest mouth_name="big_smile" position={[0, 1.5, -1]} />
+                            <MouthTest mouth_name="wobbly_frown" position={[0.5, 1.5, -1]} />
+                        </group>
+                    )}
                 </XROrigin>
 
                 <Avatar />
