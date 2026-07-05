@@ -1,7 +1,7 @@
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 
-import { useAvatarMaterials } from "../hooks/useAvatar";
+import { useAvatarMaterials } from "../contexts/AvatarContext";
 import { LayerGroup } from "../render/LayerGroup";
 import { Layer } from "../render/layers";
 import { AvatarExpression } from "./AvatarExpression";

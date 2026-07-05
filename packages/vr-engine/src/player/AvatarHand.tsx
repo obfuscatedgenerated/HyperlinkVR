@@ -5,7 +5,7 @@ import { useSetting } from "@hyperlinkvr/react";
 import { useEffect, useMemo, useRef } from "react";
 import { ArrowHelper, Group, Mesh, MeshBasicMaterial, Object3D, Quaternion, Raycaster, SphereGeometry, Vector3 } from "three";
 
-import { useAvatarMaterials } from "../hooks/useAvatar";
+import { useAvatarMaterials } from "../contexts/AvatarContext";
 import { LayerGroup } from "../render/LayerGroup";
 import { Layer } from "../render/layers";
 

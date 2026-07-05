@@ -1,5 +1,5 @@
 import { useGLTF } from "@react-three/drei";
-import { useAvatarMaterials } from "../hooks/useAvatar";
+import { useAvatarMaterials } from "../contexts/AvatarContext";
 
 
 const hair = new URL("../../assets/player/hair/0.glb", import.meta.url).href;

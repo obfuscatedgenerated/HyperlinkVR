@@ -5,7 +5,7 @@ import { Quaternion, Vector3 } from "three";
 
 
 
-import { useAvatarMaterials } from "../hooks/useAvatar";
+import { useAvatarMaterials } from "../contexts/AvatarContext";
 import { Layer, LayerGroup } from "../render";
 
 

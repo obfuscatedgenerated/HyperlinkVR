@@ -16,16 +16,15 @@ import { LogoOverlay } from "../misc/LogoOverlay";
 import { AvatarHand } from "../player/AvatarHand";
 import { CameraSetup } from "../render/CameraSetup";
 import { CanvasResizer } from "../render/CanvasResizer";
-import { ReflectiveMirror } from "../misc/ReflectiveMirror";
 import { Player } from "../player/Player";
-import {XROriginProvider} from "../contexts";
-import {SpectatorCamera} from "../misc";
-import { SkinPalette } from "../misc/SkinPalette";
+import { AvatarProvider, XROriginProvider} from "../contexts";
+import { SpectatorCamera} from "../misc";
 import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
 import { EngineObjectSync } from "./EngineObjectSync";
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { Physics } from "@react-three/rapier";
 import { FloorCollider } from "../world/FloorCollider";
+import { AvatarMirror } from "../misc/AvatarMirror";
 
 
 configureTextBuilder({
@@ -166,48 +165,49 @@ const VRHostInternal = memo(({ on_xr_ready }: { on_xr_ready: () => void }) => {
                 >
                     <LogoOverlay />
 
-                    <Canvas
-                        gl={make_xr_compatible_renderer}
-                        onCreated={handle_created}
-                    >
-                        <CameraSetup />
-                        <CanvasResizer containerRef={canvas_container_ref} />
+                    <AvatarProvider>
+                        <Canvas
+                            gl={make_xr_compatible_renderer}
+                            onCreated={handle_created}
+                        >
+                            <CameraSetup />
+                            <CanvasResizer containerRef={canvas_container_ref} />
 
-                        <XR store={xr_store}>
-                            <ErrorBoundary
-                                FallbackComponent={VRErrorFallback}
-                                onReset={() => window.location.reload()}
-                            >
-                                <PointerEvents />
+                            <XR store={xr_store}>
+                                <ErrorBoundary
+                                    FallbackComponent={VRErrorFallback}
+                                    onReset={() => window.location.reload()}
+                                >
+                                    <PointerEvents />
 
-                                <Physics interpolate gravity={[0, -9.81, 0]}>
-                                    <FloorCollider />
+                                    <Physics interpolate gravity={[0, -9.81, 0]}>
+                                        <FloorCollider />
 
-                                    <XROriginProvider value={player_ref}>
-                                        <Player ref={player_ref} />
+                                        <XROriginProvider value={player_ref}>
+                                            <Player ref={player_ref} />
 
-                                        <color attach="background" args={["#111111"]} />
-                                        <ambientLight intensity={0.5} />
-                                        <pointLight position={[10, 10, 10]} />
+                                            <color attach="background" args={["#111111"]} />
+                                            <ambientLight intensity={0.5} />
+                                            <pointLight position={[10, 10, 10]} />
 
-                                        <URLBar
-                                            position={[0, 3.25, -4]}
-                                            height={0.25}
-                                            height_of_dom_mirror={3}
-                                        />
-                                        <DOMMirror position={[0, 1.5, -4]} height={3} />
+                                            <URLBar
+                                                position={[0, 3.25, -4]}
+                                                height={0.25}
+                                                height_of_dom_mirror={3}
+                                            />
+                                            <DOMMirror position={[0, 1.5, -4]} height={3} />
 
-                                        <SkinPalette box_size={0.05} position={[2, 1.75, 0]} rotation={[0, -Math.PI/2, 0]} />
-                                        <ReflectiveMirror width={0.75} height={1.25} position={[2, 1, 0]} rotation={[0, -Math.PI/2, 0]} />
+                                            <AvatarMirror />
 
-                                        <EngineObjectSpawner />
+                                            <EngineObjectSpawner />
 
-                                        <SpectatorCamera />
-                                    </XROriginProvider>
-                                </Physics>
-                            </ErrorBoundary>
-                        </XR>
-                    </Canvas>
+                                            <SpectatorCamera />
+                                        </XROriginProvider>
+                                    </Physics>
+                                </ErrorBoundary>
+                            </XR>
+                        </Canvas>
+                    </AvatarProvider>
                 </div>
             </WebSDKMessagingProvider>
         </TabSessionProvider>

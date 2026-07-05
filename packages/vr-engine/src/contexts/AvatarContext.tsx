@@ -1,6 +1,10 @@
-import { useStorage } from "@hyperlinkvr/react";
-import { useCallback, useEffect, useMemo } from "react";
+import { useDebounce, useStorage } from "@hyperlinkvr/react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Mesh, MeshStandardMaterial, Object3D } from "three";
+
+
+
+
 
 export const skin_tones = {
     unset: { base: 0xaaaaaa },
@@ -36,9 +40,11 @@ export interface StoredAvatar {
     skin_type: SkinType;
     skin_warmth: SkinWarmth;
 
+    hair_type?: number;
     hair_hex: number;
 
     nail_hex?: number;
+    nail_roughness?: number;
 }
 
 export interface RetrievedAvatar extends StoredAvatar {
@@ -71,26 +77,79 @@ export const retrieved_to_stored_avatar = (retrieved: RetrievedAvatar): StoredAv
     };
 }
 
-export const useAvatar = () => {
-    const [stored_avatar, setStoredAvatar] = useStorage<StoredAvatar>("sync", "avatar", default_avatar);
+export interface AvatarContextType {
+    avatar: RetrievedAvatar;
+    setAvatar: (avatar: RetrievedAvatar | ((prev: RetrievedAvatar) => RetrievedAvatar)) => void;
+}
 
-    const retrieved_avatar: RetrievedAvatar = useMemo(() => stored_to_retrieved_avatar(stored_avatar), [stored_avatar]);
+const AvatarContext = createContext<AvatarContextType | null>(null);
+
+export const AvatarProvider = ({ children }: { children: React.ReactNode }) => {
+    const [stored_avatar, setStoredAvatar] = useStorage<StoredAvatar>(
+        "sync",
+        "avatar",
+        default_avatar
+    );
+
+    // update locally quickly but debounce the storage update to avoid too many writes
+    const [local_avatar, setLocalAvatar] = useState<StoredAvatar>(stored_avatar);
+    const debounced_avatar = useDebounce<StoredAvatar>(local_avatar, 500);
+
+    // sync local avatar with stored avatar
+    useEffect(() => {
+        setLocalAvatar(stored_avatar);
+    }, [stored_avatar]);
+
+    // sync stored avatar with debounced avatar only after first mount to avoid state race
+    const is_first_mount = useRef(true);
+    useEffect(() => {
+        if (is_first_mount.current) {
+            is_first_mount.current = false;
+            return;
+        }
+
+        setStoredAvatar(debounced_avatar);
+    }, [debounced_avatar, setStoredAvatar]);
+
+    const retrieved_avatar: RetrievedAvatar = useMemo(
+        () => stored_to_retrieved_avatar(local_avatar),
+        [local_avatar]
+    );
 
     const setRetrievedAvatar = useCallback(
         (retrieved: RetrievedAvatar | ((prev: RetrievedAvatar) => RetrievedAvatar)) => {
-            setStoredAvatar((prev) => {
-                const new_retrieved = typeof retrieved === "function" ? (retrieved as (prev: RetrievedAvatar) => RetrievedAvatar)(stored_to_retrieved_avatar(prev)) : retrieved;
+            setLocalAvatar((prev) => {
+                const new_retrieved =
+                    typeof retrieved === "function"
+                        ? (
+                              retrieved as (
+                                  prev: RetrievedAvatar
+                              ) => RetrievedAvatar
+                          )(stored_to_retrieved_avatar(prev))
+                        : retrieved;
                 return retrieved_to_stored_avatar(new_retrieved);
             });
         },
         [setStoredAvatar]
     );
 
-    return [retrieved_avatar, setRetrievedAvatar] as const;
+    return (
+        <AvatarContext.Provider value={{ avatar: retrieved_avatar, setAvatar: setRetrievedAvatar }}>
+            {children}
+        </AvatarContext.Provider>
+    );
+}
+
+export const avatarContext = () => {
+    const context = useContext(AvatarContext);
+    if (!context) {
+        throw new Error("useAvatar must be used within an AvatarProvider");
+    }
+    return [context.avatar, context.setAvatar] as const;
 }
 
 export const useRetrievedAvatarProperty = <K extends keyof RetrievedAvatar>(property: K) => {
-    const [avatar] = useAvatar();
+    const [avatar] = avatarContext();
     return avatar[property];
 }
 
@@ -122,7 +181,7 @@ export const useRetrievedAvatarProperty = <K extends keyof RetrievedAvatar>(prop
 // TODO: avatar slots
 
 export const useAvatarMaterials = (scene: Object3D) => {
-    const [avatar] = useAvatar();
+    const [avatar] = avatarContext();
 
     const skin_material = useMemo(
         () =>
