@@ -9,7 +9,7 @@ export const AvatarMirror = (props: ComponentProps<"group">) => {
 
     return (
         <group {...props}>
-            <SkinPalette box_size={0.05} position={[0, 1.75, 0]}  />
+            <SkinPalette box_size={0.075} spacing={0.05} position={[0, 1.75, 0]}  />
             <ReflectiveMirror width={0.75} height={1.25} position={[0, 1, 0]} />
             <ColorPicker position={[2, 0.5, 0]} scale={[2, 2, 2]} color={avatar.hair_hex} on_color_change={(color) => {
                 setAvatar((prev) => ({

@@ -1,5 +1,5 @@
 import { ComponentProps, useMemo } from "react";
-import { MeshStandardMaterial } from "three";
+import { MeshBasicMaterial, MeshStandardMaterial } from "three";
 
 
 
@@ -20,7 +20,7 @@ const SkinPaletteOption = ({skin_type, skin_warmth, on_click, chosen, box_size, 
         return skin_tone_obj[skin_warmth] || skin_tone_obj.base;
     }, [skin_type, skin_warmth]);
 
-    const material = useMemo(() => new MeshStandardMaterial({color, roughness: 0.7}), [color]);
+    const material = useMemo(() => new MeshBasicMaterial({color}), [color]);
     
     return (
         <group onClick={on_click} position={position}>
@@ -30,7 +30,7 @@ const SkinPaletteOption = ({skin_type, skin_warmth, on_click, chosen, box_size, 
 
             {chosen && (
                 <mesh position={[0, 0, -0.001]}>
-                    <meshStandardMaterial color="white" wireframe />
+                    <meshBasicMaterial color="white" wireframe />
                     <boxGeometry args={[box_size * 1.2, box_size * 1.2, 0]} />
                 </mesh>
             )}
