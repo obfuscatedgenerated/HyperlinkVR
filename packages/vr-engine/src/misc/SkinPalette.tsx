@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { ComponentProps, useMemo } from "react";
 import { MeshStandardMaterial } from "three";
 
 
@@ -38,21 +38,26 @@ const SkinPaletteOption = ({skin_type, skin_warmth, on_click, chosen, box_size, 
     );
 }
 
-export const SkinPalette = ({position, rotation, box_size}: {position: [number, number, number], rotation: [number, number, number], box_size: number}) => {
+interface SkinPaletteProps extends ComponentProps<"group"> {
+    box_size?: number;
+    spacing?: number;
+}
+
+export const SkinPalette = ({box_size = 0.1, spacing = 0.1, ...rest}: SkinPaletteProps) => {
     // const [skin_type, setSkinType] = useStoredAvatarProperty("skin_type");
     // const [skin_warmth, setSkinWarmth] = useStoredAvatarProperty("skin_warmth");
     const [avatar, setAvatar] = avatarContext();
 
     // form a grid of skin tones on horizontal, and skin warmth on vertical
     return (
-        <group position={position} rotation={rotation}>
+        <group {...rest}>
             {Object.keys(skin_tones).map((type, i) => {
                 const this_type = type as SkinType;
                 const skin_tone_obj = skin_tones[this_type];
                 return Object.keys(skin_tone_obj).map((warmth, j) => {
                     const this_warmth = warmth as SkinWarmth;
-                    const x = i * (box_size + 0.1);
-                    const y = j * (box_size + 0.1);
+                    const x = i * (box_size + spacing);
+                    const y = j * (box_size + spacing);
                     return (
                         <SkinPaletteOption
                             key={`${this_type}-${this_warmth}`}

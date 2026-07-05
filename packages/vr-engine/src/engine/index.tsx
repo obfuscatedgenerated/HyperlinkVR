@@ -198,7 +198,7 @@ const VRHostInternal = memo(({ on_xr_ready }: { on_xr_ready: () => void }) => {
                                             />
                                             <DOMMirror position={[0, 1.5, -4]} height={3} />
 
-                                            <AvatarMirror />
+                                            <AvatarMirror position={[2, 0, 0]} rotation={[0, -Math.PI/2, 0]} />
 
                                             <EngineObjectSpawner />
 

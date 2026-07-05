@@ -1,5 +1,5 @@
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo } from "react";
+import { ComponentProps, useEffect, useMemo } from "react";
 import { Camera, PlaneGeometry, Vector3 } from "three";
 import { Reflector } from "three/examples/jsm/objects/Reflector";
 
@@ -10,19 +10,18 @@ import { compute_layer_mask, Layer } from "../render";
 const RENDER_RES_WIDTH = 2048;
 const RENDER_RES_HEIGHT = 2048;
 
+interface ReflectiveMirrorProps extends Omit<ComponentProps<"primitive">, "object"> {
+    width: number;
+    height: number;
+    tint_color?: number;
+}
+
 export const ReflectiveMirror = ({
     width,
     height,
     tint_color = 0xcccccc,
-    position,
-    rotation
-}: {
-    width: number;
-    height: number;
-    tint_color?: number;
-    position: Vector3 | [number, number, number];
-    rotation: Vector3 | [number, number, number];
-}) => {
+    ...rest
+}: ReflectiveMirrorProps) => {
     const reflector = useMemo(() => {
         const geo = new PlaneGeometry(width, height);
         return new Reflector(geo, {
@@ -66,6 +65,6 @@ export const ReflectiveMirror = ({
     });
 
     return (
-        <primitive object={reflector} position={position} rotation={rotation} />
+        <primitive object={reflector} {...rest} />
     );
 };
