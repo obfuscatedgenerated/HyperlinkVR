@@ -9,6 +9,7 @@ import {
     usePlayerExpression
 } from "../contexts/PlayerExpressionContext";
 import { Layer, LayerGroup } from "../render";
+import { useAvatarMaterials } from "../contexts";
 
 const decompressor = new DRACOLoader();
 const loader = new GLTFLoader().setDRACOLoader(decompressor);
@@ -58,13 +59,15 @@ export const AvatarExpression = () => {
         return mouth_glbs[expression.mouth];
     }, [mouth_glbs, expression.mouth]);
 
+    useAvatarMaterials(eye?.scene);
+    useAvatarMaterials(mouth?.scene);
+
     if (!eye || !mouth) {
         return null;
     }
 
     return (
-        // TODO: fix direction in blender. will rotate for now to make it face the right way in engine instead of re-exporting all the glbs
-        <LayerGroup layers={[Layer.PlayerModel_Head]} name="AvatarExpression" rotation={[0, Math.PI, 0]}>
+        <LayerGroup layers={[Layer.PlayerModel_Head]} name="AvatarExpression">
             <primitive object={eye.scene} />
             <primitive object={mouth.scene} />
         </LayerGroup>

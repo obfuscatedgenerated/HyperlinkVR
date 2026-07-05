@@ -1,6 +1,6 @@
 import { useDebounce, useStorage } from "@hyperlinkvr/react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Mesh, MeshStandardMaterial, Object3D } from "three";
+import { Mesh, MeshBasicMaterial, MeshStandardMaterial, Object3D } from "three";
 
 
 
@@ -180,7 +180,7 @@ export const useRetrievedAvatarProperty = <K extends keyof RetrievedAvatar>(prop
 
 // TODO: avatar slots
 
-export const useAvatarMaterials = (scene: Object3D) => {
+export const useAvatarMaterials = (scene?: Object3D | null) => {
     const [avatar] = useAvatar();
 
     const skin_material = useMemo(
@@ -215,15 +215,28 @@ export const useAvatarMaterials = (scene: Object3D) => {
         hair_material.color.setHex(avatar.hair_hex);
     }, [avatar.hair_hex, hair_material]);
 
+    const pencil_material = useMemo(
+        () =>
+            new MeshBasicMaterial({
+                color: 0x000000,
+            }),
+        []
+    );
+
     // TODO: combine these into a shared material somehow? maybe context instead of hook? idk
 
     const replacements = useMemo(() => ({
         "Mat_Skin": skin_material,
         "Mat_Hair": hair_material,
+        "Mat_Pencil": pencil_material
     }), []);
 
     // replace materials in the scene with the dynamic materials
     useEffect(() => {
+        if (!scene) {
+            return;
+        }
+
         scene.traverse((object) => {
             if (object instanceof Mesh) {
                 if (Array.isArray(object.material)) {

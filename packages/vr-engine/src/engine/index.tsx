@@ -1,30 +1,35 @@
+import { TabSessionProvider } from "@hyperlinkvr/react";
 import { Text } from "@react-three/drei";
 import { Canvas, RootState } from "@react-three/fiber";
 import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
+import { Physics } from "@react-three/rapier";
 import { createXRStore, PointerEvents, XR } from "@react-three/xr";
-import { TabSessionProvider } from "@hyperlinkvr/react";
 import { memo, useCallback, useEffect, useRef } from "react";
-import { ErrorBoundary, getErrorMessage, type FallbackProps } from "react-error-boundary";
-import { WebGLRenderer, Group } from "three";
+import {
+    ErrorBoundary,
+    getErrorMessage,
+    type FallbackProps
+} from "react-error-boundary";
+import { Group, NeutralToneMapping, WebGLRenderer } from "three";
 import { configureTextBuilder } from "troika-three-text";
 
 
 
 import { DOMMirror } from "../browser/DOMMirror";
 import { URLBar } from "../browser/URLBar";
+import { AvatarProvider, XROriginProvider } from "../contexts";
+import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
+import { SpectatorCamera } from "../misc";
+import { AvatarMirror } from "../misc/AvatarMirror";
 import { LogoOverlay } from "../misc/LogoOverlay";
 import { AvatarHand } from "../player/AvatarHand";
+import { Player } from "../player/Player";
 import { CameraSetup } from "../render/CameraSetup";
 import { CanvasResizer } from "../render/CanvasResizer";
-import { Player } from "../player/Player";
-import { AvatarProvider, XROriginProvider} from "../contexts";
-import { SpectatorCamera} from "../misc";
-import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
-import { EngineObjectSync } from "./EngineObjectSync";
-import { EngineObjectSpawner } from "./EngineObjectSpawner";
-import { Physics } from "@react-three/rapier";
 import { FloorCollider } from "../world/FloorCollider";
-import { AvatarMirror } from "../misc/AvatarMirror";
+import { Sky } from "../world/Sky";
+import { EngineObjectSpawner } from "./EngineObjectSpawner";
+import { EngineObjectSync } from "./EngineObjectSync";
 
 
 configureTextBuilder({
@@ -139,6 +144,9 @@ const VRHostInternal = memo(({ on_xr_ready }: { on_xr_ready: () => void }) => {
 
     const handle_created = useCallback(
         ({ gl }: RootState) => {
+            gl.toneMapping = NeutralToneMapping;
+            gl.toneMappingExposure = 1.0;
+
             gl.domElement.addEventListener(
                 "webglcontextlost",
                 (event) => {
@@ -183,13 +191,16 @@ const VRHostInternal = memo(({ on_xr_ready }: { on_xr_ready: () => void }) => {
 
                                     <Physics interpolate gravity={[0, -9.81, 0]}>
                                         <FloorCollider />
+                                        <Sky
+                                            sky_zenith_color={"#111111"}
+                                            sky_horizon_color={"#222222"}
+                                            ground_horizon_color={"#111111"}
+                                            ground_nadir_color={"#000000"}
+                                            sun_color={"#ffffff"}
+                                        />
 
                                         <XROriginProvider value={player_ref}>
                                             <Player ref={player_ref} />
-
-                                            <color attach="background" args={["#111111"]} />
-                                            <ambientLight intensity={0.5} />
-                                            <pointLight position={[10, 10, 10]} />
 
                                             <URLBar
                                                 position={[0, 3.25, -4]}

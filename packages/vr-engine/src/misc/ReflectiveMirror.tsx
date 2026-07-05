@@ -7,6 +7,7 @@ import { Reflector } from "three/examples/jsm/objects/Reflector";
 
 import { compute_layer_mask, Layer } from "../render";
 
+
 const RENDER_RES_WIDTH = 2048;
 const RENDER_RES_HEIGHT = 2048;
 
@@ -19,7 +20,7 @@ interface ReflectiveMirrorProps extends Omit<ComponentProps<"primitive">, "objec
 export const ReflectiveMirror = ({
     width,
     height,
-    tint_color = 0xcccccc,
+    tint_color = 0xb0b0b0,
     ...rest
 }: ReflectiveMirrorProps) => {
     const reflector = useMemo(() => {
@@ -59,12 +60,11 @@ export const ReflectiveMirror = ({
         const scene_cameras = scene.getObjectsByProperty("isCamera", true);
         for (const cam of scene_cameras) {
             if (cam.userData.is_spectator_camera) {
-                reflector.getReflectionCamera(cam as Camera).layers.mask = layer_mask;
+                reflector.getReflectionCamera(cam as Camera).layers.mask =
+                    layer_mask;
             }
         }
     });
 
-    return (
-        <primitive object={reflector} {...rest} />
-    );
+    return <primitive object={reflector} {...rest} />;
 };
