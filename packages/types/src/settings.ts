@@ -206,6 +206,11 @@ export const settings_def = build_settings({
     debug_show_expression_ui: {
         default_value: false,
         local_only: true
+    },
+
+    debug_rerenders: {
+        default_value: false,
+        local_only: true
     }
 });
 

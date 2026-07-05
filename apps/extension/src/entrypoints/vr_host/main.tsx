@@ -1,3 +1,5 @@
+import "@hyperlinkvr/vr-engine/dev-hook";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom/client";
 

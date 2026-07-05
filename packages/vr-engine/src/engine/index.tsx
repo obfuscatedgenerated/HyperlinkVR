@@ -15,6 +15,7 @@ import { DOMMirror } from "../browser/DOMMirror";
 import { URLBar } from "../browser/URLBar";
 import { AvatarProvider, XROriginProvider } from "../contexts";
 import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
+import { SceneDebug } from "../debug/SceneDebug";
 import { SpectatorCamera } from "../misc";
 import { AvatarMirror } from "../misc/AvatarMirror";
 import { LogoOverlay } from "../misc/LogoOverlay";
@@ -26,7 +27,6 @@ import { FloorCollider } from "../world/FloorCollider";
 import { Sky } from "../world/Sky";
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
-import { SceneDebug } from "../debug/SceneDebug";
 
 
 configureTextBuilder({

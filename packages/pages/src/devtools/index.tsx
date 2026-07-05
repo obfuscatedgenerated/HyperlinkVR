@@ -168,6 +168,10 @@ export const DevToolsPage = () => {
                             label="Show colliders"
                             setting_key="debug_colliders"
                         />
+                        <ToolSettingSwitch
+                            label="Show re-renders"
+                            setting_key="debug_rerenders"
+                        />
                     </ToolGroup>
 
                     <ToolGroup title="Expressions">

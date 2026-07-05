@@ -12,6 +12,7 @@ import {
     SpriteMaterial,
     Vector3
 } from "three";
+import { SceneRerenderScanner } from "./SceneRerenderScanner";
 
 const PointLightHelpers = () => {
     const scene = useThree((s) => s.scene);
@@ -169,6 +170,7 @@ export const SceneDebug = () => {
         <>
             {show_lights && <PointLightHelpers />}
             {show_groups && <GroupHelpers />}
+            <SceneRerenderScanner />
         </>
     );
 };
