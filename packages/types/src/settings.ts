@@ -186,6 +186,21 @@ export const settings_def = build_settings({
     debug_touch: {
         default_value: false,
         local_only: true
+    },
+
+    debug_lights: {
+        default_value: false,
+        local_only: true
+    },
+
+    debug_colliders: {
+        default_value: false,
+        local_only: true
+    },
+
+    debug_groups: {
+        default_value: false,
+        local_only: true
     }
 });
 

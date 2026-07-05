@@ -1,15 +1,11 @@
-import { TabSessionProvider } from "@hyperlinkvr/react";
+import { TabSessionProvider, useSetting } from "@hyperlinkvr/react";
 import { Text } from "@react-three/drei";
 import { Canvas, RootState } from "@react-three/fiber";
 import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
 import { Physics } from "@react-three/rapier";
 import { createXRStore, PointerEvents, XR } from "@react-three/xr";
 import { memo, useCallback, useEffect, useRef } from "react";
-import {
-    ErrorBoundary,
-    getErrorMessage,
-    type FallbackProps
-} from "react-error-boundary";
+import { ErrorBoundary, getErrorMessage, type FallbackProps } from "react-error-boundary";
 import { Group, NeutralToneMapping, WebGLRenderer } from "three";
 import { configureTextBuilder } from "troika-three-text";
 
@@ -30,6 +26,7 @@ import { FloorCollider } from "../world/FloorCollider";
 import { Sky } from "../world/Sky";
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
+import { SceneDebug } from "../debug/SceneDebug";
 
 
 configureTextBuilder({
@@ -161,6 +158,8 @@ const VRHostInternal = memo(({ on_xr_ready }: { on_xr_ready: () => void }) => {
         [on_xr_ready]
     );
 
+    const [show_colliders] = useSetting("debug_colliders");
+
     const player_ref = useRef<Group>(null);
 
     return (
@@ -182,6 +181,8 @@ const VRHostInternal = memo(({ on_xr_ready }: { on_xr_ready: () => void }) => {
                             <CameraSetup />
                             <CanvasResizer containerRef={canvas_container_ref} />
 
+                            <SceneDebug />
+
                             <XR store={xr_store}>
                                 <ErrorBoundary
                                     FallbackComponent={VRErrorFallback}
@@ -189,7 +190,7 @@ const VRHostInternal = memo(({ on_xr_ready }: { on_xr_ready: () => void }) => {
                                 >
                                     <PointerEvents />
 
-                                    <Physics interpolate gravity={[0, -9.81, 0]}>
+                                    <Physics interpolate gravity={[0, -9.81, 0]} debug={show_colliders}>
                                         <FloorCollider />
                                         <Sky
                                             sky_zenith_color={"#111111"}

@@ -154,6 +154,21 @@ export const DevToolsPage = () => {
                             setting_key="debug_ray_hits"
                         />
                     </ToolGroup>
+
+                    <ToolGroup title="Scene Debug">
+                        <ToolSettingSwitch
+                            label="Show point lights"
+                            setting_key="debug_lights"
+                        />
+                        <ToolSettingSwitch
+                            label="Show groups"
+                            setting_key="debug_groups"
+                        />
+                        <ToolSettingSwitch
+                            label="Show colliders"
+                            setting_key="debug_colliders"
+                        />
+                    </ToolGroup>
                 </div>
             </div>
         </main>
