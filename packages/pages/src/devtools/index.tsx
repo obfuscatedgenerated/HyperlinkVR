@@ -169,6 +169,13 @@ export const DevToolsPage = () => {
                             setting_key="debug_colliders"
                         />
                     </ToolGroup>
+
+                    <ToolGroup title="Expressions">
+                        <ToolSettingSwitch
+                            label="Show expression test UI"
+                            setting_key="debug_show_expression_ui"
+                        />
+                    </ToolGroup>
                 </div>
             </div>
         </main>

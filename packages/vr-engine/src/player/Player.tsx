@@ -11,6 +11,7 @@ import {
 } from "../contexts/PlayerExpressionContext";
 import { Avatar } from "./Avatar";
 import { WristWatch } from "./WristWatch";
+import { useSetting } from "@hyperlinkvr/react";
 
 
 const MouthTest = ({mouth_name, position}: {mouth_name: ExpressionMouth, position: [number, number, number]}) => {
@@ -50,24 +51,28 @@ export const Player = ({ref = null}: {ref?: React.Ref<Group>}) => {
     
     useXRControllerLocomotion(origin_ref);
 
+    const [show_expression_test] = useSetting("debug_show_expression_ui");
+
     return (
         <group name="Player">
             <PlayerExpressionProvider>
                 <XROrigin ref={origin_ref}>
                     <WristWatch />
 
-                    <Text
-                        position={[0, 2, -1]}
-                        fontSize={0.1}
-                        color="white"
-                        anchorX="center"
-                        anchorY="middle"
-                    >
-                        Mouth Expression Test
-                    </Text>
-                    <MouthTest mouth_name="default" position={[-0.5, 1.5, -1]} />
-                    <MouthTest mouth_name="big_smile" position={[0, 1.5, -1]} />
-                    <MouthTest mouth_name="wobbly_frown" position={[0.5, 1.5, -1]} />
+                    <group name="ExpressionTest" visible={show_expression_test}>
+                        <Text
+                            position={[0, 2, -1]}
+                            fontSize={0.1}
+                            color="white"
+                            anchorX="center"
+                            anchorY="middle"
+                        >
+                            Mouth Expression Test
+                        </Text>
+                        <MouthTest mouth_name="default" position={[-0.5, 1.5, -1]} />
+                        <MouthTest mouth_name="big_smile" position={[0, 1.5, -1]} />
+                        <MouthTest mouth_name="wobbly_frown" position={[0.5, 1.5, -1]} />
+                    </group>
                 </XROrigin>
 
                 <Avatar />
