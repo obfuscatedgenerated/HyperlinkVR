@@ -83,7 +83,7 @@ const TabButton = ({ label, active, on_click }: { label: string; active: boolean
             borderTopRadius={6}
             backgroundColor={active ? "#2563eb" : "#374151"}
             hover={{ backgroundColor: active ? "#2563eb" : "#4b5563" }}
-            onClick={on_click}
+            onPointerDown={on_click}
         >
             <Text fontSize={20} color={active ? "white" : "#d1d5db"}>
                 {label}
@@ -105,7 +105,7 @@ export const SettingsScreen = ({change_screen}: ScreenProps) => {
             flexDirection="column"
         >
             <Container flexDirection="row" alignItems="center" gap={16} marginBottom={24}>
-                <Button onClick={() => change_screen("home")}>
+                <Button onPointerDown={() => change_screen("home")}>
                     <ArrowLeft />
                 </Button>
 

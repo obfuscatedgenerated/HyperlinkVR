@@ -46,5 +46,3 @@ export const WatchUI = () => {
         </Container>
     );
 };
-
-// TODO: improve touch

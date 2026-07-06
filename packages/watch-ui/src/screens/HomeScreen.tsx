@@ -28,7 +28,7 @@ export const HomeScreen = ({change_screen}: ScreenProps) => {
 
             <Text>{session.url}</Text>
 
-            <Button onClick={() => change_screen("settings")}>
+            <Button onPointerDown={() => change_screen("settings")}>
                 <Text>Go to Settings</Text>
             </Button>
         </>
