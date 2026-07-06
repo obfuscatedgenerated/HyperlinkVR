@@ -4,7 +4,7 @@ import { CapsuleGeometry, Mesh, MeshBasicMaterial, OrthographicCamera, Perspecti
 
 
 
-import { useXROrigin } from "../contexts";
+import { usePlayerOrigin } from "../contexts";
 import { Layer } from "./layers";
 import { CameraControllerTransform, frame_transforms } from "./SpectatorCameraController";
 
@@ -197,7 +197,7 @@ export const MixedRealityCameraController = ({
 
     const render_size = useMemo(() => new Vector2(), []);
 
-    const xr_origin_ref = useXROrigin();
+    const xr_origin_ref = usePlayerOrigin();
 
     useFrame(({ gl, scene, camera }) => {
         gl.render(scene, camera);

@@ -1,9 +1,8 @@
 import { useThree } from "@react-three/fiber";
 import { useEffect } from "react";
 
-
-
 import { compute_layer_mask, Layer } from "./layers";
+import { get_united_head_camera } from "../util/get_head_cameras";
 
 
 const layer_mask = compute_layer_mask([
@@ -13,15 +12,15 @@ const layer_mask = compute_layer_mask([
 ]);
 
 export const CameraSetup = () => {
-    const { gl } = useThree();
+    const { gl, camera } = useThree();
 
     useEffect(() => {
         const set_layers = () => {
-            const xr_camera = gl.xr.getCamera();
-            xr_camera.layers.mask = layer_mask;
+            get_united_head_camera(gl, camera).layers.mask = layer_mask;
         };
 
         // set immediately in case remounted in vr, but listen for sessionstart to cover both cameras when vr starts
+        // for flat, this will never matter so can safely set the listeners
         set_layers();
         gl.xr.addEventListener("sessionstart", set_layers);
 

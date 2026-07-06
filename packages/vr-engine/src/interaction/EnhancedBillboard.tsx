@@ -6,7 +6,7 @@ import { Euler, Group, Vector3 } from "three";
 const _cam = new Vector3();
 const _e = new Euler();
 
-interface XRBillboardProps extends ComponentProps<"group"> {
+interface EnhancedBillboardProps extends ComponentProps<"group"> {
     ref?: React.Ref<Group | null>;
 
     lock_x?: boolean;
@@ -14,7 +14,7 @@ interface XRBillboardProps extends ComponentProps<"group"> {
     lock_z?: boolean;
 }
 
-export const XRBillboard = ({ ref = null, lock_x = false, lock_y = false, lock_z = false, children, ...rest }: XRBillboardProps) => {
+export const EnhancedBillboard = ({ ref = null, lock_x = false, lock_y = false, lock_z = false, children, ...rest }: EnhancedBillboardProps) => {
     const group_ref = useRef<Group>(null);
     useImperativeHandle(ref, () => group_ref.current!);
 

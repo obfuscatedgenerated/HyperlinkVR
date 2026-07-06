@@ -12,7 +12,7 @@ import {
 
 
 
-import { useXROrigin, XROriginContextType } from "../contexts";
+import { usePlayerOrigin, PlayerOriginContextType } from "../contexts";
 import { Eye } from "../types";
 import { Layer } from "./layers";
 
@@ -22,7 +22,7 @@ interface CameraControllerTransformParams {
     spec_camera: PerspectiveCamera;
     headset_cameras: WebXRArrayCamera;
     gl: WebGLRenderer;
-    xr_origin_ref: XROriginContextType;
+    xr_origin_ref: PlayerOriginContextType;
 }
 
 // mutate in place!
@@ -86,7 +86,7 @@ export const camera_controller_configs: Record<string, (...args: any[]) => Camer
 
 export const SpectatorCameraController = ({config = camera_controller_configs.first_person(), horizontal_fov = 50}: {config?: CameraControllerConfiguration, horizontal_fov?: number}) => {
     const { size, scene } = useThree();
-    const xr_origin_ref = useXROrigin();
+    const xr_origin_ref = usePlayerOrigin();
 
     const spec_camera = useMemo(() => {
         const cam = new PerspectiveCamera(50, 16 / 9, 0.1, 1000);

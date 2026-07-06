@@ -6,12 +6,14 @@ import ReactDOM from "react-dom/client";
 import "~/shared.css";
 
 import { LoadingSpinner, ProfilePicture} from "@hyperlinkvr/ui-dom";
-import { VRHost, xr_store } from "@hyperlinkvr/vr-engine";
+import { EngineHost, xr_store } from "@hyperlinkvr/vr-engine";
 
 import { DefaultContextProviders } from "~/contexts/DefaultContextProviders";
 import {useAuthSession} from "@hyperlinkvr/react";
 
 type LoadPhase = "idle" | "starting" | "started";
+
+// TODO: rename page to engine or host
 
 const LoginHint = () => {
     const auth_session = useAuthSession();
@@ -30,11 +32,11 @@ const SpectatorUI = () => {
 
     const [is_supported, setIsSupported] = useState<boolean | null>(false);
 
-    const [xr_ready, setXRReady] = useState(false);
+    const [on_ready, setXRReady] = useState(false);
     const handle_xr_ready = useCallback(() => setXRReady(true), []);
 
     const enter_vr = useCallback(() => {
-        if (starting_ref.current || !xr_ready) return;
+        if (starting_ref.current || !on_ready) return;
 
         starting_ref.current = true; // guard against double-entry
         xr_store
@@ -47,7 +49,7 @@ const SpectatorUI = () => {
             });
 
         setPhase("starting");
-    }, [xr_ready]);
+    }, [on_ready]);
 
     useEffect(() => {
         const check_support = async () => {
@@ -109,7 +111,7 @@ const SpectatorUI = () => {
 
                         <h1 className="font-title text-3xl">HyperlinkVR</h1>
 
-                        {xr_ready ? (
+                        {on_ready ? (
                             <button
                                 className="px-4 py-2 bg-blue-600 rounded-lg hover:not-disabled:bg-blue-700 transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
                                 onClick={enter_vr}
@@ -124,7 +126,7 @@ const SpectatorUI = () => {
                     </div>
                 )}
                 <div className="h-screen w-screen bg-black flex items-center justify-center">
-                    <VRHost on_xr_ready={handle_xr_ready} />
+                    <EngineHost mode="vr" on_xr_ready={handle_xr_ready} />
                 </div>
             </main>
         </DefaultContextProviders>
@@ -132,3 +134,5 @@ const SpectatorUI = () => {
 };
 
 ReactDOM.createRoot(document.getElementById("root")!).render(<SpectatorUI />);
+
+// TODO: button to enter flat mode

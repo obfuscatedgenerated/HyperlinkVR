@@ -6,6 +6,7 @@ import { Reflector } from "three/examples/jsm/objects/Reflector";
 
 
 import { compute_layer_mask, Layer } from "../render";
+import { get_head_cameras } from "../util/get_head_cameras";
 
 
 const RENDER_RES_WIDTH = 2048;
@@ -47,9 +48,7 @@ export const ReflectiveMirror = ({
 
     useFrame(({ camera, gl, scene }) => {
         // set both xr cameras to have the right layers masked (i.e. show head even though they cant see it through the headset)
-        const cameras = gl.xr.isPresenting
-            ? gl.xr.getCamera().cameras
-            : [camera];
+        const cameras = get_head_cameras(gl, camera);
         for (const cam of cameras) {
             reflector.getReflectionCamera(cam).layers.mask = layer_mask;
         }

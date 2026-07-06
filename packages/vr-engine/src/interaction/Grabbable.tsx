@@ -1,13 +1,10 @@
 import type { GrabCollider } from "@hyperlinkvr/vr-engine-schemas";
 import { useFrame } from "@react-three/fiber";
-import { useXRInputSourceState } from "@react-three/xr";
 import { ComponentProps, RefObject, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { BackSide, Box3, Group, Matrix4, Mesh, MeshBasicMaterial, Object3D, Quaternion, Sphere, Vector3 } from "three";
+import { BackSide, Box3, Group, Matrix4, Mesh, MeshBasicMaterial, Object3D, Quaternion, Raycaster, Sphere, Vector3 } from "three";
 
-
-
-import { useObjectRefsOptional, useXROrigin } from "../contexts";
-
+import { useObjectRefsOptional } from "../contexts";
+import { Hand, useHands } from "../input/hands";
 
 enum RigidBodyType {
     Fixed = 1,
@@ -168,59 +165,73 @@ const build_region_tester = (collider: GrabCollider | undefined, target: Object3
     }
 };
 
+const _rc = new Raycaster();
+const _ro = new Vector3();
+const _rd = new Vector3();
+const _rq = new Quaternion();
+const FWD = new Vector3(0, 0, -1);
+
+const ray_hits_within = (
+    rayNode: Object3D | null,
+    target: Object3D,
+    reach: number
+): boolean => {
+    if (!rayNode) return false;
+    rayNode.updateWorldMatrix(true, false);
+    _ro.setFromMatrixPosition(rayNode.matrixWorld);
+    _rd.copy(FWD).applyQuaternion(rayNode.getWorldQuaternion(_rq)).normalize();
+    _rc.set(_ro, _rd);
+    _rc.far = reach;
+    return _rc.intersectObject(target, true).length > 0;
+};
+
 export const useGrabbable = (
     target_ref: RefObject<Object3D | null>,
     {
         grab_distance = 0.4,
         nearby_trigger_distance = 0.4,
+        reach = 0, // 0 = ray-grab disabled (VR default), flat sets this to a distance
+        snap_to_hand = false,
         collider,
         on_nearby_start,
         on_nearby_end,
         on_trigger_start,
         on_trigger_end
     }: {
-        grab_distance?: number,
-        nearby_trigger_distance?: number,
-        collider?: GrabCollider,
-        on_nearby_start?: (input: XRInputSource) => void,
-        on_nearby_end?: (input: XRInputSource) => void,
-        on_trigger_start?: (input: XRInputSource) => void,
-        on_trigger_end?: (input: XRInputSource) => void
+        grab_distance?: number;
+        nearby_trigger_distance?: number;
+        reach?: number;
+        snap_to_hand?: boolean;
+        collider?: GrabCollider;
+        on_nearby_start?: (hand: Hand) => void;
+        on_nearby_end?: (hand: Hand) => void;
+        on_trigger_start?: (hand: Hand) => void;
+        on_trigger_end?: (hand: Hand | null) => void;
     } = {}
 ) => {
-    const leftController = useXRInputSourceState('controller', 'left');
-    const rightController = useXRInputSourceState('controller', 'right');
-    const xr_origin_ref = useXROrigin();
-
-    // nullable: only present when a physics ancestor (ObjectPhysics) populated it
-    // no ancestor -> null -> the transform-write path below runs
+    const hands = useHands();
     const body_ref = useObjectRefsOptional()?.rigid_body ?? null;
 
-    const grabbingSource = useRef<XRInputSource | null>(null);
+    const grabbingHand = useRef<Hand | null>(null);
     const offsetMatrix = useRef(new Matrix4());
     const tempMatrix = useRef(new Matrix4());
-    const nearbyInputs = useRef(new Set<XRInputSource>());
+    const nearbyHands = useRef(new Set<Hand>());
 
-    // throw-velocity bookkeeping
     const prevGrabPos = useRef(new Vector3());
     const grabVelocity = useRef(new Vector3());
 
-    // scratch for the move decompose, allocated once
     const parentInverse = useRef(new Matrix4());
     const _p = useRef(new Vector3());
     const _q = useRef(new Quaternion());
     const _s = useRef(new Vector3());
+    const _objPos = useRef(new Vector3());
     const _localHand = useRef(new Vector3());
 
-    // built lazily and cached
     const region_tester = useRef<RegionTester | null>(null);
     const region_source = useRef<GrabCollider | undefined>(undefined);
-
     const ensure_region_tester = (target: Object3D): RegionTester | null => {
-        // reuse unless the collider identity changed
-        if (region_tester.current && region_source.current === collider) {
+        if (region_tester.current && region_source.current === collider)
             return region_tester.current;
-        }
         const tester = build_region_tester(collider, target);
         if (tester) {
             region_tester.current = tester;
@@ -231,48 +242,27 @@ export const useGrabbable = (
 
     const is_trigger_held = useRef(false);
 
-    useFrame((state, delta, frame) => {
-        if (!frame || !target_ref.current || !xr_origin_ref?.current) return;
-
-        // force full parent chain to update world matrices, so the grab region and hand pose are in sync with the scene graph
+    useFrame((_state, delta) => {
+        if (!target_ref.current) return;
         target_ref.current.updateWorldMatrix(true, false);
-        xr_origin_ref.current.updateMatrixWorld();
-
-        const refSpace = state.gl.xr.getReferenceSpace();
-        if (!refSpace) return;
 
         const body = body_ref?.current ?? null;
         const region = ensure_region_tester(target_ref.current);
-
-        const controllers = [leftController, rightController].filter(Boolean);
-        const currentlyNear = new Set<XRInputSource>();
-
+        const currentlyNear = new Set<Hand>();
         let activeHandMatrix: Matrix4 | null = null;
 
-        // object origin, only used for the pre-load fallback + velocity seeding
-        const objPos = new Vector3().setFromMatrixPosition(
+        const objPos = _objPos.current.setFromMatrixPosition(
             target_ref.current.matrixWorld
         );
 
-        for (const controller of controllers) {
-            if (!controller) continue;
+        for (const hand of hands) {
+            const gripObj = hand.grip.current;
+            if (!gripObj) continue;
+            gripObj.updateWorldMatrix(true, false);
 
-            const gripSpace = controller.inputSource.gripSpace;
-            if (!gripSpace) continue;
+            const handMatrix = tempMatrix.current.copy(gripObj.matrixWorld); // already world-space
+            const handPos = _p.current.setFromMatrixPosition(handMatrix);
 
-            const pose = frame.getPose(gripSpace, refSpace);
-            if (!pose) continue;
-
-            // raw pose is relative to the origin, not world
-            // it touches anything that compares against target_ref.matrixWorld
-            const handMatrix = new Matrix4()
-                .fromArray(pose.transform.matrix)
-                .premultiply(xr_origin_ref.current.matrixWorld);
-
-            const handPos = new Vector3().setFromMatrixPosition(handMatrix);
-
-            // distance to the grab region (0 inside), falling back to origin
-            // distance only until the region tester is ready (geometry load)
             let distance: number;
             if (region) {
                 _localHand.current.copy(handPos);
@@ -283,40 +273,36 @@ export const useGrabbable = (
             }
 
             if (distance < nearby_trigger_distance) {
-                currentlyNear.add(controller.inputSource);
-                if (!nearbyInputs.current.has(controller.inputSource)) {
-                    on_nearby_start?.(controller.inputSource);
-                }
+                currentlyNear.add(hand);
+                if (!nearbyHands.current.has(hand)) on_nearby_start?.(hand);
             }
 
-            const isSqueezing =
-                controller.gamepad["xr-standard-squeeze"]?.state === "pressed";
+            const proximity_ok = distance < grab_distance;
+            const ray_ok =
+                hand.grab.just_pressed &&
+                reach > 0 &&
+                ray_hits_within(hand.ray.current, target_ref.current, reach);
 
             if (
-                isSqueezing &&
-                !grabbingSource.current &&
-                distance < grab_distance
+                hand.grab.pressed &&
+                !grabbingHand.current &&
+                (proximity_ok || ray_ok)
             ) {
-                const inverseHand = handMatrix.clone().invert();
-                offsetMatrix.current.multiplyMatrices(
-                    inverseHand,
-                    target_ref.current.matrixWorld
-                );
-                grabbingSource.current = controller.inputSource;
-
-                // seed velocity tracking so the first frame's throw isn't a spike
+                if (ray_ok || snap_to_hand) {
+                    offsetMatrix.current.identity(); // snap to carry slot (TODO: grab_offset)
+                } else {
+                    offsetMatrix.current.multiplyMatrices(
+                        // keep captured relative pose (VR touch)
+                        handMatrix.clone().invert(),
+                        target_ref.current.matrixWorld
+                    );
+                }
+                grabbingHand.current = hand;
                 prevGrabPos.current.copy(objPos);
                 grabVelocity.current.set(0, 0, 0);
-
-                // hand physics control over to us while held
                 body?.setBodyType(RigidBodyType.KinematicPositionBased, true);
-            } else if (
-                !isSqueezing &&
-                grabbingSource.current === controller.inputSource
-            ) {
-                grabbingSource.current = null;
-
-                // give it back to the sim and throw with the tracked velocity
+            } else if (!hand.grab.pressed && grabbingHand.current === hand) {
+                grabbingHand.current = null;
                 if (body) {
                     body.setBodyType(RigidBodyType.Dynamic, true);
                     body.setLinvel(
@@ -330,41 +316,34 @@ export const useGrabbable = (
                 }
             }
 
-            if (grabbingSource.current === controller.inputSource) {
+            if (grabbingHand.current === hand) {
                 activeHandMatrix = handMatrix;
-
-                const trigger_pressed = controller.gamepad["xr-standard-trigger"]?.state === "pressed";
-                if (trigger_pressed && !is_trigger_held.current) {
-                    console.log("Trigger pressed on grab");
+                if (hand.trigger.just_pressed) {
                     is_trigger_held.current = true;
-                    on_trigger_start?.(controller.inputSource);
-                } else if (!trigger_pressed && is_trigger_held.current) {
+                    on_trigger_start?.(hand);
+                } else if (hand.trigger.just_released) {
                     is_trigger_held.current = false;
-                    on_trigger_end?.(controller.inputSource);
+                    on_trigger_end?.(hand);
                 }
             }
         }
 
-        if (!grabbingSource.current && is_trigger_held.current) {
+        if (!grabbingHand.current && is_trigger_held.current) {
             is_trigger_held.current = false;
-            on_trigger_end?.(grabbingSource.current!);
+            on_trigger_end?.(null);
         }
 
-        for (const input of nearbyInputs.current) {
-            if (!currentlyNear.has(input)) on_nearby_end?.(input);
-        }
-        nearbyInputs.current = currentlyNear;
+        for (const h of nearbyHands.current)
+            if (!currentlyNear.has(h)) on_nearby_end?.(h);
+        nearbyHands.current = currentlyNear;
 
-        if (grabbingSource.current && activeHandMatrix) {
+        // ---- move / throw tail: UNCHANGED from yours, only grabbingSource → grabbingHand ----
+        if (grabbingHand.current && activeHandMatrix) {
             const newWorldMatrix = tempMatrix.current.multiplyMatrices(
                 activeHandMatrix,
                 offsetMatrix.current
             );
-
-            // decompose the desired WORLD transform (needed for both paths + velocity)
             newWorldMatrix.decompose(_p.current, _q.current, _s.current);
-
-            // track world velocity for a throw on release
             grabVelocity.current
                 .copy(_p.current)
                 .sub(prevGrabPos.current)
@@ -372,8 +351,6 @@ export const useGrabbable = (
             prevGrabPos.current.copy(_p.current);
 
             if (body) {
-                // dynamic bodies can't be moved by writing three.js transforms --
-                // drive the kinematic body in world space and let it own the mesh
                 body.setNextKinematicTranslation({
                     x: _p.current.x,
                     y: _p.current.y,
@@ -386,8 +363,6 @@ export const useGrabbable = (
                     w: _q.current.w
                 });
             } else {
-                // no physics: convert to local space relative to the parent
-                // (no-op at scene root) and write the transform directly
                 if (target_ref.current.parent) {
                     target_ref.current.parent.updateWorldMatrix(true, false);
                     parentInverse.current
@@ -418,10 +393,10 @@ interface GrabbableProps extends ComponentProps<"group"> {
     // undefined defaults to auto bounding box
     collider?: GrabCollider;
     // TODO: add remaining props from useGrabbable and GrabbableInteraction
-    on_nearby_start?: (input: XRInputSource) => void;
-    on_nearby_end?: (input: XRInputSource) => void;
-    on_trigger_start?: (input: XRInputSource) => void;
-    on_trigger_end?: (input: XRInputSource) => void; // TODO: unite these with the wider controller button interaction
+    on_nearby_start?: (input: Hand) => void;
+    on_nearby_end?: (input: Hand | null) => void;
+    on_trigger_start?: (input: Hand) => void;
+    on_trigger_end?: (input: Hand | null) => void; // TODO: unite these with the wider controller button interaction?
 }
 
 export const Grabbable = (props: GrabbableProps) => {
@@ -435,7 +410,7 @@ export const Grabbable = (props: GrabbableProps) => {
     const [is_nearby, setIsNearby] = useState(false);
 
     const handle_nearby_start = useCallback(
-        (input: XRInputSource) => {
+        (input: Hand) => {
             setIsNearby(true);
             props.on_nearby_start?.(input);
         },
@@ -443,7 +418,7 @@ export const Grabbable = (props: GrabbableProps) => {
     );
 
     const handle_nearby_end = useCallback(
-        (input: XRInputSource) => {
+        (input: Hand | null) => {
             setIsNearby(false);
             props.on_nearby_end?.(input);
         },

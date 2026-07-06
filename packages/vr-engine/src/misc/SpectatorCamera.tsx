@@ -11,7 +11,7 @@ import { LayerGroup } from "../render/LayerGroup";
 import { Layer } from "../render/layers";
 import { MixedRealityCameraController } from "../render/MixedRealityCameraController";
 import { camera_controller_configs, SpectatorCameraController } from "../render/SpectatorCameraController";
-import { XRBillboard } from "../interaction";
+import { EnhancedBillboard } from "../interaction";
 
 
 const camera = new URL("../../assets/misc/camera/camera.glb", import.meta.url).href;
@@ -55,12 +55,12 @@ export const SpectatorCamera = () => {
                         on_trigger_start={() => setFollowPlayer(!follow_player)}
                     >
                         {mode !== "mixed_reality" && (
-                            <XRBillboard
+                            <EnhancedBillboard
                                 position={[0, -0.1, 0]}
                                 userData={{_exclude_from_bounds: true}}
                             >
                                 <Text fontSize={0.025} textAlign="center">{follow_player ? "Following" : "Static"}{"\n"}Grab and press trigger to toggle</Text>
-                            </XRBillboard>
+                            </EnhancedBillboard>
                         )}
 
                         <primitive object={camera_scene} />

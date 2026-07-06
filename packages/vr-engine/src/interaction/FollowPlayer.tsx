@@ -2,7 +2,7 @@ import { useFrame } from "@react-three/fiber";
 import { ComponentProps, useImperativeHandle, useRef } from "react";
 import { Group, Matrix4, Object3D } from "three";
 
-import { useXROrigin } from "../contexts";
+import { usePlayerOrigin } from "../contexts";
 
 const _tmp = new Matrix4();
 
@@ -30,7 +30,7 @@ export const FollowPlayer = ({
     children,
     ...rest
 }: FollowPlayerProps) => {
-    const origin = useXROrigin();
+    const origin = usePlayerOrigin();
 
     const frame_ref = useRef<Group>(null);
     const offset_ref = useRef<Group>(null);
