@@ -1,6 +1,6 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
-import { Group, Matrix4, Object3D, Quaternion, Vector3 } from "three";
+import { Euler, Group, Matrix4, Object3D, Quaternion, Vector3 } from "three";
 
 import { usePlayerOrigin } from "../../../contexts";
 import {
@@ -12,18 +12,15 @@ import {
 } from "../../hands";
 import { useFlatInput } from "./bindings";
 
-// carry slot: where held objects and the visible hand sit, in camera space
+// carry slot: where held objects and the visible active hand sit, in camera space
 const CARRY_OFFSET: [number, number, number] = [0.25, -0.25, -0.5];
 
-// resting pose for the cosmetic left hand, in ORIGIN space (not camera space,
-// so it hangs at the hip instead of floating in front of the face)
-const PASSIVE_HAND_OFFSET: [number, number, number] = [-0.25, 0.9, -0.15];
+const PASSIVE_HAND_OFFSET = new Vector3(-0.22, -0.35, -0.45); // left, down, forward of the head
+const PASSIVE_HAND_REST_EULER = new Euler(-Math.PI / 6, 0.15, Math.PI / 12); // wrist tilt so the watch faces up-ish
 
 const UNIT_SCALE = new Vector3(1, 1, 1);
 const scratch_world_matrix = new Matrix4();
 
-// writes a WORLD transform onto a node regardless of where it's parented,
-// so mounting the publisher under the origin can't double-apply the origin.
 const write_world_transform = (
     node: Object3D,
     world_position: Vector3,
@@ -48,9 +45,7 @@ export const FlatHandsPublisher = () => {
     const set_hands = useSetHands();
     const { camera } = useThree();
     const flat_input = useFlatInput();
-    const origin_ref = usePlayerOrigin();
 
-    // ---- active right hand: camera ray + carry slot + real buttons ----
     const active_grip = useRef<Group>(null);
     const active_ray = useRef<Group>(null);
     const active_pose = useRef<HandPose>({ kind: "curl", amount: 0 });
@@ -69,10 +64,9 @@ export const FlatHandsPublisher = () => {
         [active_grab, active_trigger]
     );
 
-    // ---- passive left hand: cosmetic only. no ray, buttons never update ----
     const passive_grip = useRef<Group>(null);
     const passive_ray = useRef<Object3D | null>(null); // stays null forever
-    const passive_pose = useRef<HandPose>({ kind: "curl", amount: 0.2 });
+    const passive_pose = useRef<HandPose>({ kind: "curl", amount: 0.15 });
     const passive_grab = useMemo(make_button_state, []);
     const passive_trigger = useMemo(make_button_state, []);
 
@@ -88,8 +82,6 @@ export const FlatHandsPublisher = () => {
         [passive_grab, passive_trigger]
     );
 
-    // publish on mount / hand identity change — a state update, so render-time
-    // consumers (FlatAvatarHands, the watch) actually re-render when hands exist
     useEffect(() => {
         set_hands([active_hand, passive_hand]);
         return () => set_hands([]);
@@ -100,6 +92,9 @@ export const FlatHandsPublisher = () => {
             camera_world_position: new Vector3(),
             camera_world_quaternion: new Quaternion(),
             carry_world_position: new Vector3(),
+            camera_yaw_euler: new Euler(0, 0, 0, "YXZ"),
+            passive_yaw_quat: new Quaternion(),
+            passive_rest_quat: new Quaternion(),
             passive_world_position: new Vector3(),
             passive_world_quaternion: new Quaternion()
         }),
@@ -110,9 +105,7 @@ export const FlatHandsPublisher = () => {
         camera.getWorldPosition(scratch.camera_world_position);
         camera.getWorldQuaternion(scratch.camera_world_quaternion);
 
-        // ray: from the eye, along the look direction (the crosshair IS the ray).
-        // kept as a node so Grabbable's ray-grab can raycast along it, even
-        // though UI clicking uses R3F's built-in camera events, not this.
+        // crosshair ray
         if (active_ray.current) {
             write_world_transform(
                 active_ray.current,
@@ -121,7 +114,6 @@ export const FlatHandsPublisher = () => {
             );
         }
 
-        // grip: the carry slot, a fixed offset in front of the camera
         if (active_grip.current) {
             scratch.carry_world_position
                 .set(...CARRY_OFFSET)
@@ -133,16 +125,26 @@ export const FlatHandsPublisher = () => {
             );
         }
 
-        // passive left: resting pose in origin space, so it walks with the
-        // player but doesn't swing with the view
-        if (passive_grip.current && origin_ref?.current) {
-            origin_ref.current.updateWorldMatrix(true, false);
-            scratch.passive_world_position
-                .set(...PASSIVE_HAND_OFFSET)
-                .applyMatrix4(origin_ref.current.matrixWorld);
-            origin_ref.current.getWorldQuaternion(
-                scratch.passive_world_quaternion
+        // passive left hand follows camera yaw and tips a little
+        if (passive_grip.current) {
+            scratch.camera_yaw_euler.setFromQuaternion(
+                scratch.camera_world_quaternion,
+                "YXZ"
             );
+            scratch.camera_yaw_euler.x = 0;
+            scratch.camera_yaw_euler.z = 0;
+            scratch.passive_yaw_quat.setFromEuler(scratch.camera_yaw_euler);
+
+            scratch.passive_world_position
+                .copy(PASSIVE_HAND_OFFSET)
+                .applyQuaternion(scratch.passive_yaw_quat)
+                .add(scratch.camera_world_position);
+
+            scratch.passive_rest_quat.setFromEuler(PASSIVE_HAND_REST_EULER);
+            scratch.passive_world_quaternion
+                .copy(scratch.passive_yaw_quat)
+                .multiply(scratch.passive_rest_quat);
+
             write_world_transform(
                 passive_grip.current,
                 scratch.passive_world_position,
@@ -156,7 +158,7 @@ export const FlatHandsPublisher = () => {
             kind: "curl",
             amount: active_grab.pressed ? 1.2 : 0
         };
-        // passive hand: buttons deliberately never updated, pose stays relaxed
+        // TODO: differentiate grab and point pose. vr should grab pose too
     });
 
     return (
@@ -167,4 +169,3 @@ export const FlatHandsPublisher = () => {
         </>
     );
 };
-

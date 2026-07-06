@@ -4,7 +4,35 @@ import { Object3D, Raycaster, Vector2 } from "three";
 
 
 export const FlatClickRaycaster = () => {
-    const { gl, camera, scene } = useThree();
+    const { gl, camera, scene, events } = useThree();
+
+    useEffect(() => {
+        const canvas = gl.domElement;
+
+        const sync = () => {
+            const locked = document.pointerLockElement === canvas;
+            if (locked) {
+                // pointer locked, let us handle events ourselves
+                events.disconnect?.();
+            } else {
+                // pointer freed, restore control to the default handlers so the user can click things
+                if (!events.connected) {
+                    events.connect?.(canvas);
+                }
+            }
+        };
+
+        document.addEventListener("pointerlockchange", sync);
+        sync();
+
+        return () => {
+            document.removeEventListener("pointerlockchange", sync);
+            if (!events.connected) {
+                events.connect?.(canvas);
+            }
+        };
+    }, [events, gl]);
+
 
     useEffect(() => {
         const canvas = gl.domElement;

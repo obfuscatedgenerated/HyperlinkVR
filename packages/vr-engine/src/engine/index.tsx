@@ -1,6 +1,6 @@
 import { TabSessionProvider, useSetting } from "@hyperlinkvr/react";
 import { Text } from "@react-three/drei";
-import { Canvas, RootState } from "@react-three/fiber";
+import { Canvas, RootState, RootStore } from "@react-three/fiber";
 import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
 import { Physics } from "@react-three/rapier";
 import { createXRStore, XR } from "@react-three/xr";
@@ -19,6 +19,7 @@ import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
 import { SceneDebug } from "../debug/SceneDebug";
 import { HandsProvider } from "../input/hands";
 import { Crosshair } from "../input/impl/flat/Crosshair";
+import { FlatClickRaycaster } from "../input/impl/flat/FlatClickRaycaster";
 import { SpectatorCamera } from "../misc";
 import { AvatarMirror } from "../misc/AvatarMirror";
 import { LogoOverlay } from "../misc/LogoOverlay";
@@ -30,7 +31,6 @@ import { FloorCollider } from "../world/FloorCollider";
 import { Sky } from "../world/Sky";
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
-import { FlatClickRaycaster } from "../input/impl/flat/FlatClickRaycaster";
 
 
 configureTextBuilder({
