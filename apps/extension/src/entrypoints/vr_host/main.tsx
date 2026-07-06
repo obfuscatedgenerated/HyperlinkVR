@@ -81,6 +81,13 @@ const SpectatorUI = () => {
         };
     }, []);
 
+    const [mode, setMode] = useState<"vr" | "flat">("vr");
+
+    const play_flat = useCallback(() => {
+        setMode("flat");
+        setPhase("started");
+    }, []);
+
     if (is_supported === null) {
         return (
             <div className="bg-black/80 backdrop-blur-md absolute inset-0 flex flex-col items-center justify-center z-50 text-white gap-8">
@@ -111,22 +118,33 @@ const SpectatorUI = () => {
 
                         <h1 className="font-title text-3xl">HyperlinkVR</h1>
 
-                        {on_ready ? (
+                        <div className="flex flex-col gap-4 w-64 items-center justify-center">
+                            {on_ready ? (
+                                // TODO: we really need a button component
+                                <button
+                                    className="w-full px-4 py-2 bg-blue-600 rounded-lg hover:not-disabled:bg-blue-700 transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
+                                    onClick={enter_vr}
+                                    disabled={
+                                        !is_supported || phase === "starting"
+                                    }>
+                                    {button_text}
+                                </button>
+                            ) : (
+                                <LoadingSpinner className="my-2" />
+                            )}
+
                             <button
-                                className="px-4 py-2 bg-blue-600 rounded-lg hover:not-disabled:bg-blue-700 transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
-                                onClick={enter_vr}
-                                disabled={
-                                    !is_supported || phase === "starting"
-                                }>
-                                {button_text}
+                                className="w-full px-4 py-2 bg-blue-600 rounded-lg hover:not-disabled:bg-blue-700 transition text-xl font-semibold cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
+                                onClick={play_flat}
+                                disabled={phase === "starting" || mode === "flat"}
+                            >
+                                Play in flat mode
                             </button>
-                        ) : (
-                            <LoadingSpinner />
-                        )}
+                        </div>
                     </div>
                 )}
                 <div className="h-screen w-screen bg-black flex items-center justify-center">
-                    <EngineHost mode="vr" on_xr_ready={handle_xr_ready} />
+                    <EngineHost mode={mode} on_xr_ready={handle_xr_ready} />
                 </div>
             </main>
         </DefaultContextProviders>

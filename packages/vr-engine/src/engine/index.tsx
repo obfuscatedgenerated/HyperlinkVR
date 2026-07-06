@@ -29,6 +29,7 @@ import { FloorCollider } from "../world/FloorCollider";
 import { Sky } from "../world/Sky";
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
+import { Crosshair } from "../input/impl/flat/Crosshair";
 
 
 configureTextBuilder({
@@ -223,6 +224,7 @@ const EngineHostInternal = memo(({ on_ready, mode }: { on_ready: () => void, mod
                         ref={canvas_container_ref}
                     >
                         <LogoOverlay />
+                        {mode === "flat" && <Crosshair />}
 
                         <AvatarProvider>
                             <HandsProvider>
