@@ -1,10 +1,12 @@
 import { useSetting } from "@hyperlinkvr/react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { PointerCursorModel, PointerRayModel, useRayPointer, useXRInputSourceState, XRSpace } from "@react-three/xr";
-import { useMemo, useRef, type RefObject } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { Group, Object3D, Quaternion, Raycaster, Vector3 } from "three";
 
-import { make_button_state, update_button_state, usePublishHands, type Hand, type HandPose } from "../../hands";
+
+
+import { make_button_state, update_button_state, useSetHands, type Hand, type HandPose } from "../../hands";
 
 
 const useXRHandSlot = (handedness: "left" | "right") => {
@@ -68,7 +70,6 @@ const WATCH_PROXIMITY_CURL_DISTANCE = 0.3;
 const FULL_CURL = 1.2;
 
 export const XRHandsPublisher = () => {
-    const published_hands = usePublishHands();
     const { scene } = useThree();
     const [watch_hand] = useSetting("watch_hand");
 
@@ -161,12 +162,22 @@ export const XRHandsPublisher = () => {
 
             slot.hand.pose.current = { kind: "curl", amount: curl_amount };
         }
-
-        // publish in place so any render-time reference to the array stays valid
-        published_hands.current.length = 0;
-        if (left_slot.state) published_hands.current.push(left_slot.hand);
-        if (right_slot.state) published_hands.current.push(right_slot.hand);
     });
+
+    const set_hands = useSetHands();
+    useEffect(() => {
+        const connected: Hand[] = [];
+        if (left_slot.state) connected.push(left_slot.hand);
+        if (right_slot.state) connected.push(right_slot.hand);
+        set_hands(connected);
+        return () => set_hands([]);
+    }, [
+        left_slot.state,
+        right_slot.state,
+        left_slot.hand,
+        right_slot.hand,
+        set_hands
+    ]);
 
     return (
         <>

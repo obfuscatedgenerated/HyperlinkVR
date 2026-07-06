@@ -1,6 +1,10 @@
 import { useThree } from "@react-three/fiber";
 import { useEffect } from "react";
 
+
+
+
+
 // TODO: controller support
 
 export interface FlatInputState {
@@ -12,6 +16,8 @@ export interface FlatInputState {
     watch_presented: boolean; // tab to open watch which also frees cursor
     cursor_free: boolean; // set true if watch presented or explictly freed with alt
 }
+// TODO: crouch
+// TODO: sprint both here and in xr
 
 const state: FlatInputState = {
     move: { x: 0, y: 0 },
@@ -80,12 +86,18 @@ export const useFlatInput = (): FlatInputState => {
             state.look.y += e.movementY;
         };
 
-        // click canvas to (re)capture look, buttons map to use/grab while locked
+        // click canvas to (re)capture look. while locked, RMB = grab, LMB = use
+        // world-UI clicks are handled separately by FlatClickRaycaster
         const on_down = (e: MouseEvent) => {
-            if (document.pointerLockElement !== canvas && !state.cursor_free) {
+            const locked = document.pointerLockElement === canvas;
+            if (!locked && !state.cursor_free) {
                 canvas.requestPointerLock();
                 return;
             }
+
+            // only arm world buttons while actually locked
+            if (!locked) return;
+
             if (e.button === 0) state.use = true;
             if (e.button === 2) state.grab = true;
         };

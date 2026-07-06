@@ -2,17 +2,10 @@ import { useSetting } from "@hyperlinkvr/react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useTouchPointer, useXRInputSourceStateContext } from "@react-three/xr";
-import { useEffect, useMemo, useRef } from "react";
-import {
-    ArrowHelper,
-    Group,
-    Mesh,
-    MeshBasicMaterial,
-    Object3D,
-    Quaternion,
-    SphereGeometry,
-    Vector3
-} from "three";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { ArrowHelper, Group, Mesh, MeshBasicMaterial, Object3D, Quaternion, SphereGeometry, Vector3 } from "three";
+
+
 
 import { useAvatarMaterials } from "../contexts/AvatarContext";
 import { Hand, useHands } from "../input/hands";
@@ -46,24 +39,25 @@ const pose_to_curl = (p: Hand["pose"]["current"]): number => {
 const TOUCH_HOVER_RADIUS = 0.04;
 const TOUCH_DOWN_RADIUS = 0.01;
 
-export const AvatarHand = () => {
-    const state = useXRInputSourceStateContext("controller");
-    const handedness = state.inputSource.handedness;
-
-    const hands = useHands();
-
+const AvatarHandModel = ({
+    hand,
+    handedness,
+    touch_origin_ref,
+    on_touch_glue,
+    children,
+    auto_position = true
+}: {
+    hand: Hand | null;
+    handedness: "left" | "right";
+    touch_origin_ref?: React.RefObject<Group | null>;
+    on_touch_glue?: (index_tip_bone: Object3D) => void;
+    children?: React.ReactNode;
+    auto_position?: boolean;
+}) => {
     const { scene: hand_scene } = useGLTF(
         handedness === "left" ? left_hand : right_hand
     );
     useAvatarMaterials(hand_scene);
-
-    const touchOriginRef = useRef<Group>(null);
-    useTouchPointer(touchOriginRef, state, {
-        hoverRadius: TOUCH_HOVER_RADIUS,
-        downRadius: TOUCH_DOWN_RADIUS
-    });
-
-    const [debug_touch] = useSetting("debug_touch");
 
     const curlRef = useRef(0);
     const chainsRef = useRef<Record<string, ChainLink[]> | null>(null);
@@ -121,77 +115,35 @@ export const AvatarHand = () => {
             cumulative: new Quaternion(),
             offset: new Vector3(),
             thumbGoal: new Quaternion(),
-            touchDebugArrow: new ArrowHelper(
-                      new Vector3(0, 0, -1), // default forward
-                      new Vector3(),
-                      0.05,
-                      0x00ff00 // green
-            ),
-            touchDebugHoverSphere: (() => {
-                const geometry = new SphereGeometry(TOUCH_HOVER_RADIUS, 16, 16);
-                const material = new MeshBasicMaterial({
-                    color: 0xff00ff,
-                    wireframe: true,
-                    transparent: true,
-                    opacity: 0.5
-                });
-                return new Mesh(geometry, material);
-            })(),
-            touchDebugDownSphere: (() => {
-                const geometry = new SphereGeometry(TOUCH_DOWN_RADIUS, 16, 16);
-                const material = new MeshBasicMaterial({
-                    color: 0x00ffff,
-                    wireframe: true,
-                    transparent: true,
-                    opacity: 0.5
-                });
-                return new Mesh(geometry, material);
-            })()
         }),
         []
     );
 
+    const root_ref = useRef<Group | null>(null);
     useFrame(() => {
         if (!hand_scene || !chainsRef.current) return;
 
-        const hand = hands.find((h) => h.handedness === handedness) ?? null;
-
-        // glue the touch ray to the fingertip
-        if (touchOriginRef.current && touchOriginRef.current.parent) {
-            const indexTipBone = hand_scene.getObjectByName(
-                "index-finger-phalanx-distal"
-            );
-            if (indexTipBone) {
-                indexTipBone.getWorldPosition(math.rayPos);
-                indexTipBone.getWorldQuaternion(math.rayQuat);
-                touchOriginRef.current.parent.worldToLocal(math.rayPos);
-                touchOriginRef.current.parent.getWorldQuaternion(
-                    math.cumulative
-                );
-                math.rayQuat.premultiply(math.cumulative.invert());
-                touchOriginRef.current.position.copy(math.rayPos);
-                touchOriginRef.current.quaternion.copy(math.rayQuat);
-                touchOriginRef.current.translateZ(-0.015);
-                touchOriginRef.current.updateMatrixWorld(true);
-
-                if (debug_touch) {
-                    const touch_direction = new Vector3(0, 0, -1)
-                        .applyQuaternion(touchOriginRef.current.quaternion)
-                        .normalize();
-
-                    math.touchDebugArrow.setDirection(touch_direction);
-                    math.touchDebugArrow.position.copy(
-                        touchOriginRef.current.position
-                    );
-
-                    math.touchDebugHoverSphere.position.copy(
-                        touchOriginRef.current.position
-                    );
-                    math.touchDebugDownSphere.position.copy(
-                        touchOriginRef.current.position
-                    );
-                }
+        // follow the world-space grip node, and write world matrix directly so being a child of the origin doesn't double-apply the origin transform
+        const render_root = root_ref.current;
+        const grip_node = hand?.grip.current ?? null;
+        if (auto_position && render_root && grip_node) {
+            grip_node.updateWorldMatrix(true, false);
+            render_root.matrixAutoUpdate = false;
+            if (render_root.parent) {
+                render_root.parent.updateWorldMatrix(true, false);
+                render_root.matrix
+                    .copy(render_root.parent.matrixWorld)
+                    .invert()
+                    .multiply(grip_node.matrixWorld);
+            } else {
+                render_root.matrix.copy(grip_node.matrixWorld);
             }
+            render_root.matrixWorldNeedsUpdate = true;
+        }
+
+        if (touch_origin_ref?.current && on_touch_glue) {
+            const index_tip_bone = hand_scene.getObjectByName("index-finger-phalanx-distal");
+            if (index_tip_bone) on_touch_glue(index_tip_bone);
         }
 
         // curl comes from hand pose, but smoothed to animate
@@ -269,19 +221,131 @@ export const AvatarHand = () => {
     });
 
     return (
-        <LayerGroup layers={[Layer.PlayerModel_TorsoAndHands]}>
+        <LayerGroup layers={[Layer.PlayerModel_TorsoAndHands]} ref={root_ref}>
             <group rotation={[Math.PI / 2, 0, 0]} pointerEvents="none">
                 <primitive object={hand_scene} />
             </group>
-            <group ref={touchOriginRef} />
+            <group ref={touch_origin_ref} />
+            {children}
+        </LayerGroup>
+    );
+};
+
+export const XRAvatarHand = () => {
+    const input_source_state = useXRInputSourceStateContext("controller");
+    const handedness = input_source_state.inputSource.handedness;
+
+    const hands = useHands();
+
+    const touch_origin_ref = useRef<Group>(null);
+    useTouchPointer(touch_origin_ref, input_source_state, {
+        hoverRadius: TOUCH_HOVER_RADIUS,
+        downRadius: TOUCH_DOWN_RADIUS
+    });
+
+    const [debug_touch] = useSetting("debug_touch");
+
+    const glue = useMemo(
+        () => ({
+            fingertip_position: new Vector3(),
+            fingertip_quaternion: new Quaternion(),
+            parent_quaternion: new Quaternion(),
+            debug_direction: new Vector3(),
+            debug_arrow: new ArrowHelper(
+                new Vector3(0, 0, -1),
+                new Vector3(),
+                0.05,
+                0x00ff00
+            ),
+            debug_hover_sphere: new Mesh(
+                new SphereGeometry(TOUCH_HOVER_RADIUS, 16, 16),
+                new MeshBasicMaterial({
+                    color: 0xff00ff,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.5
+                })
+            ),
+            debug_down_sphere: new Mesh(
+                new SphereGeometry(TOUCH_DOWN_RADIUS, 16, 16),
+                new MeshBasicMaterial({
+                    color: 0x00ffff,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.5
+                })
+            )
+        }),
+        []
+    );
+
+    // glue touch origin to index fingertip
+    const glue_touch_origin = useCallback(
+        (index_tip_bone: Object3D) => {
+            const touch_origin = touch_origin_ref.current;
+            if (!touch_origin || !touch_origin.parent) return;
+
+            index_tip_bone.updateWorldMatrix(true, false);
+            index_tip_bone.getWorldPosition(glue.fingertip_position);
+            index_tip_bone.getWorldQuaternion(glue.fingertip_quaternion);
+
+            touch_origin.parent.worldToLocal(glue.fingertip_position);
+            touch_origin.parent.getWorldQuaternion(glue.parent_quaternion);
+            glue.fingertip_quaternion.premultiply(
+                glue.parent_quaternion.invert()
+            );
+
+            touch_origin.position.copy(glue.fingertip_position);
+            touch_origin.quaternion.copy(glue.fingertip_quaternion);
+            touch_origin.translateZ(-0.015);
+            touch_origin.updateMatrixWorld(true);
+
+            if (debug_touch) {
+                glue.debug_direction
+                    .set(0, 0, -1)
+                    .applyQuaternion(touch_origin.quaternion)
+                    .normalize();
+                glue.debug_arrow.setDirection(glue.debug_direction);
+                glue.debug_arrow.position.copy(touch_origin.position);
+                glue.debug_hover_sphere.position.copy(touch_origin.position);
+                glue.debug_down_sphere.position.copy(touch_origin.position);
+            }
+        },
+        [glue, debug_touch]
+    );
+
+    const hand = hands.find((candidate) => candidate.handedness === handedness) ?? null;
+
+    return (
+        <AvatarHandModel
+            hand={hand}
+            handedness={handedness}
+            touch_origin_ref={touch_origin_ref}
+            on_touch_glue={glue_touch_origin}
+            auto_position={false} // handled by controller positioning
+        >
             {debug_touch && (
-                // TODO: make one group, but doesnt really matter
                 <>
-                    <primitive object={math.touchDebugArrow} />
-                    <primitive object={math.touchDebugHoverSphere} />
-                    <primitive object={math.touchDebugDownSphere} />
+                    <primitive object={glue.debug_arrow} />
+                    <primitive object={glue.debug_hover_sphere} />
+                    <primitive object={glue.debug_down_sphere} />
                 </>
             )}
-        </LayerGroup>
+        </AvatarHandModel>
+    );
+};
+
+export const FlatAvatarHands = () => {
+    const hands = useHands();
+    return (
+        <>
+            {hands.map((hand) => (
+                <AvatarHandModel
+                    key={hand.handedness}
+                    hand={hand}
+                    handedness={hand.handedness}
+                />
+            ))}
+        </>
     );
 };

@@ -18,10 +18,11 @@ import { SessionModeProvider } from "../contexts/SessionModeContext";
 import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
 import { SceneDebug } from "../debug/SceneDebug";
 import { HandsProvider } from "../input/hands";
+import { Crosshair } from "../input/impl/flat/Crosshair";
 import { SpectatorCamera } from "../misc";
 import { AvatarMirror } from "../misc/AvatarMirror";
 import { LogoOverlay } from "../misc/LogoOverlay";
-import { AvatarHand } from "../player/AvatarHand";
+import { FlatAvatarHands, XRAvatarHand } from "../player/AvatarHand";
 import { Player } from "../player/Player";
 import { CameraSetup } from "../render/CameraSetup";
 import { CanvasResizer } from "../render/CanvasResizer";
@@ -29,7 +30,7 @@ import { FloorCollider } from "../world/FloorCollider";
 import { Sky } from "../world/Sky";
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
-import { Crosshair } from "../input/impl/flat/Crosshair";
+import { FlatClickRaycaster } from "../input/impl/flat/FlatClickRaycaster";
 
 
 configureTextBuilder({
@@ -37,7 +38,7 @@ configureTextBuilder({
 });
 
 export const xr_store = createXRStore({
-    controller: AvatarHand,
+    controller: XRAvatarHand,
     handTracking: false,
     offerSession: false
 });
@@ -127,21 +128,13 @@ const FatalErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
     </div>
 );
 
-const FlatErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center z-50 text-white gap-8">
-        <h1 className="text-3xl font-bold">Game Error</h1>
-        <p className="text-lg text-red-400">
-            {getErrorMessage(error) || "An unexpected error occurred."}
-        </p>
-        <button
-            onClick={resetErrorBoundary}
-            className="px-6 py-3 bg-red-600 rounded hover:bg-red-700 transition cursor-pointer">
-            Restart Session
-        </button>
-    </div>
-);
+const FlatErrorFallback = VRErrorFallback; // TODO: make it follow player more properly
 
-const SceneContents = ({extra_in_origin}: {extra_in_origin?: React.ReactNode}) => {
+const SceneContents = ({
+    extra_in_origin
+}: {
+    extra_in_origin?: React.ReactNode;
+}) => {
     const [show_colliders] = useSetting("debug_colliders");
     const player_ref = useRef<Group>(null);
 
@@ -177,92 +170,111 @@ const SceneContents = ({extra_in_origin}: {extra_in_origin?: React.ReactNode}) =
             </PlayerOriginProvider>
         </Physics>
     );
-}
+};
 
-const EngineHostInternal = memo(({ on_ready, mode }: { on_ready: () => void, mode: "vr" | "flat" }) => {
-    // gracefully end session on unmount to avoid renderer crash
-    useEffect(() => {
-        return () => {
-            const session = xr_store.getState().session;
-            if (session) {
-                session.end().catch((err: Error) => {
-                    console.error("Failed to end XR session on unmount:", err);
-                });
-            }
-        };
-    }, []);
+const EngineHostInternal = memo(
+    ({ on_ready, mode }: { on_ready: () => void; mode: "vr" | "flat" }) => {
+        // gracefully end session on unmount to avoid renderer crash
+        useEffect(() => {
+            return () => {
+                const session = xr_store.getState().session;
+                if (session) {
+                    session.end().catch((err: Error) => {
+                        console.error(
+                            "Failed to end XR session on unmount:",
+                            err
+                        );
+                    });
+                }
+            };
+        }, []);
 
-    const canvas_container_ref = useRef<HTMLDivElement>(null);
+        const canvas_container_ref = useRef<HTMLDivElement>(null);
 
-    const handle_created = useCallback(
-        ({ gl }: RootState) => {
-            gl.toneMapping = NeutralToneMapping;
-            gl.toneMappingExposure = 1.0;
+        const handle_created = useCallback(
+            ({ gl }: RootState) => {
+                gl.toneMapping = NeutralToneMapping;
+                gl.toneMappingExposure = 1.0;
 
-            gl.domElement.addEventListener(
-                "webglcontextlost",
-                (event) => {
-                    // @ts-ignore non-standard, present in Chrome
-                    console.error("Context Lost:", event["statusMessage"]);
-                },
-                false
-            );
+                gl.domElement.addEventListener(
+                    "webglcontextlost",
+                    (event) => {
+                        // @ts-ignore non-standard, present in Chrome
+                        console.error("Context Lost:", event["statusMessage"]);
+                    },
+                    false
+                );
 
-            on_ready();
-        },
-        [on_ready]
-    );
+                on_ready();
+            },
+            [on_ready]
+        );
 
-    return (
-        <SessionModeProvider value={mode}>
-            <TabSessionProvider>
-                <WebSDKMessagingProvider>
-                    <EngineObjectSync />
+        return (
+            <SessionModeProvider value={mode}>
+                <TabSessionProvider>
+                    <WebSDKMessagingProvider>
+                        <EngineObjectSync />
 
-                    <div
-                        className="w-full h-full max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)] relative"
-                        ref={canvas_container_ref}
-                    >
-                        <LogoOverlay />
-                        {mode === "flat" && <Crosshair />}
+                        <div
+                            className="w-full h-full max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)] relative"
+                            ref={canvas_container_ref}>
+                            <LogoOverlay />
+                            {mode === "flat" && <Crosshair />}
 
-                        <AvatarProvider>
-                            <HandsProvider>
-                                <Canvas
-                                    gl={make_xr_compatible_renderer}
-                                    onCreated={handle_created}
-                                >
-                                    <CameraSetup />
-                                    <CanvasResizer containerRef={canvas_container_ref} />
+                            <AvatarProvider>
+                                <HandsProvider>
+                                    <Canvas
+                                        gl={make_xr_compatible_renderer}
+                                        onCreated={handle_created}
+                                    >
+                                        <CameraSetup />
+                                        <CanvasResizer
+                                            containerRef={canvas_container_ref}
+                                        />
 
-                                    <SceneDebug />
+                                        <SceneDebug />
 
-                                    {mode === "vr" ? (
-                                        <XR store={xr_store}>
+                                        {mode === "vr" ? (
+                                            <XR store={xr_store}>
+                                                <ErrorBoundary
+                                                    FallbackComponent={
+                                                        VRErrorFallback
+                                                    }
+                                                    onReset={() =>
+                                                        window.location.reload()
+                                                    }>
+                                                    <SceneContents
+                                                        extra_in_origin={
+                                                            <SpectatorCamera />
+                                                        }
+                                                    />
+                                                </ErrorBoundary>
+                                            </XR>
+                                        ) : (
                                             <ErrorBoundary
-                                                FallbackComponent={VRErrorFallback}
-                                                onReset={() => window.location.reload()}
+                                                FallbackComponent={
+                                                    FlatErrorFallback
+                                                }
+                                                onReset={() =>
+                                                    window.location.reload()
+                                                }
                                             >
-                                                <SceneContents extra_in_origin={<SpectatorCamera />} />
+                                                <FlatClickRaycaster />
+                                                <FlatAvatarHands />
+                                                <SceneContents />
                                             </ErrorBoundary>
-                                        </XR>
-                                    ) : (
-                                        <ErrorBoundary
-                                            FallbackComponent={FlatErrorFallback}
-                                            onReset={() => window.location.reload()}
-                                        >
-                                            <SceneContents />
-                                        </ErrorBoundary>
-                                    )}
-                                </Canvas>
-                            </HandsProvider>
-                        </AvatarProvider>
-                    </div>
-                </WebSDKMessagingProvider>
-            </TabSessionProvider>
-        </SessionModeProvider>
-    );
-});
+                                        )}
+                                    </Canvas>
+                                </HandsProvider>
+                            </AvatarProvider>
+                        </div>
+                    </WebSDKMessagingProvider>
+                </TabSessionProvider>
+            </SessionModeProvider>
+        );
+    }
+);
 
 export const EngineHost = ({ on_xr_ready, mode }: { on_xr_ready: () => void, mode: "vr" | "flat" }) => (
     <ErrorBoundary

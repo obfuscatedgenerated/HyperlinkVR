@@ -1,16 +1,6 @@
 import { useFrame } from "@react-three/fiber";
-import {
-    PointerCursorModel,
-    PointerRayModel,
-    useRayPointer
-} from "@react-three/xr";
-import {
-    createContext,
-    useContext,
-    useRef,
-    type ReactNode,
-    type RefObject
-} from "react";
+import { PointerCursorModel, PointerRayModel, useRayPointer } from "@react-three/xr";
+import { createContext, useContext, useState, type ReactNode, type RefObject } from "react";
 import type { Object3D } from "three";
 
 export interface ButtonState {
@@ -44,32 +34,30 @@ export interface Hand {
     readonly pose: RefObject<HandPose>;
 }
 
-const HandsContext = createContext<RefObject<Hand[]> | null>(null);
+const HandsContext = createContext<Hand[] | null>(null);
+const SetHandsContext = createContext<((hands: Hand[]) => void) | null>(null);
 
 export const HandsProvider = ({ children }: { children: ReactNode }) => {
-    const hands_ref = useRef<Hand[]>([]);
+    const [hands, set_hands] = useState<Hand[]>([]);
     return (
-        <HandsContext.Provider value={hands_ref}>
-            {children}
+        <HandsContext.Provider value={hands}>
+            <SetHandsContext.Provider value={set_hands}>
+                {children}
+            </SetHandsContext.Provider>
         </HandsContext.Provider>
     );
 };
 
-// we use publishing to context as there is a unique issue:
-// hands in xr are added by the store to the <XR> component, yet we need to be in the <XR> component to use the XR hooks
-// therefore this defers the setting of the context while still wrapping it all
-export const usePublishHands = (): RefObject<Hand[]> => {
-    const ref = useContext(HandsContext);
-    if (ref === null)
-        throw new Error("usePublishHands must be used within a HandsProvider");
-    return ref;
+export const useHands = (): Hand[] => {
+    const hands = useContext(HandsContext);
+    if (hands === null) throw new Error("useHands must be used within a HandsProvider");
+    return hands;
 };
 
-export const useHands = (): Hand[] => {
-    const ref = useContext(HandsContext);
-    if (ref === null)
-        throw new Error("useHands must be used within a HandsProvider");
-    return ref.current;
+export const useSetHands = () => {
+    const set_hands = useContext(SetHandsContext);
+    if (set_hands === null) throw new Error("useSetHands must be used within a HandsProvider");
+    return set_hands;
 };
 
 export const HandPointer = ({ hand, state }: { hand: Hand; state: any }) => {
@@ -88,4 +76,3 @@ export const HandPointer = ({ hand, state }: { hand: Hand; state: any }) => {
         </>
     );
 };
-
