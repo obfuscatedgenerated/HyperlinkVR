@@ -44,7 +44,7 @@ const pose_to_curl = (p: Hand["pose"]["current"]): number => {
 };
 
 const TOUCH_HOVER_RADIUS = 0.04;
-const TOUCH_DOWN_RADIUS = 0.02;
+const TOUCH_DOWN_RADIUS = 0.01;
 
 export const AvatarHand = () => {
     const state = useXRInputSourceStateContext("controller");
@@ -171,7 +171,7 @@ export const AvatarHand = () => {
                 math.rayQuat.premultiply(math.cumulative.invert());
                 touchOriginRef.current.position.copy(math.rayPos);
                 touchOriginRef.current.quaternion.copy(math.rayQuat);
-                touchOriginRef.current.translateZ(-0.02);
+                touchOriginRef.current.translateZ(-0.015);
                 touchOriginRef.current.updateMatrixWorld(true);
 
                 if (debug_touch) {
