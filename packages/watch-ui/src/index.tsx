@@ -41,10 +41,17 @@ export const WatchUI = () => {
             opacity={0.8}
             borderRadius={16}
             panelMaterialClass={DoubleSidedSolidPanel}
+
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
+            onPointerMove={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
         >
             <ScreenComponent change_screen={setScreen} />
         </Container>
     );
 };
 
+// TODO: disable movement when watch open
 // TODO: add ui debounce to prevent double pointer on pushing too far through watch? or just global Z check?
