@@ -6,7 +6,7 @@ import {
 } from "@hyperlinkvr/platform-extension";
 import {
     AuthSessionProvider,
-    MessageEngineProvider,
+    MessageEngineProvider, SettingsProvider,
     StorageEnginesContextType,
     StorageEnginesProvider,
     WindowArgumentsStrategyProvider
@@ -49,10 +49,12 @@ export const DefaultContextProviders = ({
     return (
         <MessageEngineProvider engine={resolved_messenger}>
             <StorageEnginesProvider engines={resolved_storage_engines}>
-                <WindowArgumentsStrategyProvider
-                    strategy={resolved_window_args_strategy}>
-                    <AuthSessionProvider>{children}</AuthSessionProvider>
-                </WindowArgumentsStrategyProvider>
+                <SettingsProvider>
+                    <WindowArgumentsStrategyProvider
+                        strategy={resolved_window_args_strategy}>
+                        <AuthSessionProvider>{children}</AuthSessionProvider>
+                    </WindowArgumentsStrategyProvider>
+                </SettingsProvider>
             </StorageEnginesProvider>
         </MessageEngineProvider>
     );
