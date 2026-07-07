@@ -1,12 +1,15 @@
+import { publish_report } from "./event_bus";
+
 export {version} from "../package.json";
 
 export * as auth from "./auth";
 export * as builders from "./builders";
 
-import {facilitate_rtc} from "./messenger";
+import { bind_rtc_event, facilitate_rtc} from "./messenger";
 
 export const connect = async () => {
-    return facilitate_rtc();
+    await facilitate_rtc();
+    bind_rtc_event("HVRSDK_ENGINE_OBJECT_REPORT", (msg) => publish_report(msg.report));
 }
 
 export const bind_messages = () => {
@@ -30,4 +33,3 @@ export const bind_messages = () => {
 
 // TODO: way to ask the extension if the host is already ready (might need state, if not just send a message and see if it gets a reply ig)
 // TODO: replace dom event with a wait_for_ready that immeidately returns if already ready
-

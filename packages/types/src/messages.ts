@@ -1,4 +1,9 @@
-import type { CreatedEngineObject, EngineObjectDispatch } from "@hyperlinkvr/vr-engine-schemas";
+import type {
+    CreatedEngineObject,
+    EngineObjectDispatch,
+    ReportEvent
+} from "@hyperlinkvr/vr-engine-schemas";
+
 
 
 import type { Identity, PrivateAuthInfo, PublicAuthInfo } from "./auth";
@@ -147,8 +152,14 @@ interface WebSDKReadyEventMessage extends BaseWebSDKEventMessage {
     type: "HVRSDK_READY";
 }
 
+interface WebSDKEngineObjectReportEventMessage extends BaseWebSDKEventMessage {
+    type: "HVRSDK_ENGINE_OBJECT_REPORT";
+    report: ReportEvent;
+}
+
 export type WebSDKEventMessage =
-    WebSDKReadyEventMessage;
+    WebSDKReadyEventMessage
+    | WebSDKEngineObjectReportEventMessage;
 
 export type EventMessage =
     StreamEvent |

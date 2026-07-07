@@ -1,4 +1,7 @@
-import type { WebSDKActionMessage, WebSDKReplyMessage, WithCorrelation } from "@hyperlinkvr/types";
+import type { NamedEvent, WebSDKActionMessage, WebSDKEventMessage, WebSDKReplyMessage, WithCorrelation } from "@hyperlinkvr/types";
+
+
+
 
 
 let rtc_data_channel: RTCDataChannel | null = null;
@@ -31,6 +34,32 @@ export const send_via_messaging = async (
         window.addEventListener("message", handle_message);
         window.postMessage(message_with_correlation, "*");
     });
+};
+
+type EventListenerMap = {
+    [E in WebSDKEventMessage["type"]]?: Set<(event: NamedEvent<E>) => void>;
+};
+
+const event_listeners: EventListenerMap = {};
+
+export const bind_rtc_event = <E extends WebSDKEventMessage["type"]>(
+    event_type: E,
+    callback: (event: NamedEvent<E>) => void
+) => {
+    if (!rtc_data_channel || rtc_data_channel.readyState !== "open") {
+        throw new Error("RTC data channel is not open");
+    }
+
+    let listeners = event_listeners[event_type] as Set<(event: NamedEvent<E>) => void> | undefined;
+    if (!listeners) {
+        listeners = new Set();
+        event_listeners[event_type] = listeners as EventListenerMap[E];
+    }
+    listeners.add(callback);
+
+    return () => {
+        listeners.delete(callback);
+    };
 };
 
 export const facilitate_rtc = async () => {
@@ -68,6 +97,31 @@ export const facilitate_rtc = async () => {
 
     window.addEventListener("message", listener);
 
+    // create a new listener that is bound once the data channel is open, and will forward events to the bound listeners
+    const data_channel_listener = (event: MessageEvent) => {
+        if (!rtc_data_channel || rtc_data_channel.readyState !== "open") {
+            return;
+        }
+
+        const data = JSON.parse(event.data) as any;
+        if ("type" in data && data.type in event_listeners) {
+            const listeners =
+                event_listeners[data.type as keyof EventListenerMap];
+            if (listeners) {
+                for (const callback of listeners) {
+                    try {
+                        callback(data);
+                    } catch (e) {
+                        console.error(
+                            `Error in event listener for event ${data.type}:`,
+                            e
+                        );
+                    }
+                }
+            }
+        }
+    };
+
     return new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
             console.error("RTC connection request timed out");
@@ -81,10 +135,18 @@ export const facilitate_rtc = async () => {
                 console.log("RTC data channel opened");
                 clearTimeout(timeout);
                 window.removeEventListener("message", listener);
+                rtc_data_channel!.addEventListener(
+                    "message",
+                    data_channel_listener
+                );
                 resolve();
             };
             rtc_data_channel.onclose = () => {
                 console.log("RTC data channel closed");
+                rtc_data_channel!.removeEventListener(
+                    "message",
+                    data_channel_listener
+                );
                 rtc_data_channel = null;
             };
         };
@@ -95,7 +157,6 @@ export const facilitate_rtc = async () => {
         });
     });
 };
-
 
 export const send_via_rtc = async (
     message: WebSDKActionMessage
