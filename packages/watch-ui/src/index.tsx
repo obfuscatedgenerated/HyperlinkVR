@@ -38,7 +38,7 @@ export const WatchUI = () => {
             alignItems="center"
             justifyContent="center"
             backgroundColor="#547299"
-            opacity={0.8}
+            opacity={0.85}
             borderRadius={16}
             panelMaterialClass={DoubleSidedSolidPanel}
 
