@@ -1,13 +1,11 @@
-import type {
-    FollowPlayerInteraction,
-    GrabbableInteraction,
-    Interaction
-} from "@hyperlinkvr/vr-engine-schemas";
-
-import { Grabbable } from "../interaction";
-import {useObjectRefs} from "../contexts/ObjectRefsContext";
-import { FollowPlayer } from "../interaction/FollowPlayer";
+import type { FollowPlayerInteraction, GrabbableInteraction, Interaction } from "@hyperlinkvr/vr-engine-schemas";
 import { useMemo } from "react";
+
+
+import { useObjectRefs } from "../contexts/ObjectRefsContext";
+import { Grabbable } from "../interaction";
+import { FollowPlayer } from "../interaction/FollowPlayer";
+import { useReportEmitter } from "../hooks/useReportEmitter";
 
 
 interface InteractionWrapperProps<I extends Interaction = Interaction> {
@@ -16,12 +14,29 @@ interface InteractionWrapperProps<I extends Interaction = Interaction> {
 }
 
 const GrabbableWrapper = ({interaction, children}: InteractionWrapperProps<GrabbableInteraction>) => {
+    const emit = useReportEmitter(interaction.reporting);
+
     // TODO: add remaining props to grabbable
     // TODO: should we pass through the root ref? or let the wrapper impls manage their own?
     return (
         <Grabbable
             collider={interaction.collider}
             grab_distance={interaction.grab_distance}
+            on_grab_start={
+                interaction.report_grabs
+                    ? (hand) => emit({ kind: "grab", payload: { type: "grab", handedness: hand.handedness } })
+                    : undefined
+            }
+            on_grab_end={
+                interaction.report_releases
+                    ? (hand) => emit({ kind: "grab", payload: { type: "release", handedness: hand?.handedness ?? "right" } })
+                    : undefined
+            }
+            on_nearby_start={
+                interaction.report_proximity
+                    ? (hand) => emit({ kind: "grab", payload: { type: "proximity", handedness: hand.handedness } })
+                    : undefined
+            }
         >
             {children}
         </Grabbable>

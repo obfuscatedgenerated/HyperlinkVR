@@ -193,6 +193,8 @@ export const useGrabbable = (
         reach = 0, // 0 = ray-grab disabled (VR default), flat sets this to a distance
         snap_to_hand = false,
         collider,
+        on_grab_start,
+        on_grab_end,
         on_nearby_start,
         on_nearby_end,
         on_trigger_start,
@@ -203,6 +205,8 @@ export const useGrabbable = (
         reach?: number;
         snap_to_hand?: boolean;
         collider?: GrabCollider;
+        on_grab_start?: (hand: Hand) => void;
+        on_grab_end?: (hand: Hand) => void;
         on_nearby_start?: (hand: Hand) => void;
         on_nearby_end?: (hand: Hand) => void;
         on_trigger_start?: (hand: Hand) => void;
@@ -298,11 +302,13 @@ export const useGrabbable = (
                     );
                 }
                 grabbingHand.current = hand;
+                on_grab_start?.(hand);
                 prevGrabPos.current.copy(objPos);
                 grabVelocity.current.set(0, 0, 0);
                 body?.setBodyType(RigidBodyType.KinematicPositionBased, true);
             } else if (!hand.grab.pressed && grabbingHand.current === hand) {
                 grabbingHand.current = null;
+                on_grab_end?.(hand);
                 if (body) {
                     body.setBodyType(RigidBodyType.Dynamic, true);
                     body.setLinvel(
@@ -393,6 +399,8 @@ interface GrabbableProps extends ComponentProps<"group"> {
     // undefined defaults to auto bounding box
     collider?: GrabCollider;
     // TODO: add remaining props from useGrabbable and GrabbableInteraction
+    on_grab_start?: (input: Hand) => void;
+    on_grab_end?: (input: Hand) => void;
     on_nearby_start?: (input: Hand) => void;
     on_nearby_end?: (input: Hand | null) => void;
     on_trigger_start?: (input: Hand) => void;
@@ -429,6 +437,8 @@ export const Grabbable = (props: GrabbableProps) => {
         grab_distance: props.grab_distance,
         nearby_trigger_distance: props.nearby_trigger_distance || props.grab_distance,
         collider,
+        on_grab_start: props.on_grab_start,
+        on_grab_end: props.on_grab_end,
         on_nearby_start: handle_nearby_start,
         on_nearby_end: handle_nearby_end,
         on_trigger_start: props.on_trigger_start,

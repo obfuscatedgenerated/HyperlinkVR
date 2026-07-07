@@ -28,4 +28,3 @@ export const publish_report = (event: ReportEvent): void => {
         callback(event);
     }
 };
-// TODO: wire up
