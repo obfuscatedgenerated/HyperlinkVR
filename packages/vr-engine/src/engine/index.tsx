@@ -4,7 +4,7 @@ import { Canvas, RootState, RootStore } from "@react-three/fiber";
 import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
 import { Physics } from "@react-three/rapier";
 import { createXRStore, XR } from "@react-three/xr";
-import { memo, useCallback, useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { ErrorBoundary, getErrorMessage, type FallbackProps } from "react-error-boundary";
 import { Group, NeutralToneMapping, WebGLRenderer } from "three";
 import { configureTextBuilder } from "troika-three-text";
@@ -18,6 +18,7 @@ import { SessionModeProvider } from "../contexts/SessionModeContext";
 import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
 import { SceneDebug } from "../debug/SceneDebug";
 import { HandsProvider } from "../input/hands";
+import { FlatInputProvider } from "../input/impl/flat/bindings";
 import { Crosshair } from "../input/impl/flat/Crosshair";
 import { FlatClickRaycaster } from "../input/impl/flat/FlatClickRaycaster";
 import { SpectatorCamera } from "../misc";
@@ -218,7 +219,8 @@ const EngineHostInternal = memo(
 
                         <div
                             className="w-full h-full max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)] relative"
-                            ref={canvas_container_ref}>
+                            ref={canvas_container_ref}
+                        >
                             <LogoOverlay />
                             {mode === "flat" && <Crosshair />}
 
@@ -260,9 +262,11 @@ const EngineHostInternal = memo(
                                                     window.location.reload()
                                                 }
                                             >
-                                                <FlatClickRaycaster />
-                                                <FlatAvatarHands />
-                                                <SceneContents />
+                                                <FlatInputProvider>
+                                                    <FlatClickRaycaster />
+                                                    <FlatAvatarHands />
+                                                    <SceneContents />
+                                                </FlatInputProvider>
                                             </ErrorBoundary>
                                         )}
                                     </Canvas>

@@ -2,7 +2,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { Euler, Group, Vector3 } from "three";
 
-import { useFlatInput } from "../input/impl/flat/bindings";
+import { useFlatFrameInput } from "../input/impl/flat/bindings";
 
 const HEAD_HEIGHT = 1.6;
 const SENSITIVITY = 0.0022; // rad per pixel TODO: configurable
@@ -10,7 +10,7 @@ const PITCH_LIMIT = Math.PI / 2 - 0.01;
 
 export const FlatCameraRig = ({ origin }: { origin: React.RefObject<Group | null>; }) => {
     const { camera } = useThree();
-    const input = useFlatInput();
+    const input = useFlatFrameInput();
 
     const yaw = useRef(0);
     const pitch = useRef(0);

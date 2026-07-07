@@ -1,8 +1,6 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { Euler, Group, Matrix4, Object3D, Quaternion, Vector3 } from "three";
-
-import { usePlayerOrigin } from "../../../contexts";
 import {
     make_button_state,
     update_button_state,
@@ -10,7 +8,7 @@ import {
     type Hand,
     type HandPose
 } from "../../hands";
-import { useFlatInput } from "./bindings";
+import { useFlatFrameInput } from "./bindings";
 
 // carry slot: where held objects and the visible active hand sit, in camera space
 const CARRY_OFFSET: [number, number, number] = [0.25, -0.25, -0.5];
@@ -44,7 +42,7 @@ const write_world_transform = (
 export const FlatHandsPublisher = () => {
     const set_hands = useSetHands();
     const { camera } = useThree();
-    const flat_input = useFlatInput();
+    const flat_input = useFlatFrameInput();
 
     const active_grip = useRef<Group>(null);
     const active_ray = useRef<Group>(null);

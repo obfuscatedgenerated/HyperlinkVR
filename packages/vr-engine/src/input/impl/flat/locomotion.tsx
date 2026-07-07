@@ -2,13 +2,13 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { RefObject, useMemo } from "react";
 import { Group, Vector3 } from "three";
 
-import { useFlatInput } from "./bindings";
+import { useFlatFrameInput } from "./bindings";
 
 
 const SPEED = 3; // m/s TODO: ensure matches vr speed
 export const FlatLocomotion = ({ origin }: { origin: RefObject<Group | null> }) => {
     const { camera } = useThree();
-    const input = useFlatInput();
+    const input = useFlatFrameInput();
     const fwd = useMemo(() => new Vector3(), []);
     const right = useMemo(() => new Vector3(), []);
 
