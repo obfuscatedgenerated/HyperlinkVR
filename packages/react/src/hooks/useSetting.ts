@@ -37,3 +37,5 @@ export const useSetting = <K extends SettingKey>(key: K) => {
     const storage_engines = useStorageEngines();
     return useSettingWithEngines(key, storage_engines);
 };
+
+// TODO: automatically debounce setting setter, with boolean to disable debounce if needed (browser storage is ratelimited)

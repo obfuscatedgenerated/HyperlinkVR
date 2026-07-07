@@ -2,6 +2,8 @@ import { type SettingKey, SettingValueType, WidgetArguments, WidgetType } from "
 import { useSetting, useSettingUIDefinition } from "@hyperlinkvr/react";
 import { useMemo } from "react";
 import { ToggleSwitch } from "./ToggleSwitch";
+import { SmartSlider } from "./SmartSlider";
+import { Dropdown } from "./Dropdown";
 
 
 type WidgetLookup<V extends SettingValueType> = {
@@ -16,6 +18,8 @@ type WidgetLookup<V extends SettingValueType> = {
 
 const widget_lookup: Partial<WidgetLookup<any>> = {
     "switch": ToggleSwitch,
+    "range": SmartSlider,
+    "select": Dropdown
 };
 
 export const WatchSettingWidget = ({setting_key}: {setting_key: SettingKey}) => {
