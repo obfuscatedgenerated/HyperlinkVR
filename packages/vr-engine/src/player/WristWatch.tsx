@@ -5,12 +5,9 @@ import { Container } from "@react-three/uikit";
 import { useMemo, useRef, useState } from "react";
 import { Group, MathUtils, Matrix4, Quaternion, Vector3 } from "three";
 
-
-
 import { useSessionMode } from "../contexts/SessionModeContext";
 import { useHands } from "../input/hands";
 import { useFlatInputState } from "../input/impl/flat/bindings";
-
 
 export type WatchMode = "wrist" | "presented" | "detached";
 
@@ -44,14 +41,14 @@ const WatchUIPresentation = ({
     mode,
     gaze_to_open = false
 }: WatchUIPresentationProps) => {
-    const watch_group_ref = useRef<Group>(null);
+    const body_group_ref = useRef<Group>(null);
     const ui_group_ref = useRef<Group>(null);
 
     const [watch_hand] = useSetting("watch_hand");
     const hands = useHands();
     const { camera } = useThree();
 
-    const [ui_open, set_ui_open] = useState(false);
+    const [ui_open, setUIOpen] = useState(false);
     const wrist_offset = useMemo(
         () => build_wrist_offset(watch_hand),
         [watch_hand]
@@ -59,16 +56,21 @@ const WatchUIPresentation = ({
 
     const scratch = useMemo(
         () => ({
-            target_world: new Matrix4(),
-            target_local: new Matrix4(),
+            wrist_world: new Matrix4(),
+            wrist_local: new Matrix4(),
+            ui_world: new Matrix4(),
+            ui_local: new Matrix4(),
             parent_inverse: new Matrix4(),
-            target_pos: new Vector3(),
-            target_quat: new Quaternion(),
-            target_scale: new Vector3(1, 1, 1),
+            wrist_pos: new Vector3(),
+            wrist_quat: new Quaternion(),
+            wrist_scale: new Vector3(1, 1, 1),
+            ui_pos: new Vector3(),
+            ui_quat: new Quaternion(),
+            ui_scale: new Vector3(1, 1, 1),
             camera_pos: new Vector3(),
-            watch_pos: new Vector3(),
-            watch_quat: new Quaternion(),
-            watch_up: new Vector3(),
+            body_pos: new Vector3(),
+            body_quat: new Quaternion(),
+            body_up: new Vector3(),
             dir_to_camera: new Vector3(),
             look_matrix: new Matrix4(),
             detached_pos: new Vector3(),
@@ -81,110 +83,120 @@ const WatchUIPresentation = ({
     const previous_mode = useRef<WatchMode>("wrist");
 
     useFrame(() => {
-        const watch_group = watch_group_ref.current;
+        const body_group = body_group_ref.current;
         const ui_group = ui_group_ref.current;
-        if (!watch_group || !ui_group) return;
+        if (!body_group || !ui_group) return;
 
-        let have_target = false;
+        // prefer the configured watch hand, but fall back to any hand whose grip tracks
+        const preferred = hands.find((hand) => hand.handedness === watch_hand && hand.grip.current);
+        const fallback = hands.find((hand) => hand.grip.current);
+        const grip_node = (preferred ?? fallback)?.grip.current ?? null;
 
-        if (mode === "wrist") {
-            // prefer the configured watch hand, but fall back to ANY hand whose
-            // grip is actually tracking, so the watch never silently vanishes
-            // when the configured hand hasn't published a grip node yet
-            const preferred = hands.find(
-                (hand) => hand.handedness === watch_hand && hand.grip.current
+        let have_wrist = false;
+        if (grip_node) {
+            grip_node.updateWorldMatrix(true, false);
+            scratch.wrist_world.multiplyMatrices(grip_node.matrixWorld, wrist_offset);
+            scratch.wrist_world.decompose(
+                scratch.wrist_pos,
+                scratch.wrist_quat,
+                scratch.wrist_scale
             );
-            const fallback = hands.find((hand) => hand.grip.current);
-            const grip_node = (preferred ?? fallback)?.grip.current ?? null;
+            scratch.wrist_scale.setScalar(1);
+            have_wrist = true;
+        }
 
-            if (grip_node) {
-                grip_node.updateWorldMatrix(true, false);
-                scratch.target_world.multiplyMatrices(
-                    grip_node.matrixWorld,
-                    wrist_offset
+        if (have_wrist) {
+            scratch.wrist_world.compose(
+                scratch.wrist_pos,
+                scratch.wrist_quat,
+                scratch.wrist_scale
+            );
+            if (body_group.parent) {
+                body_group.parent.updateWorldMatrix(true, false);
+                scratch.parent_inverse.copy(body_group.parent.matrixWorld).invert();
+                scratch.wrist_local.multiplyMatrices(
+                    scratch.parent_inverse,
+                    scratch.wrist_world
                 );
-                scratch.target_world.decompose(
-                    scratch.target_pos,
-                    scratch.target_quat,
-                    scratch.target_scale
-                );
-                scratch.target_scale.setScalar(1);
-                have_target = true;
+            } else {
+                scratch.wrist_local.copy(scratch.wrist_world);
+            }
+            scratch.wrist_local.decompose(
+                body_group.position,
+                body_group.quaternion,
+                body_group.scale
+            );
+        }
+
+        let have_ui_target = false;
+
+        // positioning of ui panel based on mode
+        if (mode === "wrist") {
+            // panel sits on the watch body, so reuse the wrist transform
+            if (have_wrist) {
+                scratch.ui_pos.copy(scratch.wrist_pos);
+                scratch.ui_quat.copy(scratch.wrist_quat);
+                scratch.ui_scale.setScalar(1);
+                have_ui_target = true;
             }
         } else if (mode === "presented") {
-            // TODO: fix watch model getting put in the way
-            camera.getWorldPosition(scratch.target_pos);
-            camera.getWorldQuaternion(scratch.target_quat);
-            scratch.target_pos.add(
-                FORWARD.clone()
-                    .applyQuaternion(scratch.target_quat)
-                    .multiplyScalar(0.55)
+            camera.getWorldPosition(scratch.ui_pos);
+            camera.getWorldQuaternion(scratch.ui_quat);
+            scratch.ui_pos.add(
+                FORWARD.clone().applyQuaternion(scratch.ui_quat).multiplyScalar(0.55)
             );
             scratch.look_matrix.lookAt(
-                scratch.target_pos,
+                scratch.ui_pos,
                 camera.getWorldPosition(scratch.camera_pos),
                 WORLD_UP
             );
-            scratch.target_quat.setFromRotationMatrix(scratch.look_matrix);
-            scratch.target_quat.multiply(FLIP_180);
-            scratch.target_scale.setScalar(2.2);
-            have_target = true;
+            scratch.ui_quat.setFromRotationMatrix(scratch.look_matrix);
+            scratch.ui_quat.multiply(FLIP_180);
+            scratch.ui_scale.setScalar(2.2);
+            have_ui_target = true;
         } else if (mode === "detached") {
             if (previous_mode.current !== "detached") {
-                watch_group.getWorldPosition(scratch.detached_pos);
-                watch_group.getWorldQuaternion(scratch.detached_quat);
+                ui_group.getWorldPosition(scratch.detached_pos);
+                ui_group.getWorldQuaternion(scratch.detached_quat);
             }
-            scratch.target_pos.copy(scratch.detached_pos);
-            scratch.target_quat.copy(scratch.detached_quat);
-            scratch.target_scale.setScalar(scratch.detached_scale);
-            have_target = true;
+            scratch.ui_pos.copy(scratch.detached_pos);
+            scratch.ui_quat.copy(scratch.detached_quat);
+            scratch.ui_scale.setScalar(scratch.detached_scale);
+            have_ui_target = true;
         }
 
         previous_mode.current = mode;
-        if (!have_target) return;
 
-        // convert the world-space target into the group's parent-local space
-        scratch.target_world.compose(
-            scratch.target_pos,
-            scratch.target_quat,
-            scratch.target_scale
-        );
-        if (watch_group.parent) {
-            watch_group.parent.updateWorldMatrix(true, false);
-            scratch.parent_inverse
-                .copy(watch_group.parent.matrixWorld)
-                .invert();
-            scratch.target_local.multiplyMatrices(
-                scratch.parent_inverse,
-                scratch.target_world
+        if (have_ui_target) {
+            scratch.ui_world.compose(scratch.ui_pos, scratch.ui_quat, scratch.ui_scale);
+            if (ui_group.parent) {
+                ui_group.parent.updateWorldMatrix(true, false);
+                scratch.parent_inverse.copy(ui_group.parent.matrixWorld).invert();
+                scratch.ui_local.multiplyMatrices(scratch.parent_inverse, scratch.ui_world);
+            } else {
+                scratch.ui_local.copy(scratch.ui_world);
+            }
+            scratch.ui_local.decompose(
+                ui_group.position,
+                ui_group.quaternion,
+                ui_group.scale
             );
-        } else {
-            scratch.target_local.copy(scratch.target_world);
         }
-        scratch.target_local.decompose(
-            watch_group.position,
-            watch_group.quaternion,
-            watch_group.scale
-        );
 
-        // ui open state
         let want_open: boolean;
         if (mode !== "wrist") {
-            // presented / detached so panel always open
-            want_open = true;
+            want_open = true; // presented / detached: always open
         } else if (gaze_to_open) {
             camera.getWorldPosition(scratch.camera_pos);
-            watch_group.getWorldPosition(scratch.watch_pos);
-            watch_group.getWorldQuaternion(scratch.watch_quat);
+            body_group.getWorldPosition(scratch.body_pos);
+            body_group.getWorldQuaternion(scratch.body_quat);
             scratch.dir_to_camera
-                .subVectors(scratch.camera_pos, scratch.watch_pos)
+                .subVectors(scratch.camera_pos, scratch.body_pos)
                 .normalize();
-            scratch.watch_up.set(0, 1, 0).applyQuaternion(scratch.watch_quat);
+            scratch.body_up.set(0, 1, 0).applyQuaternion(scratch.body_quat);
 
-            const facing_dot = scratch.dir_to_camera.dot(scratch.watch_up);
-            const distance_to_camera = scratch.camera_pos.distanceTo(
-                scratch.watch_pos
-            );
+            const facing_dot = scratch.dir_to_camera.dot(scratch.body_up);
+            const distance_to_camera = scratch.camera_pos.distanceTo(scratch.body_pos);
 
             if (distance_to_camera < 0.6) {
                 if (facing_dot > OPEN_THRESHOLD) want_open = true;
@@ -194,54 +206,64 @@ const WatchUIPresentation = ({
                 want_open = false;
             }
         } else {
-            // flat wrist with no gaze gesture, keep the watch body visible but the panel closed until it's presented
+            // flat wrist with no gaze gesture: body visible, panel closed until presented
             want_open = false;
         }
 
-        if (want_open !== ui_open) set_ui_open(want_open);
+        if (want_open !== ui_open) {
+            setUIOpen(want_open);
+        }
 
-        // ui panel placement + open animation
-        if (mode === "wrist") {
-            ui_group.position.set(0, 0.05, -0.05);
-            ui_group.rotation.set(
-                -Math.PI / 2,
-                0,
-                watch_hand === "left" ? Math.PI / 2 : -Math.PI / 2
-            );
-        } else {
-            ui_group.position.set(0, 0, 0.001);
-            ui_group.rotation.set(0, 0, 0);
+        const ui_container = ui_group.children[0];
+        if (ui_container) {
+            if (mode === "wrist") {
+                ui_container.position.set(0, 0.05, -0.05);
+                ui_container.rotation.set(
+                    -Math.PI / 2,
+                    0,
+                    watch_hand === "left" ? Math.PI / 2 : -Math.PI / 2
+                );
+            } else {
+                ui_container.position.set(0, 0, 0.001);
+                ui_container.rotation.set(0, 0, 0);
+            }
         }
 
         const open_scale = ui_open ? 1 : 0;
-        ui_group.scale.setScalar(
-            MathUtils.lerp(ui_group.scale.x, open_scale, 0.15)
-        );
+        ui_group.scale.multiplyScalar(1); // keep world scale from step 2
+        if (ui_container) {
+            ui_container.scale.setScalar(
+                MathUtils.lerp(ui_container.scale.x, open_scale, 0.15)
+            );
+        }
     });
 
     return (
-        <group ref={watch_group_ref}>
-            <mesh>
-                <boxGeometry args={[0.05, 0.01, 0.06]} />
-                <meshStandardMaterial color="#222222" />
-            </mesh>
-
-            <group name="WatchUI" ref={ui_group_ref}>
-                <Container
-                    width={WATCH_UI_WIDTH}
-                    height={WATCH_UI_HEIGHT}
-                    pixelSize={0.3 / WATCH_UI_HEIGHT}
-                    flexDirection="column">
-                    <WatchUI />
-                </Container>
+        <>
+            <group ref={body_group_ref}>
+                <mesh>
+                    <boxGeometry args={[0.05, 0.01, 0.06]} />
+                    <meshStandardMaterial color="#222222" />
+                </mesh>
             </group>
-        </group>
+
+            <group ref={ui_group_ref}>
+                <group name="WatchUI">
+                    <Container
+                        width={WATCH_UI_WIDTH}
+                        height={WATCH_UI_HEIGHT}
+                        pixelSize={0.3 / WATCH_UI_HEIGHT}
+                        flexDirection="column">
+                        <WatchUI />
+                    </Container>
+                </group>
+            </group>
+        </>
     );
 };
 
 export const FlatWatch = () => {
     const input = useFlatInputState();
-    console.log("FlatWatch input:", input.watch_presented);
     return (
         <WatchUIPresentation
             mode={input.watch_presented ? "presented" : "wrist"}
@@ -251,7 +273,7 @@ export const FlatWatch = () => {
 };
 
 export const VRWatch = () => {
-    const [mode, setMode] = useState<WatchMode>("wrist");
+    const [mode, set_mode] = useState<WatchMode>("wrist");
     // TODO: vr button (or on the watch ui) to toggle between wrist and detached mode
     return <WatchUIPresentation mode={mode} gaze_to_open />;
 };
