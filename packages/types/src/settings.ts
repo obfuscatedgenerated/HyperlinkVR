@@ -173,6 +173,25 @@ export const settings_def = build_settings({
         }
     },
 
+    player_height_cm: {
+        default_value: 170,
+        ui: {
+            common: {
+                label: "Player height",
+                description: "Height of the player in centimeters",
+                widget: {
+                    type: "range",
+                    min: 100,
+                    max: 225,
+                    precision_dp: 1,
+                    unit: "cm"
+                },
+                include_in_popup: true,
+                breadcrumbs: ["General", "Player"]
+            }
+        }
+    },
+
     debug_ray_hits: {
         default_value: false,
         local_only: true

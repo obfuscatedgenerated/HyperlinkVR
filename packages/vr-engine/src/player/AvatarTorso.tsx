@@ -1,6 +1,7 @@
+import { useSetting } from "@hyperlinkvr/react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Quaternion, Vector3 } from "three";
 
 
@@ -10,6 +11,8 @@ import { Layer, LayerGroup } from "../render";
 
 
 const torso = new URL("../../assets/player/torso/torso.glb", import.meta.url).href;
+const BASE_TORSO_HEIGHT_M = 0.6;
+const TARGET_TORSO_PERCENTAGE = 0.25;
 
 const X_AXIS = new Vector3(1, 0, 0);
 const Y_AXIS = new Vector3(0, 1, 0);
@@ -29,6 +32,15 @@ export const AvatarTorso = () => {
     // a point that lags slightly behind the true camera position, to lean the torso from the base towards locomotion
     const lean_lag_anchor_ref = useRef<Vector3 | null>(null);
 
+    const [player_height_cm] = useSetting("player_height_cm");
+    const target_height = useMemo(() => (player_height_cm / 100) * TARGET_TORSO_PERCENTAGE, [player_height_cm]);
+    console.log("target torso height", target_height, "m");
+    const scale_factor = useMemo(() => target_height / BASE_TORSO_HEIGHT_M, [target_height]);
+
+    useEffect(() => {
+        torso_scene.scale.setScalar(scale_factor);
+    }, [scale_factor, torso_scene]);
+
     useFrame(({ camera }, delta) => {
         const pos = new Vector3();
         const quat = new Quaternion();
@@ -37,7 +49,7 @@ export const AvatarTorso = () => {
         camera.getWorldQuaternion(quat);
 
         // place torso below the head
-        pos.y -= 0.125;
+        pos.y -= 0.166 * scale_factor;
 
         if (!lean_lag_anchor_ref.current) {
             lean_lag_anchor_ref.current = pos.clone();

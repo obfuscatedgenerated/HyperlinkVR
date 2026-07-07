@@ -1,10 +1,11 @@
+import { useSetting } from "@hyperlinkvr/react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { Euler, Group, Vector3 } from "three";
 
 import { useFlatFrameInput } from "../input/impl/flat/bindings";
 
-const HEAD_HEIGHT = 1.6;
+
 const SENSITIVITY = 0.0022; // rad per pixel TODO: configurable
 const PITCH_LIMIT = Math.PI / 2 - 0.01;
 
@@ -16,6 +17,8 @@ export const FlatCameraRig = ({ origin }: { origin: React.RefObject<Group | null
     const pitch = useRef(0);
     const euler = useMemo(() => new Euler(0, 0, 0, "YXZ"), []);
     const head = useMemo(() => new Vector3(), []);
+
+    const [player_height_cm] = useSetting("player_height_cm");
 
     useFrame(() => {
         // consume accumulated mouse delta
@@ -34,7 +37,7 @@ export const FlatCameraRig = ({ origin }: { origin: React.RefObject<Group | null
         const o = origin.current;
         if (o) {
             o.getWorldPosition(head);
-            head.y += HEAD_HEIGHT;
+            head.y += (player_height_cm / 100) - 0.15;
             camera.position.copy(head);
         }
     });

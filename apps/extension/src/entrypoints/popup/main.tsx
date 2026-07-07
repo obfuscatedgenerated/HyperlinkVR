@@ -60,8 +60,6 @@ const Popup = () => {
         storage_engines
     );
 
-    // TODO: options page
-
     // nevermind, debugger cant be optional
     // const on_debug_input_change = useCallback(
     //     (enabled: boolean) => {
@@ -229,6 +227,6 @@ Enable this option to use Chrome's debugger to inject raw inputs directly.`}
     );
 };
 
-// TODO: dedicated options page for more settings
+// TODO: use include_in_popup rather than manually adding
 
 ReactDOM.createRoot(document.getElementById("root")!).render(<Popup />);
