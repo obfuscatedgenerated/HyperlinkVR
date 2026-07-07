@@ -1,4 +1,4 @@
-import { TabSessionProvider, useSetting } from "@hyperlinkvr/react";
+import { TabSessionProvider, useSetting, useStorage, useTabSession } from "@hyperlinkvr/react";
 import { Text } from "@react-three/drei";
 import { Canvas, RootState, RootStore } from "@react-three/fiber";
 import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
@@ -138,6 +138,20 @@ const SceneContents = ({
 }) => {
     const [show_colliders] = useSetting("debug_colliders");
     const player_ref = useRef<Group>(null);
+
+    const session = useTabSession();
+    const setRecentWorlds = useStorage("local", "recent_worlds", [] as string[])[1];
+
+    useEffect(() => {
+        if (!session.url) {
+            return;
+        }
+
+        setRecentWorlds((prev) => {
+            const newList = [session.url!, ...prev.filter((url) => url !== session.url)];
+            return newList.slice(0, 25); // Keep only the last 25 unique worlds
+        });
+    }, [session.url, setRecentWorlds]);
 
     return (
         <Physics interpolate gravity={[0, -9.81, 0]} debug={show_colliders}>
