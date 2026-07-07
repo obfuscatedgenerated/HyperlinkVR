@@ -19,15 +19,15 @@ interface RawDraggableTrackProps {
 // replace with uikit slider when fixed for maintainability
 
 const RawDraggableTrack = ({
-    value,
-    min,
-    max,
-    step,
-    disabled = false,
-    onValueChange,
-    onDragStart,
-    onDragEnd
-}: RawDraggableTrackProps) => {
+                               value,
+                               min,
+                               max,
+                               step,
+                               disabled = false,
+                               onValueChange,
+                               onDragStart,
+                               onDragEnd
+                           }: RawDraggableTrackProps) => {
     const is_dragging_ref = useRef(false);
 
     const handle_pointer_event = (e: ThreeEvent<PointerEvent>) => {
@@ -51,41 +51,6 @@ const RawDraggableTrack = ({
             height={24}
             flexDirection="row"
             alignItems="center"
-            cursor={disabled ? "default" : "pointer"}
-            onPointerDown={(e) => {
-                if (disabled) return;
-                e.stopPropagation();
-                is_dragging_ref.current = true;
-                onDragStart?.();
-
-                (e.target as HTMLElement).setPointerCapture(e.pointerId);
-                handle_pointer_event(e);
-            }}
-            onPointerMove={(e) => {
-                if (!is_dragging_ref.current) return;
-                e.stopPropagation();
-                handle_pointer_event(e);
-            }}
-            onPointerUp={(e) => {
-                if (is_dragging_ref.current) {
-                    is_dragging_ref.current = false;
-                    onDragEnd?.();
-                }
-                e.stopPropagation();
-                if ((e.target as HTMLElement).hasPointerCapture(e.pointerId)) {
-                    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-                }
-            }}
-            onPointerCancel={(e) => {
-                if (is_dragging_ref.current) {
-                    is_dragging_ref.current = false;
-                    onDragEnd?.();
-                }
-                e.stopPropagation();
-                if ((e.target as HTMLElement).hasPointerCapture(e.pointerId)) {
-                    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-                }
-            }}
         >
             <Container width="100%" height={4} backgroundColor="#475569" borderRadius={2} />
 
@@ -105,6 +70,49 @@ const RawDraggableTrack = ({
                 height={16}
                 backgroundColor="white"
                 borderRadius={8}
+            />
+
+            {/* invisble hitbox that catches rays, rather than the feedback loop of the thumb moving in vr */}
+            <Container
+                positionType="absolute"
+                width="100%"
+                height="100%"
+                zIndexOffset={10}
+                cursor={disabled ? "default" : "pointer"}
+                onPointerDown={(e) => {
+                    if (disabled) return;
+                    e.stopPropagation();
+                    is_dragging_ref.current = true;
+                    onDragStart?.();
+
+                    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+                    //handle_pointer_event(e); snaps to 0 with touch pointers if enabled! no harm disabling really, other than cant click to place cleanly
+                }}
+                onPointerMove={(e) => {
+                    if (!is_dragging_ref.current) return;
+                    e.stopPropagation();
+                    handle_pointer_event(e);
+                }}
+                onPointerUp={(e) => {
+                    if (is_dragging_ref.current) {
+                        is_dragging_ref.current = false;
+                        onDragEnd?.();
+                    }
+                    e.stopPropagation();
+                    if ((e.target as HTMLElement).hasPointerCapture(e.pointerId)) {
+                        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+                    }
+                }}
+                onPointerCancel={(e) => {
+                    if (is_dragging_ref.current) {
+                        is_dragging_ref.current = false;
+                        onDragEnd?.();
+                    }
+                    e.stopPropagation();
+                    if ((e.target as HTMLElement).hasPointerCapture(e.pointerId)) {
+                        (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+                    }
+                }}
             />
         </Container>
     );
