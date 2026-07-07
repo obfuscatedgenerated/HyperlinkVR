@@ -37,7 +37,7 @@ export const WatchUI = () => {
             flexDirection="column"
             alignItems="center"
             justifyContent="center"
-            backgroundColor="#4db8ff"
+            backgroundColor="#547299"
             opacity={0.8}
             borderRadius={16}
             panelMaterialClass={DoubleSidedSolidPanel}
