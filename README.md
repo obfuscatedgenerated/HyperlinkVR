@@ -12,4 +12,5 @@ A not-so secret project...
 (from project root)
 
 `pnpm i`
+
 `pnpm run build:extension`
