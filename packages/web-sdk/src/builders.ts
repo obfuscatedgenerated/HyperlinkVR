@@ -1,9 +1,10 @@
 import type { NamedReply } from "@hyperlinkvr/types";
-import { AxesBasedMonitorInput, AxisRange, ButtonPrefab, ButtonPrefabInput, ButtonPrefabSchema, Collider, ColliderSchema, ControllerButtonInteraction, ControllerButtonInteractionInput, ControllerButtonInteractionSchema, ControllerButtonWhenListen, CreatedEngineObject, CustomMeshApproximation, CustomObject, CustomObjectInput, CustomObjectSchema, EngineObject, EngineObjectDispatch, EngineObjectDispatchInput, EngineObjectDispatchSchema, FollowPlayerInteractionInput, FollowPlayerInteractionSchema, GrabbableInteraction, GrabbableInteractionInput, GrabbableInteractionSchema, GrabCollider, GrabOffsetInput, HexNumericalColor, HexNumericalColorSchema, Interaction, MeshApproximation, Monitor, MonitorSchema, PhysicsSystem, PhysicsSystemInput, PhysicsSystemSchema, RigidBody, RigidBodyInput, RigidBodySchema, RigidBodyType, TransformInput, TriggerVolumeInteraction, TriggerVolumeInteractionInput, TriggerVolumeInteractionSchema } from "@hyperlinkvr/vr-engine-schemas";
+import { AxesBasedMonitorInput, AxisRange, ButtonPrefab, ButtonPrefabInput, ButtonPrefabSchema, Collider, ColliderSchema, ControllerButtonInteraction, ControllerButtonInteractionInput, ControllerButtonInteractionSchema, ControllerButtonWhenListen, CreatedEngineObject, CustomMeshApproximation, CustomObject, CustomObjectInput, CustomObjectSchema, EngineObject, EngineObjectDispatch, EngineObjectDispatchInput, EngineObjectDispatchSchema, FollowPlayerInteraction, FollowPlayerInteractionInput, FollowPlayerInteractionSchema, GrabbableInteraction, GrabbableInteractionInput, GrabbableInteractionSchema, GrabCollider, GrabOffsetInput, HexNumericalColor, HexNumericalColorSchema, Interaction, MeshApproximation, Monitor, MonitorSchema, PhysicsSystem, PhysicsSystemInput, PhysicsSystemSchema, PrefabInput, ReportEvent, ReportEventPayload, ReportingInteractionInput, ReportingPrefabInput, RigidBody, RigidBodyInput, RigidBodySchema, RigidBodyType, TransformInput, TriggerVolumeInteraction, TriggerVolumeInteractionInput, TriggerVolumeInteractionSchema } from "@hyperlinkvr/vr-engine-schemas";
 
 
 
 import { send_via_rtc } from "./messenger";
+import { subscribe_report } from "./event_bus";
 
 
 class BaseBuilder<InternalType> {
@@ -14,10 +15,12 @@ class BaseBuilder<InternalType> {
     }
 
     static from_data<B extends BaseBuilder<any>, D>(
-        this: new (data: D) => B,
+        this: new (data?: D) => B,
         data: D
     ): B {
-        return new this(JSON.parse(JSON.stringify(data)));
+        const instance = new this();
+        instance._internal = structuredClone(data);
+        return instance;
     }
 
     clone(): this {
@@ -34,6 +37,8 @@ export class PhysicsSystemBuilder extends BaseBuilder<PhysicsSystemInput> {
         this._internal.rigid_body = body;
         return this;
     }
+
+    // when report_motion/collisions supported then add here
 
     build(): PhysicsSystem {
         return PhysicsSystemSchema.parse(this._internal);
@@ -313,7 +318,44 @@ export class CustomObjectBuilder extends BaseBuilder<CustomObjectInput> {
         return this;
     }
 
-    add_interaction(interaction: Interaction) {
+    add_interaction(interaction: FollowPlayerInteraction): this;
+    add_interaction(
+        name: string,
+        interaction:
+            | GrabbableInteraction
+            | ControllerButtonInteraction
+            | TriggerVolumeInteraction
+    ): this;
+    add_interaction(
+        name_or_interaction: string | Interaction,
+        maybe_interaction?: Interaction
+    ): this {
+        let interaction: Interaction;
+
+        if (typeof name_or_interaction === "string") {
+            const name = name_or_interaction;
+            if (!maybe_interaction) {
+                throw new Error(
+                    "An interaction is required when a name is given."
+                );
+            }
+            const clash = (this._internal.interactions ?? []).some(
+                (candidate) =>
+                    "reporting" in candidate && candidate.reporting?.name === name
+            );
+            if (clash) {
+                throw new Error(
+                    `Interaction name "${name}" already used on this object.`
+                );
+            }
+            interaction = {
+                ...maybe_interaction,
+                reporting: { name }
+            } as Interaction;
+        } else {
+            interaction = name_or_interaction;
+        }
+
         if (!this._internal.interactions) {
             this._internal.interactions = [];
         }
@@ -344,6 +386,11 @@ export class ButtonPrefabBuilder extends BaseBuilder<ButtonPrefabInput> {
         super({ type: "prefab", name: "button" } as ButtonPrefabInput);
     }
 
+    named(name: string) {
+        this._internal.reporting = { ...this._internal.reporting, name };
+        return this;
+    }
+
     set_label(label: string) {
         this._internal.label = label;
         return this;
@@ -354,22 +401,24 @@ export class ButtonPrefabBuilder extends BaseBuilder<ButtonPrefabInput> {
         return this;
     }
 
+    set_reports_press(reports: boolean) {
+        this._internal.report_press = reports;
+        return this;
+    }
+
+    set_reports_release(reports: boolean) {
+        this._internal.report_release = reports;
+        return this;
+    }
+
     build(): ButtonPrefab {
         return ButtonPrefabSchema.parse(this._internal);
     }
 }
 
 class AxesBasedMonitorBuilder extends BaseBuilder<AxesBasedMonitorInput> {
-    constructor(
-        type: "position" | "rotation" | "linear-velocity" | "angular-velocity",
-        name: string
-    ) {
-        super({ type, name });
-    }
-
-    rename(name: string) {
-        this._internal.name = name;
-        return this;
+    constructor(type: "position" | "rotation" | "linear-velocity" | "angular-velocity",) {
+        super({ type });
     }
 
     when(cond: "any" | "all" | "xor") {
@@ -398,30 +447,32 @@ class AxesBasedMonitorBuilder extends BaseBuilder<AxesBasedMonitorInput> {
 }
 
 export class PositionMonitorBuilder extends AxesBasedMonitorBuilder {
-    constructor(name: string) {
-        super("position", name);
+    constructor() {
+        super("position");
     }
 }
 
 export class RotationMonitorBuilder extends AxesBasedMonitorBuilder {
-    constructor(name: string) {
-        super("rotation", name);
+    constructor() {
+        super("rotation");
     }
 }
 
 export class LinearVelocityMonitorBuilder extends AxesBasedMonitorBuilder {
-    constructor(name: string) {
-        super("linear-velocity", name);
+    constructor() {
+        super("linear-velocity");
     }
 }
 
 export class AngularVelocityMonitorBuilder extends AxesBasedMonitorBuilder {
-    constructor(name: string) {
-        super("angular-velocity", name);
+    constructor() {
+        super("angular-velocity");
     }
 }
 
 export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatchInput> {
+    #callbacks = new Map<string, (event: ReportEvent) => void>();
+
     constructor() {
         super({} as EngineObjectDispatchInput);
     }
@@ -481,24 +532,32 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         return this;
     }
 
-    add_monitor(monitor: Monitor) {
+    add_monitor(name: string, monitor: Monitor) {
         if (!this._internal.monitors) {
             this._internal.monitors = [];
         }
-        this._internal.monitors.push(monitor);
+        this._internal.monitors.push({ ...monitor, reporting: { name } });
         return this;
     }
 
-    add_monitors(monitors: Monitor[]) {
+    add_monitors(monitors: {name: string, monitor: Monitor}[]) {
         if (!this._internal.monitors) {
             this._internal.monitors = [];
         }
-        this._internal.monitors.push(...monitors);
+        this._internal.monitors.push(...monitors.map(({name, monitor}) => ({ ...monitor, reporting: { name } })));
         return this;
     }
 
-    set_monitors(monitors: Monitor[]) {
-        this._internal.monitors = monitors;
+    set_monitors(monitors: {name: string, monitor: Monitor}[]) {
+        this._internal.monitors = monitors.map(({name, monitor}) => ({ ...monitor, reporting: { name } }));
+        return this;
+    }
+
+    on(name: string, callback: (event: ReportEvent) => void) {
+        if (this.#callbacks.has(name)) {
+            throw new Error(`A callback is already bound for "${name}".`);
+        }
+        this.#callbacks.set(name, callback);
         return this;
     }
 
@@ -506,15 +565,121 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         return EngineObjectDispatchSchema.parse(this._internal);
     }
 
-    async create(): Promise<CreatedEngineObject> {
-        const built_object = this.build();
-        const created = (await send_via_rtc({
-            action: "HVRSDK_CREATE_ENGINE_OBJECT",
-            object: built_object
-        })) as NamedReply<"HVRSDK_CREATE_ENGINE_OBJECT">;
-        // TODO: handle timeouts and errors
+    #bind_callbacks(dispatch: EngineObjectDispatch) {
+        // every named reporting source in this dispatch, plus how to stamp its id back
+        const named_sources: Array<{ name: string; assign_id: (id: string) => void }> = [];
 
-        return created.object;
+        // find all interactions with reporting names
+        if (dispatch.object.type === "custom" && dispatch.object.interactions) {
+            for (const interaction of dispatch.object.interactions) {
+                if ("reporting" in interaction && interaction.reporting?.name) {
+                    named_sources.push({
+                        name: interaction.reporting.name,
+                        assign_id: (id) => {
+                            interaction.reporting = { ...interaction.reporting, id };
+                        }
+                    });
+                }
+            }
+        }
+
+        // if prefab has reporting, add it
+        if (dispatch.object.type === "prefab" && dispatch.object.reporting?.name) {
+            const prefab_object = dispatch.object as PrefabInput;
+            named_sources.push({
+                name: dispatch.object.reporting.name,
+                assign_id: (id) => {
+                    prefab_object.reporting = { ...prefab_object.reporting, id };
+                }
+            });
+        }
+
+        // add any reporting monitors
+        for (const monitor of dispatch.monitors ?? []) {
+            if (monitor.reporting?.name) {
+                named_sources.push({
+                    name: monitor.reporting.name,
+                    assign_id: (id) => {
+                        monitor.reporting = { ...monitor.reporting, id };
+                    }
+                });
+            }
+        }
+
+        const seen = new Set<string>();
+        for (const source of named_sources) {
+            if (seen.has(source.name)) {
+                throw new Error(`Duplicate reporting name "${source.name}" in this dispatch.`);
+            }
+            seen.add(source.name);
+        }
+
+        // mint an id per bound source, stamp it into the outgoing data, subscribe
+        const unsubscribes: Array<() => void> = [];
+        const unbound = new Set(this.#callbacks.keys());
+
+        for (const source of named_sources) {
+            const callback = this.#callbacks.get(source.name);
+            if (!callback) {
+                continue; // no callback bound for this source, so don't subscribe
+            }
+
+            const id = crypto.randomUUID();
+            source.assign_id(id);
+
+            unsubscribes.push(subscribe_report(id, callback));
+
+            unbound.delete(source.name);
+        }
+
+        if (unbound.size > 0) {
+            for (const unsubscribe of unsubscribes) unsubscribe();
+            const missing = [...unbound].map((name) => `"${name}"`).join(", ");
+            throw new Error(`No reporting source named ${missing} in this dispatch.`);
+        }
+
+        return unsubscribes;
+    }
+
+    async create(): Promise<{object: CreatedEngineObject, destroy: () => Promise<void> }> {
+        const built_object = this.build();
+        const unsubscribes = this.#bind_callbacks(built_object);
+
+        try {
+            const created = (await send_via_rtc({
+                action: "HVRSDK_CREATE_ENGINE_OBJECT",
+                object: built_object
+            })) as NamedReply<"HVRSDK_CREATE_ENGINE_OBJECT">;
+            // TODO: handle timeouts and errors
+
+            let burned = false;
+            return {
+                object: created.object,
+                destroy: async () => {
+                    if (burned) {
+                        throw new Error("This object has already been destroyed.");
+                    }
+
+                    burned = true;
+
+                    for (const unsubscribe of unsubscribes) {
+                        unsubscribe();
+                    }
+
+                    // TODO: implement
+                    // await send_via_rtc({
+                    //     action: "HVRSDK_DESTROY_ENGINE_OBJECT",
+                    //     object_id: created.object.id
+                    // });
+                }
+            }
+        } catch (e) {
+            for (const unsubscribe of unsubscribes) {
+                unsubscribe();
+            }
+
+            throw e;
+        }
     }
 }
 
@@ -530,7 +695,7 @@ const sword = new CustomObjectBuilder()
         )
         .build()
     )
-    .add_interaction(new GrabbableInteractionBuilder()
+    .add_interaction("grab", new GrabbableInteractionBuilder()
         .reports_grabs() // now recieves events when object grabbed
         .build()
     )
@@ -541,13 +706,16 @@ const created_sword = await new EngineObjectDispatchBuilder()
     .set_position(0, 1, -2)
     .add_monitor(
         // we also recieve an event when being swung faster than 5 rads/s in any direction
-        new AngularVelocityMonitorBuilder("sword_swung")
+        "swung",
+        new AngularVelocityMonitorBuilder()
             .when("any")
             .x({ min: 5 })
             .y({ min: 5 })
             .z({ min: 5 })
             .build()
     )
+    .on("grab", (event) => console.log("grabbed", event.object_id))
+    .on("swung", () => console.log("swung"))
     .create();
 
 console.log("Created sword object with ID:", created_sword.id);
@@ -556,6 +724,7 @@ console.log("Created sword object with ID:", created_sword.id);
 // example usage for button prefab:
 /*
 const button = new ButtonPrefabBuilder()
+    .named("my_button")
     .set_label("Press Me")
     .set_color(0xff0000)
     .build();
@@ -563,6 +732,7 @@ const button = new ButtonPrefabBuilder()
 const created_button = await new EngineObjectDispatchBuilder()
     .set_object(button)
     .set_position(1, 1, -2)
+    .on("my_button", (event) => console.log("button event:", event))
     .create();
 
 console.log("Created button object with ID:", created_button.id);

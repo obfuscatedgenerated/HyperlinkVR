@@ -1,8 +1,12 @@
 import { z } from "zod";
 
-
-
-
+export const ReportConfigSchema = z.object({
+    id: z.string().optional(),   // routing id, minted at dispatch
+    name: z.string().optional()  // author label, used to bind callbacks
+});
+export type ReportConfig = z.infer<typeof ReportConfigSchema>;
+const reportable = <T extends z.ZodRawShape>(shape: T) =>
+    z.object({ ...shape, reporting: ReportConfigSchema.optional() });
 
 // TODO: collider offsets. and is collider combo possible?
 
@@ -112,8 +116,9 @@ export type RigidBodyType = RigidBody["type"];
 export const PhysicsSystemSchema = z.object({
     rigid_body: RigidBodySchema.optional(),
     //joints: // to be added later
-    report_collisions: z.boolean().default(false),
-    report_motion: z.boolean().default(false)
+    // report_collisions: z.boolean().default(false),
+    // report_motion: z.boolean().default(false)
+    // TODO: move the top to monitors? or just add ids in place. either way neither supported yet
 });
 export type PhysicsSystem = z.infer<typeof PhysicsSystemSchema>;
 export type PhysicsSystemInput = z.input<typeof PhysicsSystemSchema>;
@@ -177,7 +182,8 @@ export const GrabColliderSchema = z.discriminatedUnion("type", [
 ]);
 export type GrabCollider = z.infer<typeof GrabColliderSchema>;
 
-export const GrabbableInteractionSchema = z.object({
+
+export const GrabbableInteractionSchema = reportable({
     type: z.literal("grabbable"),
     collider: GrabColliderSchema.default({ type: "auto-bounding-box" }),
     grab_distance: z.number().positive().optional(),
@@ -201,7 +207,7 @@ export type ControllerButtonWhenListen = z.infer<
     typeof ControllerButtonWhenListenSchema
 >;
 
-export const ControllerButtonInteractionSchema = z.object({
+export const ControllerButtonInteractionSchema = reportable({
     type: z.literal("controller-button"),
     button: z.string(),
     report_press: z.boolean().default(true),
@@ -215,7 +221,7 @@ export type ControllerButtonInteractionInput = z.input<
     typeof ControllerButtonInteractionSchema
 >;
 
-export const TriggerVolumeInteractionSchema = z.object({
+export const TriggerVolumeInteractionSchema = reportable({
     type: z.literal("trigger-volume"),
     collider: ColliderSchema,
     report_enter: z.boolean().default(true),
@@ -287,12 +293,8 @@ export type CustomObjectInput = z.input<typeof CustomObjectSchema>;
 export const HexNumericalColorSchema = z.number().int().min(0).max(0xffffff);
 export type HexNumericalColor = z.infer<typeof HexNumericalColorSchema>;
 
-const BasePrefabSchema = z.object({
+export const ButtonPrefabSchema = reportable({
     type: z.literal("prefab"),
-    name: z.string(),
-});
-
-export const ButtonPrefabSchema = BasePrefabSchema.extend({
     name: z.literal("button"),
     label: z.string(),
     color: HexNumericalColorSchema.default(0x00ff00),
@@ -309,11 +311,6 @@ export type PrefabInput = z.input<typeof PrefabSchema>;
 export const EngineObjectSchema = z.union([CustomObjectSchema, PrefabSchema]);
 export type EngineObject = z.infer<typeof EngineObjectSchema>;
 export type EngineObjectInput = z.input<typeof EngineObjectSchema>;
-
-const BaseMonitorSchema = z.object({
-    type: z.string(),
-    name: z.string()
-});
 
 export const AxisRangeSchema = z.union([
     z.object({
@@ -332,7 +329,8 @@ export const AxisRangeSchema = z.union([
 ]);
 export type AxisRange = z.infer<typeof AxisRangeSchema>;
 
-export const AxesBasedMonitorSchema = BaseMonitorSchema.extend({
+export const AxesBasedMonitorSchema = reportable({
+    type: z.enum(["position", "rotation", "linear-velocity", "angular-velocity"]),
     when: z.enum(["any", "all", "xor"]).default("all"),
     x: AxisRangeSchema.optional(),
     y: AxisRangeSchema.optional(),
