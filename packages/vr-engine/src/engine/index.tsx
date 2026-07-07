@@ -218,10 +218,10 @@ const EngineHostInternal = memo(
                         <EngineObjectSync />
 
                         <div
-                            className="w-full h-full max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)] relative"
+                            className={`w-full h-full relative ${mode === "vr" ? "max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)]" : ""}`}
                             ref={canvas_container_ref}
                         >
-                            <LogoOverlay />
+                            {mode === "vr" && <LogoOverlay />}
                             {mode === "flat" && <Crosshair />}
 
                             <AvatarProvider>
