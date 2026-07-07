@@ -6,7 +6,8 @@ import { Euler, Group, Vector3 } from "three";
 import { useFlatFrameInput } from "../input/impl/flat/bindings";
 
 
-const SENSITIVITY = 0.0022; // rad per pixel TODO: configurable
+const BASE_YAW_RADIANS = 0.022 * (Math.PI / 180);
+
 const PITCH_LIMIT = Math.PI / 2 - 0.01;
 
 export const FlatCameraRig = ({ origin }: { origin: React.RefObject<Group | null>; }) => {
@@ -19,11 +20,14 @@ export const FlatCameraRig = ({ origin }: { origin: React.RefObject<Group | null
     const head = useMemo(() => new Vector3(), []);
 
     const [player_height_cm] = useSetting("player_height_cm");
+    const [sensitivity] = useSetting("flat_sensitivity");
 
     useFrame(() => {
+        const mult = BASE_YAW_RADIANS * sensitivity;
+
         // consume accumulated mouse delta
-        yaw.current -= input.look.x * SENSITIVITY;
-        pitch.current -= input.look.y * SENSITIVITY;
+        yaw.current -= input.look.x * mult;
+        pitch.current -= input.look.y * mult;
         pitch.current = Math.max(
             -PITCH_LIMIT,
             Math.min(PITCH_LIMIT, pitch.current)

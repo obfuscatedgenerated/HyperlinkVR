@@ -192,6 +192,24 @@ export const settings_def = build_settings({
         }
     },
 
+    flat_sensitivity: {
+        default_value: 2.5,
+        ui: {
+            common: {
+                label: "Mouse sensitivity",
+                description: "Sensitivity of the mouse look in flat mode",
+                widget: {
+                    type: "range",
+                    min: 0.1,
+                    max: 20,
+                    precision_dp: 2,
+                    slider_step: 0.1
+                },
+                breadcrumbs: ["Input", "Flat"]
+            }
+        }
+    },
+
     debug_ray_hits: {
         default_value: false,
         local_only: true
