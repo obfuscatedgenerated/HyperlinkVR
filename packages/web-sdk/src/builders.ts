@@ -666,11 +666,10 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
                         unsubscribe();
                     }
 
-                    // TODO: implement
-                    // await send_via_rtc({
-                    //     action: "HVRSDK_DESTROY_ENGINE_OBJECT",
-                    //     object_id: created.object.id
-                    // });
+                    await send_via_rtc({
+                        action: "HVRSDK_DESTROY_ENGINE_OBJECT",
+                        object_id: created.object.id
+                    });
                 }
             }
         } catch (e) {
@@ -718,7 +717,11 @@ const created_sword = await new EngineObjectDispatchBuilder()
     .on("swung", () => console.log("swung"))
     .create();
 
-console.log("Created sword object with ID:", created_sword.id);
+console.log("Created sword object with ID:", created_sword.object.id);
+
+// if you want to get rid of it:
+created_sword.destroy().then(() => console.log("sword destroyed"));
+
  */
 
 // example usage for button prefab:
@@ -735,5 +738,5 @@ const created_button = await new EngineObjectDispatchBuilder()
     .on("my_button", (event) => console.log("button event:", event))
     .create();
 
-console.log("Created button object with ID:", created_button.id);
+console.log("Created button object with ID:", created_button.object.id);
 */

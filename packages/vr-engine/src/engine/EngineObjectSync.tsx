@@ -10,7 +10,7 @@ export const EngineObjectSync = () => {
     const { add_object, remove_object } = useEngineObjectStore();
 
     useEffect(() => {
-        const unlisten = rtc.on_action("HVRSDK_CREATE_ENGINE_OBJECT", (message, reply) => {
+        const unlisten_create = rtc.on_action("HVRSDK_CREATE_ENGINE_OBJECT", (message, reply) => {
             const {success, data} = EngineObjectDispatchSchema.safeParse(message.object);
             if (!success) {
                 // TODO: proper error support, this is just stuffing it into a type that wont go. just need a standard error reply then expect it on the builder's create method/sdk sender
@@ -30,8 +30,19 @@ export const EngineObjectSync = () => {
             });
         });
 
+        const unlisten_destroy = rtc.on_action("HVRSDK_DESTROY_ENGINE_OBJECT", (message, reply) => {
+            console.log("(-) Destroyed engine object", message.object_id);
+            remove_object(message.object_id);
+
+            reply({
+                for: "HVRSDK_DESTROY_ENGINE_OBJECT",
+                object_id: message.object_id
+            });
+        });
+
         return () => {
-            unlisten();
+            unlisten_create();
+            unlisten_destroy();
         };
     }, [rtc, add_object, remove_object]);
 

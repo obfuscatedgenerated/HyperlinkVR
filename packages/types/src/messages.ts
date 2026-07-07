@@ -90,6 +90,11 @@ interface WebSDKCreateEngineObjectAction extends BaseWebSDKActionMessage {
     object: EngineObjectDispatch;
 }
 
+interface WebSDKDestroyEngineObjectAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_DESTROY_ENGINE_OBJECT";
+    object_id: string;
+}
+
 interface WebSDKMetaAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_META";
     content: "supported" | "defer" | "disable";
@@ -103,6 +108,7 @@ export type WebSDKActionMessage =
     | WebSDKRTCIceCandidateAction
     | WebSDKRTCAnswerAction
     | WebSDKCreateEngineObjectAction
+    | WebSDKDestroyEngineObjectAction
     | WebSDKMetaAction;
 
 export type ActionMessage =
@@ -171,11 +177,17 @@ interface WebSDKObjectCreatedReplyMessage extends BaseWebSDKReplyMessage {
     object: CreatedEngineObject;
 }
 
+interface WebSDKObjectDestroyedReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_DESTROY_ENGINE_OBJECT";
+    object_id: string;
+}
+
 export type WebSDKReplyMessage =
     WebSDKAuthQueryReplyMessage
     | WebSDKAuthWhoAmIReplyMessage
     | WebSDKRTCOfferReplyMessage
-    | WebSDKObjectCreatedReplyMessage;
+    | WebSDKObjectCreatedReplyMessage
+    | WebSDKObjectDestroyedReplyMessage;
 
 export type ReplyMessage =
     WebSDKReplyMessage;

@@ -394,6 +394,5 @@ export type CreatedEngineObject = z.infer<typeof CreatedEngineObjectSchema>;
 export type CreatedEngineObjectInput = z.input<typeof CreatedEngineObjectSchema>;
 
 // TODO: dispatch object modifications
-// TODO: dispatch object destruction
 // TODO: prefab for dom mirror
 // TODO: support parenting
