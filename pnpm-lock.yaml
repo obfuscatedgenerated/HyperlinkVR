@@ -80,9 +80,6 @@ overrides:
   three: ^0.185.0
 
 patchedDependencies:
-  '@pmndrs/uikit@1.0.74':
-    hash: 3f272a0ad12160430ec802e91064cab6e8395f5a9ff964ed2be9b36d879d4ae1
-    path: patches/@pmndrs__uikit@1.0.74.patch
   '@tailwindcss/oxide@4.3.1':
     hash: adaee549c69537cdd9ceb5b9384d1da927741fb9a0540133a953c7b14dcbb6dc
     path: patches/@tailwindcss__oxide@4.3.1.patch
@@ -181,7 +178,7 @@ importers:
     devDependencies:
       '@tailwindcss/vite':
         specifier: 'catalog:'
-        version: 4.3.1(vite@8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0))
+        version: 4.3.1(vite@8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
       '@types/node':
         specifier: 'catalog:'
         version: 20.11.5
@@ -196,16 +193,19 @@ importers:
         version: 0.185.0
       '@wxt-dev/auto-icons':
         specifier: 'catalog:'
-        version: 1.1.1(wxt@0.20.27(@types/node@20.11.5)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0))
+        version: 1.1.1(wxt@0.20.27(@types/node@20.11.5)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
       rollup-plugin-visualizer:
         specifier: ^7.0.1
         version: 7.0.1(rolldown@1.1.3)(rollup@3.30.0)
       tailwindcss:
         specifier: 'catalog:'
         version: 4.3.1
+      terser:
+        specifier: ^5.48.0
+        version: 5.48.0
       wxt:
         specifier: 'catalog:'
-        version: 0.20.27(@types/node@20.11.5)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0)
+        version: 0.20.27(@types/node@20.11.5)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
 
   packages/@types-custom/troika-three-text: {}
 
@@ -1226,6 +1226,9 @@ packages:
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
     engines: {node: '>=6.0.0'}
 
+  '@jridgewell/source-map@0.3.11':
+    resolution: {integrity: sha512-ZMp1V8ZFcPG5dIWnQLr3NSI1MiCU7UETdS/A0G8V/XWHvJv3ZsFqutJn1Y5RPmAPX6F3BiE397OqveU/9NCuIA==}
+
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
 
@@ -2221,6 +2224,9 @@ packages:
 
   comlink@4.4.2:
     resolution: {integrity: sha512-OxGdvBmJuNKSCMO4NTl1L47VRp6xn2wG4F/2hYzB6tiCb709otOxtEYCSvK80PtjODfXXZu8ds+Nw5kVCjqd2g==}
+
+  commander@2.20.3:
+    resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
 
   commander@2.9.0:
     resolution: {integrity: sha512-bmkUukX8wAOjHdN26xj5c4ctEV22TQ7dQYhSmuckKhToXrkUn0iIaolHdIxYYqD55nhpSPA9zPQ1yP57GdXP2A==}
@@ -3565,6 +3571,11 @@ packages:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
     engines: {node: '>=6'}
 
+  terser@5.48.0:
+    resolution: {integrity: sha512-J/9An6vs9Us6wKRriSFXBWdRZapREHqFzdNUKk0pmu804EMR6dr6winwo7e5JDxN4xahxQsuysyYFwlwj4XN/Q==}
+    engines: {node: '>=10'}
+    hasBin: true
+
   thread-stream@3.2.0:
     resolution: {integrity: sha512-zLBvqpwr4Esa0kRjcrzGU6zL25lePWaCLMx0RQFrmteozIfeNdaMLpG5U7PeHzvlFkAWaRKA9/KVW4F60iB+qw==}
 
@@ -4545,6 +4556,11 @@ snapshots:
 
   '@jridgewell/resolve-uri@3.1.2': {}
 
+  '@jridgewell/source-map@0.3.11':
+    dependencies:
+      '@jridgewell/gen-mapping': 0.3.13
+      '@jridgewell/trace-mapping': 0.3.31
+
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
   '@jridgewell/trace-mapping@0.3.31':
@@ -4803,7 +4819,7 @@ snapshots:
 
   '@pmndrs/uikit-default@1.0.74(three@0.185.0)':
     dependencies:
-      '@pmndrs/uikit': 1.0.74(patch_hash=3f272a0ad12160430ec802e91064cab6e8395f5a9ff964ed2be9b36d879d4ae1)(three@0.185.0)
+      '@pmndrs/uikit': 1.0.74(three@0.185.0)
       '@pmndrs/uikit-lucide': 1.0.74(three@0.185.0)
       zod: 4.4.3
     transitivePeerDependencies:
@@ -4811,7 +4827,7 @@ snapshots:
 
   '@pmndrs/uikit-lucide@1.0.74(three@0.185.0)':
     dependencies:
-      '@pmndrs/uikit': 1.0.74(patch_hash=3f272a0ad12160430ec802e91064cab6e8395f5a9ff964ed2be9b36d879d4ae1)(three@0.185.0)
+      '@pmndrs/uikit': 1.0.74(three@0.185.0)
     transitivePeerDependencies:
       - three
 
@@ -4819,7 +4835,7 @@ snapshots:
     dependencies:
       '@preact/signals-core': 1.14.3
 
-  '@pmndrs/uikit@1.0.74(patch_hash=3f272a0ad12160430ec802e91064cab6e8395f5a9ff964ed2be9b36d879d4ae1)(three@0.185.0)':
+  '@pmndrs/uikit@1.0.74(three@0.185.0)':
     dependencies:
       '@pmndrs/msdfonts': 1.0.74
       '@pmndrs/uikit-pub-sub': 1.0.74
@@ -4960,7 +4976,7 @@ snapshots:
   '@react-three/uikit@1.0.74(@react-three/fiber@9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0))(@types/react@19.2.3)(react@19.2.7)(three@0.185.0)(use-sync-external-store@1.6.0(react@19.2.7))':
     dependencies:
       '@pmndrs/pointer-events': 6.6.30
-      '@pmndrs/uikit': 1.0.74(patch_hash=3f272a0ad12160430ec802e91064cab6e8395f5a9ff964ed2be9b36d879d4ae1)(three@0.185.0)
+      '@pmndrs/uikit': 1.0.74(three@0.185.0)
       '@preact/signals-core': 1.14.3
       '@react-three/fiber': 9.6.1(@types/react@19.2.3)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.0)
       react: 19.2.7
@@ -5108,12 +5124,12 @@ snapshots:
       '@tailwindcss/oxide-win32-arm64-msvc': 4.3.1
       '@tailwindcss/oxide-win32-x64-msvc': 4.3.1
 
-  '@tailwindcss/vite@4.3.1(vite@8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0))':
+  '@tailwindcss/vite@4.3.1(vite@8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))':
     dependencies:
       '@tailwindcss/node': 4.3.1
       '@tailwindcss/oxide': 4.3.1(patch_hash=adaee549c69537cdd9ceb5b9384d1da927741fb9a0540133a953c7b14dcbb6dc)
       tailwindcss: 4.3.1
-      vite: 8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0)
+      vite: 8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
 
   '@turbo/darwin-64@2.10.3':
     optional: true
@@ -5257,12 +5273,12 @@ snapshots:
 
   '@wordlist/random@5.0.0(patch_hash=e4f7fc367c5125132b9052a9d700e787a36fa178c35ce57cbf36610c9059fe55)': {}
 
-  '@wxt-dev/auto-icons@1.1.1(wxt@0.20.27(@types/node@20.11.5)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0))':
+  '@wxt-dev/auto-icons@1.1.1(wxt@0.20.27(@types/node@20.11.5)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))':
     dependencies:
       defu: 6.1.7
       fs-extra: 11.3.5
       sharp: 0.34.5
-      wxt: 0.20.27(@types/node@20.11.5)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0)
+      wxt: 0.20.27(@types/node@20.11.5)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
 
   '@wxt-dev/browser@0.1.43':
     dependencies:
@@ -5476,6 +5492,8 @@ snapshots:
   color-name@1.1.4: {}
 
   comlink@4.4.2: {}
+
+  commander@2.20.3: {}
 
   commander@2.9.0:
     dependencies:
@@ -6826,6 +6844,13 @@ snapshots:
 
   tapable@2.3.3: {}
 
+  terser@5.48.0:
+    dependencies:
+      '@jridgewell/source-map': 0.3.11
+      acorn: 8.17.0
+      commander: 2.20.3
+      source-map-support: 0.5.21
+
   thread-stream@3.2.0:
     dependencies:
       real-require: 0.2.0
@@ -6932,7 +6957,7 @@ snapshots:
 
   undici-types@5.26.5: {}
 
-  unimport@6.3.0(esbuild@0.27.7)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(vite@8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0)):
+  unimport@6.3.0(esbuild@0.27.7)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(vite@8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)):
     dependencies:
       acorn: 8.17.0
       escape-string-regexp: 5.0.0
@@ -6946,7 +6971,7 @@ snapshots:
       scule: 1.3.0
       strip-literal: 3.1.0
       tinyglobby: 0.2.17
-      unplugin: 3.2.0(esbuild@0.27.7)(rolldown@1.1.3)(rollup@3.30.0)(vite@8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0))
+      unplugin: 3.2.0(esbuild@0.27.7)(rolldown@1.1.3)(rollup@3.30.0)(vite@8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
       unplugin-utils: 0.3.1
     optionalDependencies:
       oxc-parser: 0.137.0
@@ -6968,7 +6993,7 @@ snapshots:
       pathe: 2.0.3
       picomatch: 4.0.4
 
-  unplugin@3.2.0(esbuild@0.27.7)(rolldown@1.1.3)(rollup@3.30.0)(vite@8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0)):
+  unplugin@3.2.0(esbuild@0.27.7)(rolldown@1.1.3)(rollup@3.30.0)(vite@8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)):
     dependencies:
       '@jridgewell/remapping': 2.3.5
       picomatch: 4.0.4
@@ -6977,7 +7002,7 @@ snapshots:
       esbuild: 0.27.7
       rolldown: 1.1.3
       rollup: 3.30.0
-      vite: 8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0)
+      vite: 8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
 
   update-browserslist-db@1.2.3(browserslist@4.28.2):
     dependencies:
@@ -7042,13 +7067,13 @@ snapshots:
 
   uuid@8.3.2: {}
 
-  vite-node@6.0.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0):
+  vite-node@6.0.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0):
     dependencies:
       cac: 7.0.0
       es-module-lexer: 2.1.0
       obug: 2.1.3
       pathe: 2.0.3
-      vite: 8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0)
+      vite: 8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@types/node'
       - '@vitejs/devtools'
@@ -7063,7 +7088,7 @@ snapshots:
       - tsx
       - yaml
 
-  vite@8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0):
+  vite@8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
@@ -7078,6 +7103,7 @@ snapshots:
       less: 4.6.6
       sass: 1.101.0
       sugarss: 5.0.1(postcss@8.5.15)
+      terser: 5.48.0
       tsx: 4.22.4
       yaml: 2.9.0
 
@@ -7167,7 +7193,7 @@ snapshots:
       is-wsl: 3.1.1
       powershell-utils: 0.1.0
 
-  wxt@0.20.27(@types/node@20.11.5)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0):
+  wxt@0.20.27(@types/node@20.11.5)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0):
     dependencies:
       '@1natsu/wait-element': 4.2.0
       '@aklinker1/rollup-plugin-visualizer': 5.12.0(rollup@3.30.0)
@@ -7207,9 +7233,9 @@ snapshots:
       publish-browser-extension: 4.0.5
       scule: 1.3.0
       tinyglobby: 0.2.17
-      unimport: 6.3.0(esbuild@0.27.7)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(vite@8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0))
-      vite: 8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0)
-      vite-node: 6.0.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(tsx@4.22.4)(yaml@2.9.0)
+      unimport: 6.3.0(esbuild@0.27.7)(oxc-parser@0.137.0)(rolldown@1.1.3)(rollup@3.30.0)(vite@8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))
+      vite: 8.1.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
+      vite-node: 6.0.0(@types/node@20.11.5)(esbuild@0.27.7)(jiti@2.7.0(patch_hash=d01a7bc14d7eb1a495c6581495222eaf77155369d24d6acabaeba06cd981c477))(less@4.6.6)(sass@1.101.0)(sugarss@5.0.1(postcss@8.5.15))(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0)
       web-ext-run: 0.2.4
     transitivePeerDependencies:
       - '@farmfe/core'

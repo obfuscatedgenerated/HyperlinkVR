@@ -4,18 +4,15 @@ packages:
   - packages/@types-custom/*
   - scripts/
 
-overrides:
-  three: ^0.185.0
-
 catalog:
   '@react-three/drei': ^10.7.7
   '@react-three/fiber': ^9.6.1
+  '@react-three/handle': ^6.6.30
+  '@react-three/rapier': ^2.2.0
   '@react-three/uikit': ^1.0.74
   '@react-three/uikit-default': ^1.0.74
   '@react-three/uikit-lucide': ^1.0.74
   '@react-three/xr': ^6.6.30
-  '@react-three/handle': ^6.6.30
-  '@react-three/rapier': ^2.2.0
   '@tailwindcss/vite': ^4.3.1
   '@types/node': 20.11.5
   '@types/react': 19.2.3
@@ -41,8 +38,10 @@ onlyBuiltDependencies:
   - msgpackr-extract
   - sharp
 
+overrides:
+  three: ^0.185.0
+
 patchedDependencies:
-  '@pmndrs/uikit@1.0.74': patches/@pmndrs__uikit@1.0.74.patch
   '@tailwindcss/oxide@4.3.1': patches/@tailwindcss__oxide@4.3.1.patch
   '@wordlist/english-eff': patches/@wordlist__english-eff.patch
   '@wordlist/random': patches/@wordlist__random.patch
