@@ -101,7 +101,7 @@ const SpectatorUI = () => {
 
     const button_text = is_supported ? (
         phase === "starting" ? (
-            <LoadingSpinner />
+            <LoadingSpinner className="mx-auto" />
         ) : (
             "Enter VR"
         )
