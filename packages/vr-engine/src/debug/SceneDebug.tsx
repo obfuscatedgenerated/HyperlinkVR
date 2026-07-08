@@ -1,19 +1,32 @@
 import { useSetting } from "@hyperlinkvr/react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import { BoxHelper, CanvasTexture, Color, Group, PointLight, PointLightHelper, Sprite, SpriteMaterial, Vector3 } from "three";
-
-
+import {
+    BoxHelper,
+    CanvasTexture,
+    Color,
+    DirectionalLight, DirectionalLightHelper,
+    Group,
+    PointLight,
+    PointLightHelper,
+    SpotLight, SpotLightHelper,
+    Sprite,
+    SpriteMaterial,
+    Vector3
+} from "three";
 
 import { SceneRerenderScanner } from "./SceneRerenderScanner";
 
 
-const PointLightHelpers = () => {
+type Light = PointLight | SpotLight | DirectionalLight;
+type LightHelper = PointLightHelper | SpotLightHelper | DirectionalLightHelper;
+const LightHelpers = () => {
     const scene = useThree((s) => s.scene);
-    const helpers = useRef(new Map<PointLight, PointLightHelper>());
+
+    const helpers = useRef(new Map<Light, LightHelper>());
 
     useFrame(() => {
-        const seen = new Set<PointLight>();
+        const seen = new Set<PointLight | SpotLight | DirectionalLight>();
 
         scene.traverse((obj) => {
             if ((obj as PointLight).isPointLight) {
@@ -22,6 +35,26 @@ const PointLightHelpers = () => {
                 let helper = helpers.current.get(light);
                 if (!helper) {
                     helper = new PointLightHelper(light, 0.25, 0xffff00);
+                    scene.add(helper);
+                    helpers.current.set(light, helper);
+                }
+                helper.update();
+            } else if ((obj as SpotLight).isSpotLight) {
+                const light = obj as SpotLight;
+                seen.add(light);
+                let helper = helpers.current.get(light);
+                if (!helper) {
+                    helper = new SpotLightHelper(light, 0xffff00);
+                    scene.add(helper);
+                    helpers.current.set(light, helper);
+                }
+                helper.update();
+            } else if ((obj as DirectionalLight).isDirectionalLight) {
+                const light = obj as DirectionalLight;
+                seen.add(light);
+                let helper = helpers.current.get(light);
+                if (!helper) {
+                    helper = new DirectionalLightHelper(light, 0.25, 0xffff00);
                     scene.add(helper);
                     helpers.current.set(light, helper);
                 }
@@ -187,7 +220,7 @@ export const SceneDebug = () => {
 
     return (
         <>
-            {show_lights && <PointLightHelpers />}
+            {show_lights && <LightHelpers />}
             {show_groups && <GroupHelpers />}
             <SceneRerenderScanner />
         </>

@@ -157,7 +157,7 @@ export const DevToolsPage = () => {
 
                     <ToolGroup title="Scene Debug">
                         <ToolSettingSwitch
-                            label="Show point lights"
+                            label="Show lights"
                             setting_key="debug_lights"
                         />
                         <ToolSettingSwitch
