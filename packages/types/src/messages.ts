@@ -207,6 +207,12 @@ interface WebSDKObjectDestroyedReplyMessage extends BaseWebSDKReplyMessage {
     object_id: string;
 }
 
+interface WebSDKObjectModifiedReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_MODIFY_ENGINE_OBJECT";
+    object_id: string;
+    success: true;
+}
+
 interface WebSDKObjectRefreshReplyMessage extends BaseWebSDKReplyMessage {
     for: "HVRSDK_REFRESH_ENGINE_OBJECT";
     object: CreatedEngineObject;
@@ -218,6 +224,7 @@ export type WebSDKReplyMessage =
     | WebSDKRTCOfferReplyMessage
     | WebSDKObjectCreatedReplyMessage
     | WebSDKObjectDestroyedReplyMessage
+    | WebSDKObjectModifiedReplyMessage
     | WebSDKObjectRefreshReplyMessage;
 
 export type ReplyMessage =

@@ -7,9 +7,10 @@ interface EngineObjectState {
 
     add_object: (obj: CreatedEngineObject) => void;
     remove_object: (id: string) => void;
+    get_object: (id: string) => CreatedEngineObject | null;
 }
 
-export const useEngineObjectStore = create<EngineObjectState>((set) => ({
+export const useEngineObjectStore = create<EngineObjectState>((set, get) => ({
     objects: {},
 
     add_object: (obj) =>
@@ -22,5 +23,13 @@ export const useEngineObjectStore = create<EngineObjectState>((set) => ({
             const next = { ...state.objects };
             delete next[id];
             return { objects: next };
-        })
+        }),
+
+    get_object: (id) => {
+        const obj = get().objects[id];
+        if (!obj) {
+            return null;
+        }
+        return obj;
+    }
 }));

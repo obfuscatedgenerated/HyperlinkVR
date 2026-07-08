@@ -1,10 +1,10 @@
 import { RapierRigidBody } from "@react-three/rapier";
 import { createContext, RefObject, useContext } from "react";
-import { Object3D } from "three";
+import {Group} from "three";
 
 export interface ObjectRefsContextType {
     id: string;
-    root: RefObject<Object3D | null>;
+    root: RefObject<Group | null>;
     rigid_body: RefObject<RapierRigidBody | null>;
 }
 

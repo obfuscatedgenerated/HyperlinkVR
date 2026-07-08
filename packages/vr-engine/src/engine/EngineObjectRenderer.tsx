@@ -1,42 +1,62 @@
-import type { CreatedEngineObject } from "@hyperlinkvr/vr-engine-schemas";
-import { useMemo, useRef } from "react";
-import type { Group } from "three";
+import type { CreatedEngineObject, Rotation } from "@hyperlinkvr/vr-engine-schemas";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { Euler, Quaternion } from "three";
 
 import type { RendererComponentProps } from "../types";
+import { create_object_refs, ObjectRefsProvider } from "../contexts/ObjectRefsContext";
+import { register_object_refs } from "./object_ref_registry";
 import { CustomObjectRenderer } from "./CustomObjectRenderer";
 import { PrefabRenderer } from "./PrefabRenderer";
+import {EULER_ORDER} from "../consts";
 
+const scratch_euler = new Euler();
+export const rotation_to_quaternion = (rotation: Rotation, out: Quaternion): Quaternion => {
+    if (rotation.length === 4) {
+        return out.set(rotation[0], rotation[1], rotation[2], rotation[3]);
+    }
+    scratch_euler.set(rotation[0], rotation[1], rotation[2], EULER_ORDER);
+    return out.setFromEuler(scratch_euler);
+};
 
-export const EngineObjectRenderer = ({data}: {data: CreatedEngineObject}) => {
-    const {type, ...obj_rest} = data.object;
+export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) => {
+    const { type, ...obj_rest } = data.object;
 
     const RendererComponent = useMemo(
-        () => type === "prefab" ? PrefabRenderer : CustomObjectRenderer,
+        () => (type === "prefab" ? PrefabRenderer : CustomObjectRenderer),
         [data.object.type]
     ) as React.ComponentType<RendererComponentProps<any>>;
 
     const user_data_ref = useRef(data.user_data);
 
-    const root_ref = useRef<Group>(null);
+    const refs = useRef(create_object_refs(data.id));
 
-    // TODO: handle monitors
-    
+    // register refs with registry for retrieval by sdk
+    useEffect(() => register_object_refs(refs.current), []);
+
+    // rotation via quaternion so euler + quat both work
+    useLayoutEffect(() => {
+        const group = refs.current.root.current;
+        if (!group) return;
+        rotation_to_quaternion(data.transform.rotation, group.quaternion);
+    }, [data.transform.rotation]);
+
     return (
-        <group
-            ref={root_ref}
-            position={data.transform.position}
-            //rotation={data.transform.rotation} // TODO: need order on euler rotation data, and how do we use quat?
-            scale={data.transform.scale}
-        >
-            <RendererComponent
-                root_ref={root_ref}
-                user_data_ref={user_data_ref}
-                id={data.id}
-                {...obj_rest}
-            />
-        </group>
+        <ObjectRefsProvider value={refs.current}>
+            <group
+                ref={refs.current.root}
+                position={data.transform.position}
+                scale={data.transform.scale}
+            >
+                <RendererComponent
+                    root_ref={refs.current.root}
+                    user_data_ref={user_data_ref}
+                    id={data.id}
+                    {...obj_rest}
+                />
+            </group>
+        </ObjectRefsProvider>
     );
-}
+};
 
 /*
 await hyperlinkvr.connect();

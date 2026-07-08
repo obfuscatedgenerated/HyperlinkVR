@@ -1,0 +1,1 @@
+export const EULER_ORDER = "XYZ" as const;
