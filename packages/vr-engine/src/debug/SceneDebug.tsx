@@ -1,18 +1,12 @@
 import { useSetting } from "@hyperlinkvr/react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import {
-    BoxHelper,
-    CanvasTexture,
-    Color,
-    Group,
-    PointLight,
-    PointLightHelper,
-    Sprite,
-    SpriteMaterial,
-    Vector3
-} from "three";
+import { BoxHelper, CanvasTexture, Color, Group, PointLight, PointLightHelper, Sprite, SpriteMaterial, Vector3 } from "three";
+
+
+
 import { SceneRerenderScanner } from "./SceneRerenderScanner";
+
 
 const PointLightHelpers = () => {
     const scene = useThree((s) => s.scene);
@@ -62,7 +56,8 @@ const PointLightHelpers = () => {
 
 const LABEL_SCALE = 0.00025;
 const LABEL_OPACITY = 0.4;
-const make_label = (text: string): Sprite => {
+const EMPTY_LABEL_OPACITY = 0.025;
+const make_label = (text?: string): Sprite => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d")!;
 
@@ -70,6 +65,8 @@ const make_label = (text: string): Sprite => {
     const padding = 16;
     ctx.font = `${font_size}px sans-serif`;
 
+    const text_was_empty = !text || text.trim() === "";
+    text = text || "(unnamed)";
     const text_width = ctx.measureText(text).width;
     canvas.width = text_width + padding * 2;
     canvas.height = font_size + padding * 2;
@@ -78,10 +75,10 @@ const make_label = (text: string): Sprite => {
     ctx.font = `${font_size}px sans-serif`;
     ctx.textBaseline = "middle";
 
-    ctx.fillStyle = `rgba(0, 0, 0, ${LABEL_OPACITY})`;
+    ctx.fillStyle = `rgba(0, 0, 0, ${text_was_empty ? EMPTY_LABEL_OPACITY : LABEL_OPACITY})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = "#00ffff";
+    ctx.fillStyle = text_was_empty ? "#aaaaaa" : "#00ffff";
     ctx.fillText(text, padding, canvas.height / 2);
 
     const texture = new CanvasTexture(canvas);
@@ -97,7 +94,7 @@ const make_label = (text: string): Sprite => {
     return sprite;
 };
 
-type GroupDebug = { box: BoxHelper; label: Sprite };
+type GroupDebug = { box: BoxHelper | null; label: Sprite };
 
 const GroupHelpers = () => {
     const scene = useThree((s) => s.scene);
@@ -114,19 +111,35 @@ const GroupHelpers = () => {
 
                 let entry = helpers.current.get(group);
                 if (!entry) {
-                    const box = new BoxHelper(group, new Color(0x00ffff));
-                    (box as any).__debugHelper = true;
+                    try {
+                        const box = new BoxHelper(group, new Color(0x00ffff));
+                        (box as any).__debugHelper = true;
 
-                    const label = make_label(group.name || "(unnamed group)");
-                    (label as any).__debugHelper = true;
+                        const label = make_label(group.name);
+                        (label as any).__debugHelper = true;
 
-                    scene.add(box);
-                    scene.add(label);
-                    entry = { box, label };
-                    helpers.current.set(group, entry);
+                        scene.add(box);
+                        scene.add(label);
+                        entry = { box, label };
+                        helpers.current.set(group, entry);
+                    } catch (e) {
+                        console.error("Failed to create debug helper for group", group, e);
+
+                        // fallback to just a label
+                        const label = make_label(group.name ? `${group.name} (no box)` : "(unnamed) (no box)");
+                        (label as any).__debugHelper = true;
+                        scene.add(label);
+                        entry = { box: null, label };
+                        helpers.current.set(group, entry);
+                    }
                 }
 
-                entry.box.update();
+                if (!entry) return;
+
+                if (entry.box) {
+                    entry.box.update();
+                }
+
                 // park the label at the group's world position
                 group.getWorldPosition(world_pos.current);
                 entry.label.position.copy(world_pos.current);
@@ -135,9 +148,12 @@ const GroupHelpers = () => {
 
         for (const [group, entry] of helpers.current) {
             if (!seen.has(group)) {
-                scene.remove(entry.box);
+                if (entry.box) {
+                    scene.remove(entry.box);
+                    entry.box.dispose();
+                }
+
                 scene.remove(entry.label);
-                entry.box.dispose();
                 entry.label.material.map?.dispose();
                 entry.label.material.dispose();
                 helpers.current.delete(group);
@@ -149,9 +165,12 @@ const GroupHelpers = () => {
         const map = helpers.current;
         return () => {
             for (const [, entry] of map) {
-                entry.box.parent?.remove(entry.box);
+                if (entry.box) {
+                    entry.box.parent?.remove(entry.box);
+                    entry.box.dispose();
+                }
+
                 entry.label.parent?.remove(entry.label);
-                entry.box.dispose();
                 entry.label.material.map?.dispose();
                 entry.label.material.dispose();
             }
