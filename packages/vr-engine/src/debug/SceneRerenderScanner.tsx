@@ -37,18 +37,38 @@ const SceneScanRunner = () => {
 
             let helper = helpers.get(obj);
             if (!helper) {
-                helper = new Box3Helper(_box.clone(), new Color());
-                (helper as any).__debugHelper = true;
-                (helper.material as any).depthTest = false;
-                (helper.material as any).transparent = true;
-                helper.renderOrder = 998;
-                scene.add(helper);
-                helpers.set(obj, helper);
+                try {
+                    helper = new Box3Helper(_box.clone(), new Color());
+                    (helper as any).__debugHelper = true;
+                    (helper.material as any).depthTest = false;
+                    (helper.material as any).transparent = true;
+                    helper.renderOrder = 998;
+                    scene.add(helper);
+                    helpers.set(obj, helper);
+                } catch (e) {
+                    console.error("Failed to create debug helper for object", obj, e);
+                    flashes.delete(obj);
+                    // TODO: fallback to marker/sphere
+                    continue;
+                }
             }
 
             // refit the box to the object's current world bounds
-            _box.setFromObject(obj);
-            (helper as any).box.copy(_box);
+            try {
+                _box.setFromObject(obj);
+                (helper as any).box.copy(_box);
+            } catch (e) {
+                console.error("Failed to compute bounding box for object", obj, e);
+                flashes.delete(obj);
+                if (helper) {
+                    scene.remove(helper);
+                    helper.geometry.dispose();
+                    helpers.delete(obj);
+                }
+                continue;
+            }
+            // TODO: broken
+
             ramp_color(entry.count, helper.material.color);
             helper.material.opacity = 1 - age / FLASH_MS;
         }
