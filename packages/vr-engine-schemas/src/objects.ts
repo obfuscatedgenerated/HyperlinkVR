@@ -393,6 +393,33 @@ export const CreatedEngineObjectSchema = EngineObjectDispatchSchema.extend({
 export type CreatedEngineObject = z.infer<typeof CreatedEngineObjectSchema>;
 export type CreatedEngineObjectInput = z.input<typeof CreatedEngineObjectSchema>;
 
-// TODO: dispatch object modifications
+export const PartialTransformSchema = z.object({
+    position: z.tuple([z.number(), z.number(), z.number()]).optional(),
+    rotation: RotationSchema.optional(),
+    scale: z.tuple([z.number(), z.number(), z.number()]).optional()
+});
+export type PartialTransform = z.infer<typeof PartialTransformSchema>;
+export type PartialTransformInput = z.input<typeof PartialTransformSchema>;
+
+export const EngineObjectModificationSchema = z.object({
+    id: z.string(),
+    transform: PartialTransformSchema.optional(),
+    user_data: z.record(z.string(), z.any()).optional(),
+    monitors: z.array(MonitorSchema).optional()
+});
+export type EngineObjectModification = z.infer<typeof EngineObjectModificationSchema>;
+export type EngineObjectModificationInput = z.input<typeof EngineObjectModificationSchema>;
+
+export const TweenEasingSchema = z.enum(["linear", "ease-in", "ease-out", "ease-in-out"]).default("linear");
+export type TweenEasing = z.infer<typeof TweenEasingSchema>;
+export type TweenEasingInput = z.input<typeof TweenEasingSchema>;
+
+export const TweenSchema = z.object({
+    ms: z.number().positive(),
+    easing: TweenEasingSchema,
+});
+export type Tween = z.infer<typeof TweenSchema>;
+export type TweenInput = z.input<typeof TweenSchema>;
+
 // TODO: prefab for dom mirror
 // TODO: support parenting

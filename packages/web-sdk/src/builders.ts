@@ -1,5 +1,54 @@
 import type { NamedReply } from "@hyperlinkvr/types";
-import { AxesBasedMonitorInput, AxisRange, ButtonPrefab, ButtonPrefabInput, ButtonPrefabSchema, Collider, ColliderSchema, ControllerButtonInteraction, ControllerButtonInteractionInput, ControllerButtonInteractionSchema, ControllerButtonWhenListen, CreatedEngineObject, CustomMeshApproximation, CustomObject, CustomObjectInput, CustomObjectSchema, EngineObject, EngineObjectDispatch, EngineObjectDispatchInput, EngineObjectDispatchSchema, FollowPlayerInteraction, FollowPlayerInteractionInput, FollowPlayerInteractionSchema, GrabbableInteraction, GrabbableInteractionInput, GrabbableInteractionSchema, GrabCollider, GrabOffsetInput, HexNumericalColor, HexNumericalColorSchema, Interaction, MeshApproximation, Monitor, MonitorSchema, PhysicsSystem, PhysicsSystemInput, PhysicsSystemSchema, PrefabInput, ReportEvent, ReportEventPayload, ReportingInteractionInput, ReportingPrefabInput, RigidBody, RigidBodyInput, RigidBodySchema, RigidBodyType, TransformInput, TriggerVolumeInteraction, TriggerVolumeInteractionInput, TriggerVolumeInteractionSchema } from "@hyperlinkvr/vr-engine-schemas";
+import {
+    AxesBasedMonitorInput,
+    AxisRange,
+    ButtonPrefab,
+    ButtonPrefabInput,
+    ButtonPrefabSchema,
+    Collider,
+    ColliderSchema,
+    ControllerButtonInteraction,
+    ControllerButtonInteractionInput,
+    ControllerButtonInteractionSchema,
+    ControllerButtonWhenListen,
+    CreatedEngineObject,
+    CustomMeshApproximation,
+    CustomObject,
+    CustomObjectInput,
+    CustomObjectSchema,
+    EngineObject,
+    EngineObjectDispatch,
+    EngineObjectDispatchInput,
+    EngineObjectDispatchSchema, EngineObjectModification,
+    EngineObjectModificationInput, EngineObjectModificationSchema,
+    FollowPlayerInteraction,
+    FollowPlayerInteractionInput,
+    FollowPlayerInteractionSchema,
+    GrabbableInteraction,
+    GrabbableInteractionInput,
+    GrabbableInteractionSchema,
+    GrabCollider,
+    GrabOffsetInput,
+    HexNumericalColor,
+    HexNumericalColorSchema,
+    Interaction,
+    MeshApproximation,
+    Monitor,
+    MonitorSchema, PartialTransformInput,
+    PhysicsSystem,
+    PhysicsSystemInput,
+    PhysicsSystemSchema,
+    PrefabInput,
+    ReportEvent,
+    RigidBody,
+    RigidBodyInput,
+    RigidBodySchema,
+    RigidBodyType,
+    TransformInput,
+    TriggerVolumeInteraction,
+    TriggerVolumeInteractionInput,
+    TriggerVolumeInteractionSchema, TweenEasingInput, TweenSchema
+} from "@hyperlinkvr/vr-engine-schemas";
 
 
 
@@ -470,6 +519,174 @@ export class AngularVelocityMonitorBuilder extends AxesBasedMonitorBuilder {
     }
 }
 
+export interface EngineObjectCreationResult {
+    object: CreatedEngineObject;
+    destroy: () => Promise<void>;
+    modify: () => EngineObjectModificationBuilder;
+    refresh: () => Promise<void>;
+}
+
+class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificationInput> {
+    //#source: EngineObjectCreationResult;
+    #burned = false;
+
+    //constructor(source: EngineObjectCreationResult) {
+        //super({ id: source.object.id } as EngineObjectModificationInput);
+        //this.#source = source;
+    //}
+    constructor(id: string) {
+        super({ id } as EngineObjectModificationInput);
+    }
+
+    set_position(x: number, y: number, z: number) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.transform) {
+            this._internal.transform = {};
+        }
+        this._internal.transform.position = [x, y, z];
+        return this;
+    }
+
+    set_euler_rotation(x: number, y: number, z: number) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.transform) {
+            this._internal.transform = {};
+        }
+        this._internal.transform.rotation = [x, y, z];
+        return this;
+    }
+
+    set_quaternion_rotation(x: number, y: number, z: number, w: number) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.transform) {
+            this._internal.transform = {};
+        }
+        this._internal.transform.rotation = [x, y, z, w];
+        return this;
+    }
+
+    set_scale(x: number, y: number, z: number) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.transform) {
+            this._internal.transform = {};
+        }
+        this._internal.transform.scale = [x, y, z];
+        return this;
+    }
+
+    set_transform(transform: PartialTransformInput) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        this._internal.transform = transform;
+        return this;
+    }
+
+    set_user_data_value(key: string, value: any) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.user_data) {
+            this._internal.user_data = {};
+        }
+        this._internal.user_data[key] = value;
+        return this;
+    }
+
+    set_user_data(user_data: Record<string, any>) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        this._internal.user_data = user_data;
+        return this;
+    }
+
+    build(): EngineObjectModification {
+        return EngineObjectModificationSchema.parse(this._internal);
+    }
+
+    async apply(): Promise<void> {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        const built_modification = this.build();
+        this.#burned = true;
+        await send_via_rtc({
+            action: "HVRSDK_MODIFY_ENGINE_OBJECT",
+            object_id: this._internal.id,
+            changes: built_modification,
+        });
+
+        // // apply the changes to the cached object
+        // this.#source.object = Object.freeze({
+        //     ...this.#source.object,
+        //     transform: {
+        //         ...this.#source.object.transform,
+        //         ...built_modification.transform
+        //     },
+        //     user_data: {
+        //         ...this.#source.object.user_data,
+        //         ...built_modification.user_data
+        //     }
+        // });
+    }
+
+    async tween(duration_ms: number, easing?: TweenEasingInput) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (this._internal.user_data) {
+            throw new Error("Tweening user_data is not allowed");
+        }
+
+        const built_modification = this.build();
+        const tween = TweenSchema.parse({
+            ms: duration_ms,
+            easing,
+        });
+
+        this.#burned = true;
+        await send_via_rtc({
+            action: "HVRSDK_MODIFY_ENGINE_OBJECT",
+            object_id: this._internal.id,
+            changes: built_modification,
+            tween
+        });
+
+        // // could tween the changes to the cached object, for now just wait for the delay then apply the final state
+        // await new Promise((resolve) => setTimeout(resolve, duration_ms));
+        //
+        // this.#source.object = Object.freeze({
+        //     ...this.#source.object,
+        //     transform: {
+        //         ...this.#source.object.transform,
+        //         ...built_modification.transform
+        //     },
+        //     user_data: {
+        //         ...this.#source.object.user_data,
+        //         ...built_modification.user_data
+        //     }
+        // });
+    }
+}
+
 export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatchInput> {
     #callbacks = new Map<string, (event: ReportEvent) => void>();
 
@@ -641,7 +858,7 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         return unsubscribes;
     }
 
-    async create(): Promise<{object: CreatedEngineObject, destroy: () => Promise<void> }> {
+    async create(): Promise<EngineObjectCreationResult> {
         const built_object = this.build();
         const unsubscribes = this.#bind_callbacks(built_object);
 
@@ -653,8 +870,8 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
             // TODO: handle timeouts and errors
 
             let burned = false;
-            return {
-                object: created.object,
+            const ret_val = {
+                object: Object.freeze(created.object),
                 destroy: async () => {
                     if (burned) {
                         throw new Error("This object has already been destroyed.");
@@ -670,8 +887,29 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
                         action: "HVRSDK_DESTROY_ENGINE_OBJECT",
                         object_id: created.object.id
                     });
+                },
+                modify: () => {
+                    if (burned) {
+                        throw new Error("This object has already been destroyed.");
+                    }
+
+                    return new EngineObjectModificationBuilder(created.object.id);
+                },
+                refresh: async () => {
+                    if (burned) {
+                        throw new Error("This object has already been destroyed.");
+                    }
+
+                    const refreshed = (await send_via_rtc({
+                        action: "HVRSDK_REFRESH_ENGINE_OBJECT",
+                        object_id: created.object.id
+                    })) as NamedReply<"HVRSDK_REFRESH_ENGINE_OBJECT">;
+
+                    ret_val.object = Object.freeze(refreshed.object);
                 }
             }
+
+            return ret_val;
         } catch (e) {
             for (const unsubscribe of unsubscribes) {
                 unsubscribe();

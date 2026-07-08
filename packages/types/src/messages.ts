@@ -1,7 +1,7 @@
 import type {
     CreatedEngineObject,
-    EngineObjectDispatch,
-    ReportEvent
+    EngineObjectDispatch, EngineObjectModification,
+    ReportEvent, Tween
 } from "@hyperlinkvr/vr-engine-schemas";
 
 
@@ -100,6 +100,18 @@ interface WebSDKDestroyEngineObjectAction extends BaseWebSDKActionMessage {
     object_id: string;
 }
 
+interface WebSDKModifyEngineObjectAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_MODIFY_ENGINE_OBJECT";
+    object_id: string;
+    changes: EngineObjectModification;
+    tween?: Tween;
+}
+
+interface WebSDKRefreshEngineObjectAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_REFRESH_ENGINE_OBJECT";
+    object_id: string;
+}
+
 interface WebSDKMetaAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_META";
     content: "supported" | "defer" | "disable";
@@ -114,6 +126,8 @@ export type WebSDKActionMessage =
     | WebSDKRTCAnswerAction
     | WebSDKCreateEngineObjectAction
     | WebSDKDestroyEngineObjectAction
+    | WebSDKModifyEngineObjectAction
+    | WebSDKRefreshEngineObjectAction
     | WebSDKMetaAction;
 
 export type ActionMessage =
@@ -193,12 +207,18 @@ interface WebSDKObjectDestroyedReplyMessage extends BaseWebSDKReplyMessage {
     object_id: string;
 }
 
+interface WebSDKObjectRefreshReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_REFRESH_ENGINE_OBJECT";
+    object: CreatedEngineObject;
+}
+
 export type WebSDKReplyMessage =
     WebSDKAuthQueryReplyMessage
     | WebSDKAuthWhoAmIReplyMessage
     | WebSDKRTCOfferReplyMessage
     | WebSDKObjectCreatedReplyMessage
-    | WebSDKObjectDestroyedReplyMessage;
+    | WebSDKObjectDestroyedReplyMessage
+    | WebSDKObjectRefreshReplyMessage;
 
 export type ReplyMessage =
     WebSDKReplyMessage;
