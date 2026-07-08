@@ -5,6 +5,7 @@ import { useEngineObjectStore } from "../stores/EngineObjectStore";
 import {EngineObjectDispatchSchema, EngineObjectModificationSchema} from "@hyperlinkvr/vr-engine-schemas";
 import {get_object_refs} from "./object_ref_registry";
 import {apply_modification, sample_live_transform} from "./object_modification";
+import {cancel_active_tween, set_active_tween} from "./tween_registry";
 
 
 export const EngineObjectSync = () => {
@@ -93,8 +94,38 @@ export const EngineObjectSync = () => {
                 return;
             }
 
-            // TODO: support tween
+            // starting any modify supersedes a running tween on this object
+            cancel_active_tween(message.object_id);
 
+            if (message.tween && data.transform) {
+                const live = sample_live_transform(refs);
+                const target = { ...live, ...data.transform };
+
+                set_active_tween({
+                    id: message.object_id,
+                    from: live,
+                    to: target,
+                    easing: message.tween.easing,
+                    duration_ms: message.tween.ms,
+                    start_ms: performance.now(),
+                    on_complete: () => {
+                        const current = useEngineObjectStore.getState().get_object(message.object_id);
+                        if (!current) return; // destroyed before completion
+                        useEngineObjectStore.getState().add_object({ ...current, transform: target });
+                    }
+                });
+
+                // user_data / monitors (if any) still apply instantly alongside the tween
+                // although the builder typically wont allow this for consistency
+                if (data.user_data !== undefined || data.monitors !== undefined) {
+                    add_object(apply_modification(stored, { ...data, transform: undefined }, refs));
+                }
+
+                reply({ for: "HVRSDK_MODIFY_ENGINE_OBJECT", object_id: message.object_id, success: true });
+                return;
+            }
+
+            // if no tween, apply the modification immediately
             const next = apply_modification(stored, data, refs);
             add_object(next);
 

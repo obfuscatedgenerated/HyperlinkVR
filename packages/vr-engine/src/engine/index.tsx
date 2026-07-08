@@ -32,6 +32,7 @@ import { FloorCollider } from "../world/FloorCollider";
 import { Sky } from "../world/Sky";
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
+import {TweenRunner} from "./TweenRunner";
 
 
 configureTextBuilder({
@@ -180,6 +181,7 @@ const SceneContents = ({
                 />
 
                 <EngineObjectSpawner />
+                <TweenRunner />
 
                 {extra_in_origin || null}
             </PlayerOriginProvider>

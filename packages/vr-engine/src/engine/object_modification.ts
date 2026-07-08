@@ -62,6 +62,14 @@ const rigid_body_type = (stored: CreatedEngineObject): string | undefined =>
 const body_owns_pose = (body: RapierRigidBody | null, rb_type?: string): boolean =>
     !!body && rb_type !== "kinematic-pos";
 
+// same check but upon the refs context
+export const body_owns_pose_for = (refs: ObjectRefsContextType): boolean => {
+    const body = refs.rigid_body.current;
+    if (!body) return false;
+
+    return body.bodyType() !== 2; // 2 === KinematicPositionBased in rapier
+};
+
 const teleport_body = (
     body: RapierRigidBody,
     transform: PartialTransform,

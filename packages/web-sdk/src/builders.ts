@@ -616,6 +616,48 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
         return this;
     }
 
+    add_monitor(name: string, monitor: Monitor) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.monitors) {
+            this._internal.monitors = [];
+        }
+
+        this._internal.monitors.push({ ...monitor, reporting: { name } });
+    }
+
+    remove_monitors(name: string) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.monitors) {
+            throw new Error("No monitors to remove.");
+        }
+
+        // multiple monitors are allowed to have the same name, so remove all with that name but check if any were actually removed
+        const original_length = this._internal.monitors.length;
+        this._internal.monitors = this._internal.monitors.filter((monitor) => monitor.reporting?.name !== name);
+
+        if (this._internal.monitors.length === original_length) {
+            throw new Error(`No monitors were found with name "${name}".`);
+        }
+    }
+
+    add_monitors(monitors: {name: string, monitor: Monitor}[]) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.monitors) {
+            this._internal.monitors = [];
+        }
+
+        this._internal.monitors.push(...monitors.map(({name, monitor}) => ({ ...monitor, reporting: { name } })));
+    }
+
     build(): EngineObjectModification {
         return EngineObjectModificationSchema.parse(this._internal);
     }
@@ -652,8 +694,8 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
             throw new Error("This modification builder has already been applied.");
         }
 
-        if (this._internal.user_data) {
-            throw new Error("Tweening user_data is not allowed");
+        if (this._internal.user_data || this._internal.monitors) {
+            throw new Error("Only transform changes may be tweened");
         }
 
         const built_modification = this.build();
