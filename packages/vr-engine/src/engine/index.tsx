@@ -162,6 +162,7 @@ const SceneContents = ({
                 ground_nadir_color={0x000000}
                 sun_color={0xffffff}
             />
+            <fog attach="fog" args={[0x222222, 10, 75]} />
 
             <PlayerOriginProvider value={player_ref}>
                 <Player ref={player_ref} />
