@@ -1,5 +1,5 @@
 import type { FollowPlayerInteraction, GrabbableInteraction, Interaction, TriggerVolumeInteraction } from "@hyperlinkvr/vr-engine-schemas";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 
 
@@ -8,6 +8,8 @@ import { useReportEmitter } from "../hooks/useReportEmitter";
 import { Grabbable } from "../interaction";
 import { FollowPlayer } from "../interaction/FollowPlayer";
 import { resolve_body_part, TriggerVolume } from "../interaction/TriggerVolume";
+import { Group } from "three";
+
 
 interface InteractionWrapperProps<I extends Interaction = Interaction> {
     interaction: I;
@@ -46,29 +48,33 @@ const GrabbableWrapper = ({interaction, children}: InteractionWrapperProps<Grabb
 
 const TriggerVolumeWrapper = ({interaction, children}: InteractionWrapperProps<TriggerVolumeInteraction>) => {
     const emit = useReportEmitter(interaction.reporting);
+    const anchor_ref = useRef<Group>(null);
 
     return (
-        <TriggerVolume
-            collider={interaction.collider}
-            on_enter={interaction.report_enter
-                ? (payload) => {
-                    const part = resolve_body_part(payload);
-                    if (!part) return;
-                    emit({ kind: "trigger-volume", payload: { type: "enter", part } })
-                }
-                : undefined
-            }
-            on_exit={interaction.report_exit
-                ? (payload) => {
-                    const part = resolve_body_part(payload);
-                    if (!part) return;
-                    emit({ kind: "trigger-volume", payload: { type: "exit", part } })
-                }
-                : undefined
-            }
-        >
+        <>
+            <group ref={anchor_ref} />
             {children}
-        </TriggerVolume>
+            <TriggerVolume
+                collider={interaction.collider}
+                on_enter={interaction.report_enter
+                    ? (payload) => {
+                        const part = resolve_body_part(payload);
+                        if (!part) return;
+                        emit({ kind: "trigger-volume", payload: { type: "enter", part } })
+                    }
+                    : undefined
+                }
+                on_exit={interaction.report_exit
+                    ? (payload) => {
+                        const part = resolve_body_part(payload);
+                        if (!part) return;
+                        emit({ kind: "trigger-volume", payload: { type: "exit", part } })
+                    }
+                    : undefined
+                }
+                anchor_ref={anchor_ref}
+            />
+        </>
     )
 }
 

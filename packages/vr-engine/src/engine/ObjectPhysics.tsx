@@ -58,7 +58,7 @@ export const URLMeshCollider = ({
     );
 };
 
-const useKinematicPosition = (
+export const useKinematicPosition = (
     rb_ref: React.RefObject<RapierRigidBody | null>,
     rb: RigidBodyConfig,
     container_ref: React.RefObject<Group | null>
@@ -82,7 +82,7 @@ const useKinematicPosition = (
     }, -1);
 };
 
-const useKinematicVelocity = (
+export const useKinematicVelocity = (
     ref: React.RefObject<RapierRigidBody | null>,
     rb: RigidBodyConfig
 ) => {
@@ -95,7 +95,7 @@ const useKinematicVelocity = (
     }, [ref, rb]);
 };
 
-const useExplicitMass = (
+export const useExplicitMass = (
     ref: React.RefObject<RapierRigidBody | null>,
     rb: RigidBodyConfig
 ) => {

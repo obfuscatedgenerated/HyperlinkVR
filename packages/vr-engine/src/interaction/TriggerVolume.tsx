@@ -1,31 +1,49 @@
 import type { Collider } from "@hyperlinkvr/vr-engine-schemas";
-import { CollisionPayload, RigidBody } from "@react-three/rapier";
-import type { ComponentProps } from "react";
+import {
+    CollisionPayload,
+    RapierRigidBody,
+    RigidBody,
+} from "@react-three/rapier";
+import { ComponentProps, useRef } from "react";
+import { Group } from "three";
 
-import { useCollider } from "../engine/ObjectPhysics";
+
+
+import { useCollider, useKinematicPosition } from "../engine/ObjectPhysics";
+
 
 interface TriggerVolumeProps extends ComponentProps<"group"> {
     collider: Collider;
     on_enter?: (payload: CollisionPayload) => void;
     on_exit?: (payload: CollisionPayload) => void;
+    anchor_ref?: React.RefObject<Group | null>;
 }
 
-export const TriggerVolume = ({collider, on_enter, on_exit, children, ...rest}: TriggerVolumeProps) => {
+const ALL_COLLISIONS = 60943;
+
+export const TriggerVolume = ({collider, on_enter, on_exit, anchor_ref, children, ...rest}: TriggerVolumeProps) => {
     const { auto_strategy, ColliderComponent } = useCollider(collider);
+    const container_ref = useRef<Group>(null);
+    const rb_ref = useRef<RapierRigidBody>(null);
+
+    useKinematicPosition(rb_ref, { type: "kinematic-pos" }, anchor_ref || container_ref);
 
     return (
-        <RigidBody
-            // @ts-ignore
-            type="fixed"
-            sensor
-            onIntersectionEnter={on_enter}
-            onIntersectionExit={on_exit}
-            colliders={auto_strategy}
-            {...rest}
-        >
-            {ColliderComponent && <ColliderComponent />}
-            {children}
-        </RigidBody>
+        <group {...rest}>
+            <RigidBody
+                ref={rb_ref}
+                // @ts-ignore
+                type="kinematicPosition"
+                sensor
+                onIntersectionEnter={on_enter}
+                onIntersectionExit={on_exit}
+                activeCollisionTypes={ALL_COLLISIONS}
+                colliders={auto_strategy}
+            >
+                {ColliderComponent && <ColliderComponent />}
+                {children}
+            </RigidBody>
+        </group>
     )
 }
 
