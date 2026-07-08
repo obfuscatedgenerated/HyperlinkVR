@@ -8,6 +8,7 @@ import { ArrowHelper, Group, Mesh, MeshBasicMaterial, Object3D, Quaternion, Sphe
 
 
 import { useAvatarMaterials } from "../contexts/AvatarContext";
+import { ObjectPhysics } from "../engine/ObjectPhysics";
 import { Hand, useHands } from "../input/hands";
 import { LayerGroup } from "../render/LayerGroup";
 import { Layer } from "../render/layers";
@@ -314,7 +315,8 @@ export const XRAvatarHand = () => {
         [glue, debug_touch]
     );
 
-    const hand = hands.find((candidate) => candidate.handedness === handedness) ?? null;
+    const hand =
+        hands.find((candidate) => candidate.handedness === handedness) ?? null;
 
     return (
         <AvatarHandModel
@@ -331,6 +333,16 @@ export const XRAvatarHand = () => {
                     <primitive object={glue.debug_down_sphere} />
                 </>
             )}
+
+            <ObjectPhysics
+                body_name={`avatar_hand_rb-${handedness}`}
+                physics={{
+                    rigid_body: {
+                        type: "kinematic-pos",
+                        collider: { type: "sphere", radius: 0.05 }
+                    }
+                }}
+            />
         </AvatarHandModel>
     );
 };
@@ -344,7 +356,17 @@ export const FlatAvatarHands = () => {
                     key={hand.handedness}
                     hand={hand}
                     handedness={hand.handedness}
-                />
+                >
+                    <ObjectPhysics
+                        body_name={`avatar_hand_rb-${hand.handedness}`}
+                        physics={{
+                            rigid_body: {
+                                type: "kinematic-pos",
+                                collider: { type: "sphere", radius: 0.05 }
+                            }
+                        }}
+                    />
+                </AvatarHandModel>
             ))}
         </>
     );

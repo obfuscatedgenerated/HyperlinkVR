@@ -11,6 +11,7 @@ export interface TriggerVolumeInteractionPayload {
     part: "hand" | "torso" | "head";
     handedness?: "left" | "right";
 }
+// TODO: support other objects entering
 
 export interface ControllerButtonInteractionPayload {
     type: "press" | "release";

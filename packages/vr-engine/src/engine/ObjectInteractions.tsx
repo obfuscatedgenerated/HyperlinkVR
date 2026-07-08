@@ -1,12 +1,13 @@
-import type { FollowPlayerInteraction, GrabbableInteraction, Interaction } from "@hyperlinkvr/vr-engine-schemas";
+import type { FollowPlayerInteraction, GrabbableInteraction, Interaction, TriggerVolumeInteraction } from "@hyperlinkvr/vr-engine-schemas";
 import { useMemo } from "react";
 
 
+
 import { useObjectRefs } from "../contexts/ObjectRefsContext";
+import { useReportEmitter } from "../hooks/useReportEmitter";
 import { Grabbable } from "../interaction";
 import { FollowPlayer } from "../interaction/FollowPlayer";
-import { useReportEmitter } from "../hooks/useReportEmitter";
-
+import { resolve_body_part, TriggerVolume } from "../interaction/TriggerVolume";
 
 interface InteractionWrapperProps<I extends Interaction = Interaction> {
     interaction: I;
@@ -43,6 +44,34 @@ const GrabbableWrapper = ({interaction, children}: InteractionWrapperProps<Grabb
     );
 }
 
+const TriggerVolumeWrapper = ({interaction, children}: InteractionWrapperProps<TriggerVolumeInteraction>) => {
+    const emit = useReportEmitter(interaction.reporting);
+
+    return (
+        <TriggerVolume
+            collider={interaction.collider}
+            on_enter={interaction.report_enter
+                ? (payload) => {
+                    const part = resolve_body_part(payload);
+                    if (!part) return;
+                    emit({ kind: "trigger-volume", payload: { type: "enter", part } })
+                }
+                : undefined
+            }
+            on_exit={interaction.report_exit
+                ? (payload) => {
+                    const part = resolve_body_part(payload);
+                    if (!part) return;
+                    emit({ kind: "trigger-volume", payload: { type: "exit", part } })
+                }
+                : undefined
+            }
+        >
+            {children}
+        </TriggerVolume>
+    )
+}
+
 const FollowPlayerWrapper = ({interaction, children}: InteractionWrapperProps<FollowPlayerInteraction>) => {
     return (
         <FollowPlayer enabled={interaction.enabled} snap_on_release={interaction.snap_on_release}>
@@ -54,8 +83,8 @@ const FollowPlayerWrapper = ({interaction, children}: InteractionWrapperProps<Fo
 const INTERACTION_MAP: Record<Interaction["type"], React.ComponentType<InteractionWrapperProps<any>> | null> = {
     "grabbable": GrabbableWrapper,
     "follow-player": FollowPlayerWrapper,
-    "controller-button": null,
-    "trigger-volume": null
+    "trigger-volume": TriggerVolumeWrapper,
+    "controller-button": null
 } as const;
 
 // follow player must be the parent to grabbable, others dont matter

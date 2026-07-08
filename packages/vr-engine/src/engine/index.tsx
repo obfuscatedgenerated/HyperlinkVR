@@ -136,7 +136,6 @@ const SceneContents = ({
 }: {
     extra_in_origin?: React.ReactNode;
 }) => {
-    const [show_colliders] = useSetting("debug_colliders");
     const player_ref = useRef<Group>(null);
 
     const session = useTabSession();
@@ -154,7 +153,7 @@ const SceneContents = ({
     }, [session.url, setRecentWorlds]);
 
     return (
-        <Physics interpolate gravity={[0, -9.81, 0]} debug={show_colliders}>
+        <>
             <FloorCollider />
             <Sky
                 sky_zenith_color={0x111111}
@@ -183,7 +182,7 @@ const SceneContents = ({
 
                 {extra_in_origin || null}
             </PlayerOriginProvider>
-        </Physics>
+        </>
     );
 };
 
@@ -225,6 +224,8 @@ const EngineHostInternal = memo(
             [on_ready]
         );
 
+        const [show_colliders] = useSetting("debug_colliders");
+
         return (
             <SessionModeProvider value={mode}>
                 <TabSessionProvider>
@@ -244,6 +245,7 @@ const EngineHostInternal = memo(
                                         gl={make_xr_compatible_renderer}
                                         onCreated={handle_created}
                                     >
+                                        <Physics interpolate gravity={[0, -9.81, 0]} debug={show_colliders}>
                                         <CameraSetup />
                                         <CanvasResizer
                                             containerRef={canvas_container_ref}
@@ -283,6 +285,7 @@ const EngineHostInternal = memo(
                                                 </FlatInputProvider>
                                             </ErrorBoundary>
                                         )}
+                                        </Physics>
                                     </Canvas>
                                 </HandsProvider>
                             </AvatarProvider>

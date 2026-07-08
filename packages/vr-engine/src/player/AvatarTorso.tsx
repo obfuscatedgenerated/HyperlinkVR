@@ -2,11 +2,12 @@ import { useSetting } from "@hyperlinkvr/react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { Quaternion, Vector3 } from "three";
+import { Group, Quaternion, Vector3 } from "three";
 
 
 
 import { useAvatarMaterials } from "../contexts/AvatarContext";
+import { ObjectPhysics } from "../engine/ObjectPhysics";
 import { Layer, LayerGroup } from "../render";
 
 
@@ -29,6 +30,8 @@ export const AvatarTorso = () => {
 
    // TODO: load clothing layer
 
+    const anchor_ref = useRef<Group>(null);
+
     // a point that lags slightly behind the true camera position, to lean the torso from the base towards locomotion
     const lean_lag_anchor_ref = useRef<Vector3 | null>(null);
 
@@ -42,6 +45,8 @@ export const AvatarTorso = () => {
     }, [scale_factor, torso_scene]);
 
     useFrame(({ camera }, delta) => {
+        if (!anchor_ref.current) return;
+
         const pos = new Vector3();
         const quat = new Quaternion();
 
@@ -87,13 +92,26 @@ export const AvatarTorso = () => {
         const flat_forward = new Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
         pos.add(flat_forward.multiplyScalar(-0.05));
 
-        torso_scene.position.copy(pos);
-        torso_scene.quaternion.copy(quat);
+        anchor_ref.current.position.copy(pos);
+        anchor_ref.current.quaternion.copy(quat);
+        //group_ref.current.updateWorldMatrix(true, false);
     });
 
     return (
         <LayerGroup layers={[Layer.PlayerModel_TorsoAndHands]}>
-            <primitive object={torso_scene} />
+            <group ref={anchor_ref} />
+            <ObjectPhysics
+                body_name="avatar_torso_rb"
+                physics={{
+                    rigid_body: {
+                        type: "kinematic-pos",
+                        collider: { type: "auto" }
+                    }
+                }}
+                kinematic_pos_tracking_ref={anchor_ref}
+            >
+                <primitive object={torso_scene} />
+            </ObjectPhysics>
         </LayerGroup>
     );
 };
