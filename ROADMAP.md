@@ -19,6 +19,7 @@
 - [ ] Light prefabs: point, spot, directional
 - [ ] Positional audio interaction/prefab (with option for 2D audio for consistency even though they could do it via their own DOM if they wished)
 - [ ] Camera interaction/prefab: activating one moves the player POV there (race games etc, altho those could use a forced sit interaction instead added later. figure out what difference there could be)
+- [ ] Implement ControllerButtonInteraction
 - [ ] Expand ControllerButtonInteraction to also read flat input, and axes like movement. Provide option to use consolidated input, or to use raw input per control scheme to customise it
 - [ ] Billboard positioning interaction
 - [ ] Prefab for links between worlds (a door? a portal? a big link logo? or as an interaction to allow customisation? perhaps both with some prefabbed links)
