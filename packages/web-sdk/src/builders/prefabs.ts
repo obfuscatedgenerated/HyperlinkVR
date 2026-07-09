@@ -1,0 +1,43 @@
+import {BaseBuilder} from "./base";
+import {
+    ButtonPrefab,
+    ButtonPrefabInput,
+    ButtonPrefabSchema,
+    HexNumericalColor,
+    HexNumericalColorSchema
+} from "@hyperlinkvr/vr-engine-schemas";
+
+export class ButtonPrefabBuilder extends BaseBuilder<ButtonPrefabInput> {
+    constructor() {
+        super({type: "prefab", name: "button"} as ButtonPrefabInput);
+    }
+
+    named(name: string) {
+        this._internal.reporting = {...this._internal.reporting, name};
+        return this;
+    }
+
+    set_label(label: string) {
+        this._internal.label = label;
+        return this;
+    }
+
+    set_color(color: HexNumericalColor) {
+        this._internal.color = HexNumericalColorSchema.parse(color);
+        return this;
+    }
+
+    set_reports_press(reports: boolean) {
+        this._internal.report_press = reports;
+        return this;
+    }
+
+    set_reports_release(reports: boolean) {
+        this._internal.report_release = reports;
+        return this;
+    }
+
+    build(): ButtonPrefab {
+        return ButtonPrefabSchema.parse(this._internal);
+    }
+}

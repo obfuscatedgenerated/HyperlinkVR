@@ -10,7 +10,7 @@
   - [ ] make vignette work for teleport
 - [x] Match flat locomotion speed to VR speed
 - [x] Match teleport locomotion to walk speed by using window to limit distance within timeframe
-- [ ] Split SDK builders into per-domain files (physics, interactions, prefabs, monitors, modification), barrel-export from one `index.ts` so consumer imports don't change
+- [x] Split SDK builders into per-domain files (physics, interactions, prefabs, monitors, modification), barrel-export from one `index.ts` so consumer imports don't change
 
 ### Phase 2
 - [ ] Player gravity
