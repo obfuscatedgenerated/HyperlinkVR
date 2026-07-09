@@ -1,4 +1,4 @@
-import { useXRControllerLocomotion, XRControllerState, XRSpace} from "@react-three/xr";
+import {useXRControllerLocomotion, useXRInputSourceState, XRControllerState, XRSpace} from "@react-three/xr";
 import {RefObject, useMemo, useRef} from "react";
 import {Group, Quaternion, Vector3} from "three";
 import {useSetting} from "@hyperlinkvr/react";
@@ -20,14 +20,61 @@ const TELEPORT_MIN_NORMAL_Y = 0.7;
 // TODO: pull speed from common file to match flat and vr speed, then handle sprinting too
 
 export const XRLocomotion = ({ origin }: { origin: RefObject<Group | null> }) => {
-    const [mode] = useSetting("vr_locomotion");
-    const [hand] = useSetting("vr_locomotion_hand");
+    const [locomotion] = useSetting("vr_locomotion");
+    const [locomotion_hand] = useSetting("vr_locomotion_hand");
+    const rotation_hand = useMemo(() => (locomotion_hand === "left" ? "right" : "left"), [locomotion_hand]);
 
-    // TODO: rotationOptions {type} arg allows specifying smooth rot
+    const [rotation] = useSetting("vr_rotation");
+    const [snap_angle] = useSetting("vr_snap_rotation_angle");
+    const [smooth_speed] = useSetting("vr_smooth_rotation_speed");
+    const smooth_speed_rad = useMemo(() => smooth_speed * (Math.PI / 180), [smooth_speed]);
 
     // in teleport mode, explictly disable the translation, but keep rotation
     // teleportation is handled by TeleportSurface, not this component
-    useXRControllerLocomotion(origin, mode === "walk" ? undefined : {speed: false}, undefined, hand);
+    useXRControllerLocomotion(origin,
+        {
+            speed: locomotion === "walk" ? undefined : false
+        },
+        {
+            // built in smooth rotation doesn't offset properly, so just disable snap angle when on smooth mode and implement our own
+            type: "snap",
+            degrees: rotation === "smooth" ? 0 : snap_angle,
+        },
+        locomotion_hand
+    );
+
+    // manual implementation of smooth turn
+    const controller = useXRInputSourceState("controller", rotation_hand);
+    const {camera} = useThree();
+
+    const cam_local_pos = useMemo(() => new Vector3(), []);
+    const rotated_cam_pos = useMemo(() => new Vector3(), []);
+    const y_axis = useMemo(() => new Vector3(0, 1, 0), []);
+
+    useFrame((_, delta) => {
+        if (rotation !== "smooth" || !origin.current || !controller) return;
+
+        const thumbstick = controller.gamepad["xr-standard-thumbstick"];
+        if (!thumbstick) return;
+
+        const turn_axis = thumbstick.xAxis ?? 0;
+
+        // deadzone
+        if (Math.abs(turn_axis) < 0.05) return;
+
+        // clamp delta to prevent massive rotational jumps if a frame drops
+        const safe_delta = Math.min(delta, 0.05);
+        const angle = turn_axis * smooth_speed_rad * safe_delta * -1;
+
+        cam_local_pos.copy(camera.position);
+        cam_local_pos.y = 0;
+
+        // pivot around camera position
+        rotated_cam_pos.copy(cam_local_pos).applyAxisAngle(y_axis, angle);
+        origin.current.position.add(cam_local_pos).sub(rotated_cam_pos);
+        origin.current.rotation.y += angle;
+    });
+
     return null;
 };
 

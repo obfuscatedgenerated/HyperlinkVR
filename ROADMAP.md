@@ -4,7 +4,7 @@
 - [x] Disable locomotion while watch UI is open (for flat)
 - [ ] Comfort options:
   - [x] vignette/masking on move and turn
-  - [ ] snap/smooth turn toggle
+  - [x] snap/smooth turn toggle
   - [x] option for teleport locomotion
   - [x] option to swap locomotion hands
   - [ ] make vignette work for teleport

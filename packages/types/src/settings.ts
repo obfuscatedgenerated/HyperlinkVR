@@ -264,6 +264,67 @@ export const settings_def = build_settings({
         }
     },
 
+    vr_rotation: {
+        default_value: "snap" as "snap" | "smooth",
+        ui: {
+            common: {
+                label: "Rotation method",
+                description: "Method of rotation in VR",
+                widget: {
+                    type: "select",
+                    options: [
+                        {label: "Snap", value: "snap"},
+                        {label: "Smooth", value: "smooth"}
+                    ]
+                },
+                breadcrumbs: ["Comfort"]
+            }
+        }
+    },
+
+    vr_snap_rotation_angle: {
+        default_value: 30 as 5 | 10 | 15 | 30 | 45 | 60 | 90,
+        ui: {
+            common: {
+                label: "Snap rotation angle",
+                description: "Angle of snap rotation in degrees",
+                widget: {
+                    type: "select",
+                    options: [
+                        {label: "5°", value: 5},
+                        {label: "10°", value: 10},
+                        {label: "15°", value: 15},
+                        {label: "30°", value: 30},
+                        {label: "45°", value: 45},
+                        {label: "60°", value: 60},
+                        {label: "90°", value: 90}
+                    ]
+                },
+                breadcrumbs: ["Comfort"]
+            }
+        }
+    },
+
+    vr_smooth_rotation_speed: {
+        default_value: 60,
+        ui: {
+            common: {
+                label: "Smooth rotation speed",
+                description: "Speed of smooth rotation in degrees per second",
+                widget: {
+                    type: "range",
+                    min: 30,
+                    max: 180,
+                    precision_dp: 0,
+                    unit: "°/s"
+                },
+                breadcrumbs: ["Comfort"]
+            }
+        }
+    },
+
+    // TODO: widget cross conditions: only show angle if mode is snap, only show speed if mode is smooth
+
     debug_ray_hits: {
         default_value: false,
         local_only: true
