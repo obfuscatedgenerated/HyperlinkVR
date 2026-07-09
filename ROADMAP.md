@@ -2,7 +2,7 @@
 
 ### Phase 1
 - [x] Disable locomotion while watch UI is open (for flat)
-- [ ] Comfort options: snap/smooth turn toggle, vignette/masking on move and turn
+- [ ] Comfort options: snap/smooth turn toggle, vignette/masking on move and turn, option for teleport locomotion
 - [ ] Match flat locomotion speed to VR speed
 - [ ] Split SDK builders into per-domain files (physics, interactions, prefabs, monitors, modification), barrel-export from one `index.ts` so consumer imports don't change
 
@@ -19,7 +19,7 @@
 - [ ] Decide if/how to deal with duplicate interactions
 - [ ] Environment props via SDK (sky, fog, maybe even gravity!)
 - [ ] Expression input
-- [ ] Player stuff via SDK (change locomotion restrictions, change if flat allowed via meta, force avatar items, teleport player, force spectator camera mode/pos, player pos monitors, force expressions)
+- [ ] Player stuff via SDK (change locomotion restrictions, change if flat allowed via meta, force avatar items, teleport player, force spectator camera mode/pos, player pos monitors, force expressions, force non-teleport locomotion)
 - [ ] `wait_for_ready()` and `is_ready` on SDK as alternative to DOM event
 
 ### Phase 3
