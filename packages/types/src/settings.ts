@@ -53,7 +53,7 @@ export interface UISubdefinition<V> {
     breadcrumbs?: string[]; // if omitted, component must be added manually to the UI, but will inherit all its existing widget definitions
     widget: WidgetConfig<V>;
 }
-
+// TODO: option to only show on watch in VR or only in flat for contextual config
 export interface SeparateUIDefinition<V extends SettingValueType> {
     // if either omitted, then will have no associated widget and must be implemented manually on the specific platform
 
@@ -206,6 +206,24 @@ export const settings_def = build_settings({
                     slider_step: 0.1
                 },
                 breadcrumbs: ["Input", "Flat"]
+            }
+        }
+    },
+
+    vignette_intensity: {
+        default_value: 0.5,
+        ui: {
+            common: {
+                label: "Vignette intensity",
+                description: "Intensity of the motion sickness reduction vignette",
+                widget: {
+                    type: "range",
+                    min: 0,
+                    max: 100,
+                    precision_dp: 0,
+                    unit: "%"
+                },
+                breadcrumbs: ["Comfort"]
             }
         }
     },

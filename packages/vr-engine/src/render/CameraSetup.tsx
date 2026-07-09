@@ -1,14 +1,15 @@
-import { useThree } from "@react-three/fiber";
-import { useEffect } from "react";
+import {useThree} from "@react-three/fiber";
+import {useEffect} from "react";
 
-import { compute_layer_mask, Layer } from "./layers";
-import { get_united_head_camera } from "../util/get_head_cameras";
+import {compute_layer_mask, Layer} from "./layers";
+import {get_united_head_camera} from "../util/get_head_cameras";
 
 
 const layer_mask = compute_layer_mask([
     Layer.Default,
     Layer.PlayerModel_TorsoAndHands,
-    Layer.ThirdPerson_ForceHide
+    Layer.ThirdPerson_ForceHide,
+    Layer.Vignette
 ]);
 
 export const CameraSetup = () => {
