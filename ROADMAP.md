@@ -8,7 +8,7 @@
 
 ### Phase 2
 - [ ] Player gravity
-- [ ] Sprint, jump, fly
+- [ ] Sprint, jump, fly (and crouch for flat)
 - [ ] Light prefabs: point, spot, directional
 - [ ] Positional audio interaction/prefab (with option for 2D audio for consistency even though they could do it via their own DOM if they wished)
 - [ ] Camera interaction/prefab: activating one moves the player POV there (race games etc)
@@ -18,7 +18,8 @@
 - [ ] Anchored option on kinematic-pos rigid body builder
 - [ ] Decide if/how to deal with duplicate interactions
 - [ ] Environment props via SDK (sky, fog, maybe even gravity!)
-- [ ] Player stuff via SDK (change locomotion restrictions, change if flat allowed via meta, force avatar items, teleport player, force spectator camera mode/pos, player pos monitors)
+- [ ] Expression input
+- [ ] Player stuff via SDK (change locomotion restrictions, change if flat allowed via meta, force avatar items, teleport player, force spectator camera mode/pos, player pos monitors, force expressions)
 - [ ] `wait_for_ready()` and `is_ready` on SDK as alternative to DOM event
 
 ### Phase 3
@@ -43,6 +44,8 @@
 - [ ] Improve OOBE
 - [ ] Create hub world with links to other worlds at project homepage, fixed links for now
 - [ ] Create other official worlds and games (i.e. our version of the Rec Center, some games that show off features, etc)
+- [ ] Free hand movement on flat with keypress
+- [ ] Flat gestures
 - [ ] Implement raw input via debugger perm in sidecar extension for least privilege (if not, then disable the option for now)
 - [ ] Single-node P2P multiplayer, making sure to define the discovery and transport interfaces abstractly so the later relay idea is a drop-in swap
 - [ ] SDK-hosted XR session handoff: investigate feasibility first (can we host on their behalf so they don't need a permission prompt?) and implement in a multiplayer friendly way or drop the idea entirely
