@@ -210,24 +210,6 @@ export const settings_def = build_settings({
         }
     },
 
-    vignette_intensity: {
-        default_value: 0.5,
-        ui: {
-            common: {
-                label: "Vignette intensity",
-                description: "Intensity of the motion sickness reduction vignette",
-                widget: {
-                    type: "range",
-                    min: 0,
-                    max: 100,
-                    precision_dp: 0,
-                    unit: "%"
-                },
-                breadcrumbs: ["Comfort"]
-            }
-        }
-    },
-
     vr_locomotion: {
         default_value: "walk" as "walk" | "teleport",
         ui: {
@@ -241,7 +223,7 @@ export const settings_def = build_settings({
                         {label: "Teleport", value: "teleport"}
                     ]
                 },
-                breadcrumbs: ["Comfort"]
+                breadcrumbs: ["Comfort", "VR Movement"]
             }
         }
     },
@@ -259,7 +241,7 @@ export const settings_def = build_settings({
                         {label: "Right", value: "right"}
                     ]
                 },
-                breadcrumbs: ["Comfort"]
+                breadcrumbs: ["Comfort", "VR Movement"]
             }
         }
     },
@@ -277,7 +259,7 @@ export const settings_def = build_settings({
                         {label: "Smooth", value: "smooth"}
                     ]
                 },
-                breadcrumbs: ["Comfort"]
+                breadcrumbs: ["Comfort", "VR Movement"]
             }
         }
     },
@@ -300,7 +282,7 @@ export const settings_def = build_settings({
                         {label: "90°", value: 90}
                     ]
                 },
-                breadcrumbs: ["Comfort"]
+                breadcrumbs: ["Comfort", "VR Movement"]
             }
         }
     },
@@ -318,7 +300,25 @@ export const settings_def = build_settings({
                     precision_dp: 0,
                     unit: "°/s"
                 },
-                breadcrumbs: ["Comfort"]
+                breadcrumbs: ["Comfort", "VR Movement"]
+            }
+        }
+    },
+
+    vignette_intensity: {
+        default_value: 0.5,
+        ui: {
+            common: {
+                label: "Vignette intensity",
+                description: "Intensity of the motion sickness reduction vignette",
+                widget: {
+                    type: "range",
+                    min: 0,
+                    max: 100,
+                    precision_dp: 0,
+                    unit: "%"
+                },
+                breadcrumbs: ["Comfort", "VR Movement"]
             }
         }
     },
