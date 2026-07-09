@@ -111,7 +111,10 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
                 keys.delete(event.code);
             }
             frame_input.jump = keys.has("Space");
-            recompute_move();
+
+            if (!watch_presented_local) {
+                recompute_move();
+            }
         };
 
         const on_keydown = on_key(true);

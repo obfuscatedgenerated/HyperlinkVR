@@ -1,7 +1,7 @@
 # Roadmap
 
 ### Phase 1
-- [ ] Disable locomotion while watch UI is open (for flat)
+- [x] Disable locomotion while watch UI is open (for flat)
 - [ ] Comfort options: snap/smooth turn toggle, vignette/masking on move and turn
 - [ ] Match flat locomotion speed to VR speed
 - [ ] Split SDK builders into per-domain files (physics, interactions, prefabs, monitors, modification), barrel-export from one `index.ts` so consumer imports don't change
