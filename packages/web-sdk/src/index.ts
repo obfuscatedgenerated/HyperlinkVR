@@ -31,5 +31,4 @@ export const bind_messages = () => {
     });
 }
 
-// TODO: way to ask the extension if the host is already ready (might need state, if not just send a message and see if it gets a reply ig)
-// TODO: replace dom event with a wait_for_ready that immeidately returns if already ready
+// TODO: replace dom event with a wait_for_ready that immeidately returns if already ready?
