@@ -5,19 +5,20 @@ import {useSetting} from "@hyperlinkvr/react";
 import {usePlayerOrigin} from "../../../contexts";
 import {useRapier} from "@react-three/rapier";
 import {createPortal, useFrame, useThree} from "@react-three/fiber";
+import {WALK_SPEED} from "../../values";
 
 const TELEPORT_STICK_FORWARD_THRESHOLD = 0.7;
 const TELEPORT_STICK_RELEASE_THRESHOLD = 0.3;
 
-const TELEPORT_MAX_DISTANCE = 5;
-// TODO: teleport delay to enforce m/s, using a window to detect how far has been traveled with a second, reducing max distance if moving too fast
+// walk speed m/s is enforced for teleporting by keeping a sliding window of accumulated distance,
+// and only allowing teleport if the new accumulated distance is less than the max distance for the window (by calculating from m/s)
+// larger windows allow a larger distance to be teleported in one go, but takes longer to recover
+const TELEPORT_LIMIT_WINDOW_S = 2;
 
 const TELEPORT_RAY_START_OFFSET = 0.2;
 
 // how flat a surface must be to count as teleportable (1 = perfectly horizontal)
 const TELEPORT_MIN_NORMAL_Y = 0.7;
-
-// TODO: pull speed from common file to match flat and vr speed, then handle sprinting too
 
 export const XRLocomotion = ({ origin }: { origin: RefObject<Group | null> }) => {
     const [locomotion] = useSetting("vr_locomotion");
@@ -33,7 +34,7 @@ export const XRLocomotion = ({ origin }: { origin: RefObject<Group | null> }) =>
     // teleportation is handled by TeleportSurface, not this component
     useXRControllerLocomotion(origin,
         {
-            speed: locomotion === "walk" ? undefined : false
+            speed: locomotion === "walk" ? WALK_SPEED : false
         },
         {
             // built in smooth rotation doesn't offset properly, so just disable snap angle when on smooth mode and implement our own
@@ -109,7 +110,19 @@ export const XRTeleportControl = ({
 
     const {scene} = useThree();
 
-    useFrame(() => {
+    // TODO: switch to sprint speed when implemented (provided no restrictions on sprinting from room)
+    const available_distance_m = useRef(WALK_SPEED * TELEPORT_LIMIT_WINDOW_S);
+
+    useFrame((_, delta) => {
+        const max_burst_distance = WALK_SPEED * TELEPORT_LIMIT_WINDOW_S;
+
+        available_distance_m.current = Math.min(
+            max_burst_distance,
+            available_distance_m.current + (WALK_SPEED * delta)
+        );
+
+        const max_distance = available_distance_m.current;
+
         const marker = marker_ref.current;
         const ray_space = ray_space_ref.current;
 
@@ -143,7 +156,7 @@ export const XRTeleportControl = ({
             );
 
             const ray = new rapier.Ray(scratch.ray_position, scratch.ray_direction);
-            const hit = world.castRayAndGetNormal(ray, TELEPORT_MAX_DISTANCE, true);
+            const hit = world.castRayAndGetNormal(ray, max_distance, true);
 
             const distance = (hit as any)?.timeOfImpact ?? (hit as any)?.toi;
 
@@ -166,6 +179,7 @@ export const XRTeleportControl = ({
         if (released && has_valid_target.current) {
             const origin_group = origin.current;
             if (origin_group) {
+                available_distance_m.current -= origin_group.position.distanceTo(scratch.landing_point);
                 origin_group.position.copy(scratch.landing_point);
             }
             has_valid_target.current = false;

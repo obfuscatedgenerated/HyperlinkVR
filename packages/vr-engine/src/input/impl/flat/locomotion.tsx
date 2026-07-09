@@ -3,9 +3,8 @@ import { RefObject, useMemo } from "react";
 import { Group, Vector3 } from "three";
 
 import { useFlatFrameInput } from "./bindings";
+import {WALK_SPEED} from "../../values";
 
-
-const SPEED = 3; // m/s TODO: ensure matches vr speed
 export const FlatLocomotion = ({ origin }: { origin: RefObject<Group | null> }) => {
     const { camera } = useThree();
     const input = useFlatFrameInput();
@@ -20,8 +19,8 @@ export const FlatLocomotion = ({ origin }: { origin: RefObject<Group | null> }) 
         fwd.normalize();
         right.crossVectors(fwd, o.up).normalize();
         o.position
-            .addScaledVector(fwd, input.move.y * SPEED * delta)
-            .addScaledVector(right, input.move.x * SPEED * delta);
+            .addScaledVector(fwd, input.move.y * WALK_SPEED * delta)
+            .addScaledVector(right, input.move.x * WALK_SPEED * delta);
     });
     return null;
 };
