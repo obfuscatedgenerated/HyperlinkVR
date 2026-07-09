@@ -1,22 +1,13 @@
-import type { CreatedEngineObject, Rotation } from "@hyperlinkvr/vr-engine-schemas";
+import type { CreatedEngineObject } from "@hyperlinkvr/vr-engine-schemas";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { Euler, Quaternion } from "three";
 
 import type { RendererComponentProps } from "../types";
 import { create_object_refs, ObjectRefsProvider } from "../contexts/ObjectRefsContext";
 import { register_object_refs } from "./object_ref_registry";
 import { CustomObjectRenderer } from "./CustomObjectRenderer";
 import { PrefabRenderer } from "./PrefabRenderer";
-import {EULER_ORDER} from "../consts";
-
-const scratch_euler = new Euler();
-export const rotation_to_quaternion = (rotation: Rotation, out: Quaternion): Quaternion => {
-    if (rotation.length === 4) {
-        return out.set(rotation[0], rotation[1], rotation[2], rotation[3]);
-    }
-    scratch_euler.set(rotation[0], rotation[1], rotation[2], EULER_ORDER);
-    return out.setFromEuler(scratch_euler);
-};
+import {rotation_to_quaternion} from "./rotation";
+import {Group} from "three";
 
 export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) => {
     const { type, ...obj_rest } = data.object;
@@ -33,12 +24,32 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
     // register refs with registry for retrieval by sdk
     useEffect(() => register_object_refs(refs.current), []);
 
-    // rotation via quaternion so euler + quat both work
+    // a physics object's pose is owned by its rigid body so the outer group must stay at identity or the mesh double-transforms
+    // a non-physics object's pose is owned by this group
+    const has_physics = data.object.type === "custom" && !!data.object.physics;
+
     useLayoutEffect(() => {
-        const group = refs.current.root.current;
+        const group = refs.current.root.current as Group | null;
         if (!group) return;
-        rotation_to_quaternion(data.transform.rotation, group.quaternion);
-    }, [data.transform.rotation]);
+
+        if (has_physics) {
+            group.position.set(0, 0, 0);
+            group.quaternion.identity();
+            group.scale.set(1, 1, 1);
+        } else {
+            group.position.set(
+                data.transform.position[0],
+                data.transform.position[1],
+                data.transform.position[2]
+            );
+            rotation_to_quaternion(data.transform.rotation, group.quaternion);
+            group.scale.set(
+                data.transform.scale[0],
+                data.transform.scale[1],
+                data.transform.scale[2]
+            );
+        }
+    }, [has_physics, data.transform]);
 
     return (
         <ObjectRefsProvider value={refs.current}>
@@ -51,6 +62,7 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
                     root_ref={refs.current.root}
                     user_data_ref={user_data_ref}
                     id={data.id}
+                    transform={data.transform}
                     {...obj_rest}
                 />
             </group>

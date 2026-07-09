@@ -25,7 +25,7 @@ export const CustomObjectRenderer = (props: RendererComponentProps<CustomObject>
     );
 
     const with_physics = props.physics ? (
-        <ObjectPhysics physics={props.physics}>
+        <ObjectPhysics physics={props.physics} transform={props.transform}>
             {with_interactions}
         </ObjectPhysics>
     ) : (

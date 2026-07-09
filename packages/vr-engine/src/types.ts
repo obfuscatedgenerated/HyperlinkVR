@@ -11,4 +11,5 @@ export type RendererComponentProps<T extends CreatedEngineObject["object"]> = Om
     root_ref: React.RefObject<Group | null>;
     user_data_ref: React.RefObject<CreatedEngineObject["user_data"]>;
     id: CreatedEngineObject["id"];
+    transform: CreatedEngineObject["transform"];
 }

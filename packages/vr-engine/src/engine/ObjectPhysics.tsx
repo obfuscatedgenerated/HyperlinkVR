@@ -1,4 +1,4 @@
-import { Collider, PhysicsSystem, RigidBody as RigidBodyConfig } from "@hyperlinkvr/vr-engine-schemas";
+import {Collider, PhysicsSystem, RigidBody as RigidBodyConfig, Transform} from "@hyperlinkvr/vr-engine-schemas";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { BallCollider, CapsuleCollider, CuboidCollider, MeshCollider, RapierRigidBody, RigidBody, RigidBodyAutoCollider } from "@react-three/rapier";
@@ -8,6 +8,7 @@ import { Group, Quaternion, Vector3 } from "three";
 
 
 import { useObjectRefsOptional } from "../contexts/ObjectRefsContext";
+import {rotation_to_quaternion_array} from "./rotation";
 
 
 const RB_TYPE = {
@@ -128,12 +129,14 @@ export const ObjectPhysics = ({
     physics,
     children = null,
     body_name,
-    kinematic_pos_tracking_ref
+    kinematic_pos_tracking_ref,
+    transform
 }: {
     physics: PhysicsSystem;
     children?: React.ReactNode;
     body_name?: string;
     kinematic_pos_tracking_ref?: React.RefObject<Group | null>;
+    transform?: Transform
 }) => {
     const refs = useObjectRefsOptional();
 
@@ -166,6 +169,8 @@ export const ObjectPhysics = ({
                 ref={rb_ref}
                 name={body_name}
                 type={RB_TYPE[rb.type]}
+                position={transform?.position}
+                quaternion={transform ? rotation_to_quaternion_array(transform.rotation) : undefined}
                 colliders={auto_strategy}
                 linearVelocity={(rb.type === "dynamic" ? rb.velocity : undefined) || [0, 0, 0]}
                 // TODO: angular velocity, friction, damping, other props to be added to config
@@ -179,4 +184,3 @@ export const ObjectPhysics = ({
 };
 
 // TODO: option to ignore player collisions, and option to allow players to pass through objects
-// TODO: player interactions with physics
