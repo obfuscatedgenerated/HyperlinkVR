@@ -18,23 +18,32 @@ const GLTFRenderer = ({url}: {url: string}) => {
 }
 
 
-export const CustomObjectRenderer = (props: RendererComponentProps<CustomObject>) => {
-    const visual = props.mesh ? <GLTFRenderer url={props.mesh} /> : null;
-
-    const with_interactions = props.interactions ? (
-        <ObjectInteractions interactions={props.interactions}>
-            {visual}
-        </ObjectInteractions>
-    ) : (
-        visual
+export const CustomObjectRenderer = ({ mesh, interactions, physics, transform }: RendererComponentProps<CustomObject>) => {
+    const visual = useMemo(
+        () => (mesh ? <GLTFRenderer url={mesh} /> : null),
+        [mesh]
     );
 
-    const with_physics = props.physics ? (
-        <ObjectPhysics physics={props.physics} transform={props.transform}>
-            {with_interactions}
-        </ObjectPhysics>
-    ) : (
-        with_interactions
+    const with_interactions = useMemo(
+        () =>
+            interactions ? (
+                <ObjectInteractions interactions={interactions}>{visual}</ObjectInteractions>
+            ) : (
+                visual
+            ),
+        [interactions, visual]
+    );
+
+    const with_physics = useMemo(
+        () =>
+            physics ? (
+                <ObjectPhysics physics={physics} transform={transform}>
+                    {with_interactions}
+                </ObjectPhysics>
+            ) : (
+                with_interactions
+            ),
+        [physics, transform, with_interactions]
     );
 
     return with_physics;
