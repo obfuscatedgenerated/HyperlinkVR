@@ -13,7 +13,7 @@
 - [x] Split SDK builders into per-domain files (physics, interactions, prefabs, monitors, modification), barrel-export from one `index.ts` so consumer imports don't change
 
 ### Phase 2
-- [ ] Player gravity
+- [x] Player gravity
 - [ ] Sprint, jump, fly (and crouch for flat)
 - [ ] Option for SDK rigid body to forbid teleport onto
 - [ ] Light prefabs: point, spot, directional

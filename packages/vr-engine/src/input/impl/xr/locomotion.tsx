@@ -158,7 +158,7 @@ export const XRTeleportControl = ({
             const ray = new rapier.Ray(scratch.ray_position, scratch.ray_direction);
             const hit = world.castRayAndGetNormal(ray, max_distance, true);
 
-            const distance = (hit as any)?.timeOfImpact ?? (hit as any)?.toi;
+            const distance = hit?.timeOfImpact;
 
             if (hit && distance !== undefined && hit.normal.y >= TELEPORT_MIN_NORMAL_Y) {
                 const point = ray.pointAt(distance);

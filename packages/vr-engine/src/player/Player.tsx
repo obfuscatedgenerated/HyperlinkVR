@@ -18,6 +18,7 @@ import { WristWatch } from "./WristWatch";
 import { XRHandsPublisher } from "../input/impl/xr/hands";
 import { FlatHandsPublisher } from "../input/impl/flat/hands";
 import {ComfortVignette} from "./ComfortVignette";
+import {PlayerGravity} from "./PlayerGravity";
 
 const MouthTest = ({
     mouth_name,
@@ -91,6 +92,8 @@ export const Player = ({ ref = null }: { ref?: React.Ref<Group> }) => {
             <PlayerExpressionProvider>
                 <Avatar />
                 <WristWatch />
+
+                <PlayerGravity />
 
                 {session_mode === "vr" ? (
                     <>
