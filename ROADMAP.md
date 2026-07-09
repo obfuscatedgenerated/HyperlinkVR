@@ -5,13 +5,17 @@
 - [ ] Comfort options:
   - [x] vignette/masking on move and turn
   - [ ] snap/smooth turn toggle
-  - [ ] option for teleport locomotion
+  - [x] option for teleport locomotion
+  - [x] option to swap locomotion hands
+  - [ ] make vignette work for teleport
 - [ ] Match flat locomotion speed to VR speed
+- [ ] Match teleport locomotion to walk speed by using window to limit distance within timeframe
 - [ ] Split SDK builders into per-domain files (physics, interactions, prefabs, monitors, modification), barrel-export from one `index.ts` so consumer imports don't change
 
 ### Phase 2
 - [ ] Player gravity
 - [ ] Sprint, jump, fly (and crouch for flat)
+- [ ] Option for SDK rigid body to forbid teleport onto
 - [ ] Light prefabs: point, spot, directional
 - [ ] Positional audio interaction/prefab (with option for 2D audio for consistency even though they could do it via their own DOM if they wished)
 - [ ] Camera interaction/prefab: activating one moves the player POV there (race games etc, altho those could use a forced sit interaction instead added later. figure out what difference there could be)

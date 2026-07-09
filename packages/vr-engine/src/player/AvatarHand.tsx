@@ -1,7 +1,7 @@
 import { useSetting } from "@hyperlinkvr/react";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useTouchPointer, useXRInputSourceStateContext } from "@react-three/xr";
+import {useTouchPointer, useXRInputSourceStateContext} from "@react-three/xr";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { ArrowHelper, Group, Mesh, MeshBasicMaterial, Object3D, Quaternion, SphereGeometry, Vector3 } from "three";
 
@@ -12,6 +12,7 @@ import { ObjectPhysics } from "../engine/ObjectPhysics";
 import { Hand, useHands } from "../input/hands";
 import { LayerGroup } from "../render/LayerGroup";
 import { Layer } from "../render/layers";
+import {XRTeleportControl} from "../input/impl/xr/locomotion";
 
 
 const left_hand = new URL("../../assets/player/hands/left.glb", import.meta.url).href;
@@ -236,6 +237,9 @@ export const XRAvatarHand = () => {
     const input_source_state = useXRInputSourceStateContext("controller");
     const handedness = input_source_state.inputSource.handedness;
 
+    const [locomotion] = useSetting("vr_locomotion");
+    const [locomotion_hand] = useSetting("vr_locomotion_hand");
+
     const hands = useHands();
 
     const touch_origin_ref = useRef<Group>(null);
@@ -332,6 +336,10 @@ export const XRAvatarHand = () => {
                     <primitive object={glue.debug_hover_sphere} />
                     <primitive object={glue.debug_down_sphere} />
                 </>
+            )}
+
+            {locomotion === "teleport" && handedness === locomotion_hand && (
+                <XRTeleportControl input_source_state={input_source_state} enabled />
             )}
 
             <ObjectPhysics

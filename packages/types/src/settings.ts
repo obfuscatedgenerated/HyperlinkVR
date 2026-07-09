@@ -228,6 +228,42 @@ export const settings_def = build_settings({
         }
     },
 
+    vr_locomotion: {
+        default_value: "walk" as "walk" | "teleport",
+        ui: {
+            common: {
+                label: "Locomotion method",
+                description: "Method of locomotion in VR",
+                widget: {
+                    type: "select",
+                    options: [
+                        {label: "Walk", value: "walk"},
+                        {label: "Teleport", value: "teleport"}
+                    ]
+                },
+                breadcrumbs: ["Comfort"]
+            }
+        }
+    },
+
+    vr_locomotion_hand: {
+        default_value: "left" as "left" | "right",
+        ui: {
+            common: {
+                label: "Movement hand",
+                description: "Which hand to use for locomotion in VR. The other hand will be used for turning.",
+                widget: {
+                    type: "select",
+                    options: [
+                        {label: "Left", value: "left"},
+                        {label: "Right", value: "right"}
+                    ]
+                },
+                breadcrumbs: ["Comfort"]
+            }
+        }
+    },
+
     debug_ray_hits: {
         default_value: false,
         local_only: true

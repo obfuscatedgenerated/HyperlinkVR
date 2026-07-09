@@ -1,10 +1,10 @@
 import { TabSessionProvider, useSetting, useStorage, useTabSession } from "@hyperlinkvr/react";
 import { Text } from "@react-three/drei";
-import { Canvas, RootState, RootStore } from "@react-three/fiber";
+import { Canvas, RootState } from "@react-three/fiber";
 import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
 import { Physics } from "@react-three/rapier";
 import { createXRStore, XR } from "@react-three/xr";
-import { memo, useCallback, useEffect, useMemo, useRef } from "react";
+import {memo, useCallback, useEffect, useImperativeHandle, useRef} from "react";
 import { ErrorBoundary, getErrorMessage, type FallbackProps } from "react-error-boundary";
 import { Group, NeutralToneMapping, WebGLRenderer } from "three";
 import { configureTextBuilder } from "troika-three-text";
@@ -133,11 +133,14 @@ const FatalErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
 const FlatErrorFallback = VRErrorFallback; // TODO: make it follow player more properly
 
 const SceneContents = ({
+    player_ref,
     extra_in_origin
 }: {
+    player_ref?: React.RefObject<Group | null>;
     extra_in_origin?: React.ReactNode;
 }) => {
-    const player_ref = useRef<Group>(null);
+    const internal_ref = useRef<Group>(null);
+    useImperativeHandle(player_ref, () => internal_ref.current!);
 
     const session = useTabSession();
     const setRecentWorlds = useStorage("local", "recent_worlds", [] as string[])[1];
@@ -165,26 +168,24 @@ const SceneContents = ({
             />
             <fog attach="fog" args={[0x222222, 10, 75]} />
 
-            <PlayerOriginProvider value={player_ref}>
-                <Player ref={player_ref} />
+            <Player ref={internal_ref} />
 
-                <URLBar
-                    position={[0, 3.25, -4]}
-                    height={0.25}
-                    height_of_dom_mirror={3}
-                />
-                <DOMMirror position={[0, 1.5, -4]} height={3} />
+            <URLBar
+                position={[0, 3.25, -4]}
+                height={0.25}
+                height_of_dom_mirror={3}
+            />
+            <DOMMirror position={[0, 1.5, -4]} height={3} />
 
-                <AvatarMirror
-                    x_z_position={[2, 0]}
-                    rotation={[0, -Math.PI / 2, 0]}
-                />
+            <AvatarMirror
+                x_z_position={[2, 0]}
+                rotation={[0, -Math.PI / 2, 0]}
+            />
 
-                <EngineObjectSpawner />
-                <TweenRunner />
+            <EngineObjectSpawner />
+            <TweenRunner />
 
-                {extra_in_origin || null}
-            </PlayerOriginProvider>
+            {extra_in_origin || null}
         </>
     );
 };
@@ -229,6 +230,8 @@ const EngineHostInternal = memo(
 
         const [show_colliders] = useSetting("debug_colliders");
 
+        const player_ref = useRef<Group>(null);
+
         return (
             <SessionModeProvider value={mode}>
                 <TabSessionProvider>
@@ -244,52 +247,55 @@ const EngineHostInternal = memo(
 
                             <AvatarProvider>
                                 <HandsProvider>
-                                    <Canvas
-                                        gl={make_xr_compatible_renderer}
-                                        onCreated={handle_created}
-                                    >
-                                        <Physics interpolate gravity={[0, -9.81, 0]} debug={show_colliders}>
-                                        <CameraSetup />
-                                        <CanvasResizer
-                                            containerRef={canvas_container_ref}
-                                        />
+                                    <PlayerOriginProvider value={player_ref}>
+                                        <Canvas
+                                            gl={make_xr_compatible_renderer}
+                                            onCreated={handle_created}
+                                        >
+                                            <Physics interpolate gravity={[0, -9.81, 0]} debug={show_colliders}>
+                                            <CameraSetup />
+                                            <CanvasResizer
+                                                containerRef={canvas_container_ref}
+                                            />
 
-                                        <SceneDebug />
+                                            <SceneDebug />
 
-                                        {mode === "vr" ? (
-                                            <XR store={xr_store}>
+                                            {mode === "vr" ? (
+                                                <XR store={xr_store}>
+                                                    <ErrorBoundary
+                                                        FallbackComponent={
+                                                            VRErrorFallback
+                                                        }
+                                                        onReset={() =>
+                                                            window.location.reload()
+                                                        }>
+                                                        <SceneContents
+                                                            player_ref={player_ref}
+                                                            extra_in_origin={
+                                                                <SpectatorCamera />
+                                                            }
+                                                        />
+                                                    </ErrorBoundary>
+                                                </XR>
+                                            ) : (
                                                 <ErrorBoundary
                                                     FallbackComponent={
-                                                        VRErrorFallback
+                                                        FlatErrorFallback
                                                     }
                                                     onReset={() =>
                                                         window.location.reload()
-                                                    }>
-                                                    <SceneContents
-                                                        extra_in_origin={
-                                                            <SpectatorCamera />
-                                                        }
-                                                    />
+                                                    }
+                                                >
+                                                    <FlatInputProvider>
+                                                        <FlatClickRaycaster />
+                                                        <FlatAvatarHands />
+                                                        <SceneContents player_ref={player_ref} />
+                                                    </FlatInputProvider>
                                                 </ErrorBoundary>
-                                            </XR>
-                                        ) : (
-                                            <ErrorBoundary
-                                                FallbackComponent={
-                                                    FlatErrorFallback
-                                                }
-                                                onReset={() =>
-                                                    window.location.reload()
-                                                }
-                                            >
-                                                <FlatInputProvider>
-                                                    <FlatClickRaycaster />
-                                                    <FlatAvatarHands />
-                                                    <SceneContents />
-                                                </FlatInputProvider>
-                                            </ErrorBoundary>
-                                        )}
-                                        </Physics>
-                                    </Canvas>
+                                            )}
+                                            </Physics>
+                                        </Canvas>
+                                    </PlayerOriginProvider>
                                 </HandsProvider>
                             </AvatarProvider>
                         </div>
