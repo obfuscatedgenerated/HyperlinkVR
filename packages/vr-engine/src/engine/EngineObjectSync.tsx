@@ -27,6 +27,7 @@ export const EngineObjectSync = () => {
             const created_object = { id, ...data };
             console.log("(+) Created engine object", created_object);
             add_object(created_object);
+            console.log("New object count: ", Object.keys(useEngineObjectStore.getState().objects).length)
 
             reply({
                 for: "HVRSDK_CREATE_ENGINE_OBJECT",
@@ -39,6 +40,7 @@ export const EngineObjectSync = () => {
 
             console.log("(-) Destroyed engine object", message.object_id);
             remove_object(message.object_id);
+            console.log("New object count: ", Object.keys(useEngineObjectStore.getState().objects).length)
 
             reply({
                 for: "HVRSDK_DESTROY_ENGINE_OBJECT",

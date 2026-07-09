@@ -6,10 +6,15 @@ import { RendererComponentProps } from "../types";
 import { ObjectInteractions } from "./ObjectInteractions";
 import { ObjectPhysics } from "./ObjectPhysics";
 
+import { clone } from "three/examples/jsm/utils/SkeletonUtils";
+import {useMemo} from "react";
 
 const GLTFRenderer = ({url}: {url: string}) => {
     const {scene} = useGLTF(url);
-    return <primitive object={scene} />;
+
+    // useGLTF caches the scene by url, so need to clone to render multiple instances of the same model
+    const instance = useMemo(() => clone(scene), [scene]);
+    return <primitive object={instance} />;
 }
 
 
