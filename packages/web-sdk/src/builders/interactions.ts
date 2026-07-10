@@ -248,6 +248,12 @@ export class PositionalAudioInteractionBuilder extends BaseBuilder<PositionalAud
             stop: async () => {
                 return await interaction_command(object_id, interaction_id, "stop");
             },
+            seek: async (offset: number) => {
+                return await interaction_command(object_id, interaction_id, "seek", {offset});
+            },
+            is_playing: async () => {
+                return await interaction_command(object_id, interaction_id, "is_playing");
+            },
             set_loop: async (loop: boolean) => {
                 return await interaction_command(object_id, interaction_id, "set_loop", {loop});
             },
@@ -301,6 +307,12 @@ export class GlobalAudioInteractionBuilder extends BaseBuilder<GlobalAudioIntera
             },
             stop: async () => {
                 return await interaction_command(object_id, interaction_id, "stop");
+            },
+            seek: async (offset: number) => {
+                return await interaction_command(object_id, interaction_id, "seek", {offset});
+            },
+            is_playing: async () => {
+                return await interaction_command(object_id, interaction_id, "is_playing");
             },
             set_volume: async (volume: number) => {
                 return await interaction_command(object_id, interaction_id, "set_volume", {volume});

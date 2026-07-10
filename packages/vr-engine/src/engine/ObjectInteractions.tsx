@@ -135,6 +135,21 @@ const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps
                 case "stop":
                     audio.stop();
                     break;
+                case "seek": {
+                    const is_playing = audio.isPlaying;
+
+                    if (is_playing) {
+                        audio.stop();
+                    }
+
+                    audio.offset = args.offset;
+                    if (is_playing) {
+                        audio.play();
+                    }
+                    break;
+                }
+                case "is_playing":
+                    return audio.isPlaying;
                 case "set_loop":
                     interaction.loop = args.loop;
                     break;
@@ -208,6 +223,21 @@ const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<Glo
                 case "stop":
                     audio.stop();
                     break;
+                case "seek": {
+                    const is_playing = audio.isPlaying;
+
+                    if (is_playing) {
+                        audio.stop();
+                    }
+
+                    audio.offset = args.offset;
+                    if (is_playing) {
+                        audio.play();
+                    }
+                    break;
+                }
+                case "is_playing":
+                    return audio.isPlaying;
                 case "set_loop":
                     interaction.loop = args.loop;
                     break;
