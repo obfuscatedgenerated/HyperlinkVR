@@ -7,7 +7,7 @@ import {
     EngineObjectDispatchSchema,
     EngineObjectModification,
     EngineObjectModificationInput,
-    EngineObjectModificationSchema, Interaction,
+    EngineObjectModificationSchema,
     Monitor,
     PartialTransformInput,
     PrefabInput,

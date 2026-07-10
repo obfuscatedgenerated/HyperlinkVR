@@ -14,7 +14,11 @@
 
 ### Phase 2
 - [x] Player gravity
-- [ ] Sprint, jump, fly (and crouch for flat)
+- [ ] More movement
+  - [ ] Sprint
+  - [x] Jump
+  - [ ] Fly
+  - [ ] Crouch for flat
 - [ ] Option for SDK rigid body to forbid teleport onto
 - [ ] Light prefabs: point, spot, directional
 - [x] Positional audio interaction/prefab (with option for 2D audio for consistency even though they could do it via their own DOM if they wished)
