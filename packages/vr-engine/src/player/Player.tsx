@@ -104,11 +104,11 @@ export const Player = ({ ref = null }: { ref?: React.Ref<Group> }) => {
             }
 
             const pos = origin_ref.current.position;
-            const euler = origin_ref.current.rotation;
+            const yaw = origin_ref.current.rotation.y;
             reply({
                 for: "HVRSDK_PLAYER_GET_POSITION",
                 position: [pos.x, pos.y, pos.z],
-                facing: [euler.x, euler.y, euler.z] // as euler XYZ
+                yaw
             });
         });
 
@@ -123,28 +123,25 @@ export const Player = ({ ref = null }: { ref?: React.Ref<Group> }) => {
 
             // TODO: optional (maybe default) fade out and in, will at least do vignette for now but would help to have them differentiate between teleporting and lag!
             const pos = message.position;
-            const facing = message.facing;
+            const yaw = message.yaw;
 
-            if (pos) {
+            if (pos !== undefined) {
                 origin_ref.current.position.set(pos[0], pos[1], pos[2]);
             }
 
-            if (facing) {
-                // as euler XYZ
-                origin_ref.current.rotation.set(facing[0], facing[1], facing[2], EULER_ORDER);
+            if (yaw !== undefined) {
+                origin_ref.current.rotation.y = yaw;
             }
 
             const new_pos = origin_ref.current.position;
-            const new_euler = origin_ref.current.rotation;
+            const new_yaw = origin_ref.current.rotation.y;
 
             reply({
                 for: "HVRSDK_PLAYER_TELEPORT_TO",
                 new_position: [new_pos.x, new_pos.y, new_pos.z],
-                new_facing: [new_euler.x, new_euler.y, new_euler.z] // as euler XYZ
+                new_yaw
             });
         });
-
-        // TODO: rotating origin doesnt rotate camera/vr player! so facing doesnt work currently
 
         return () => {
             unlisten_get_pos();

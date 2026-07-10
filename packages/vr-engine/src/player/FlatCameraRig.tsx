@@ -14,36 +14,35 @@ export const FlatCameraRig = ({ origin }: { origin: React.RefObject<Group | null
     const { camera } = useThree();
     const input = useFlatFrameInput();
 
-    const yaw = useRef(0);
     const pitch = useRef(0);
-    const euler = useMemo(() => new Euler(0, 0, 0, "YXZ"), []);
     const head = useMemo(() => new Vector3(), []);
 
     const [player_height_cm] = useSetting("player_height_cm");
     const [sensitivity] = useSetting("flat_sensitivity");
 
     useFrame(() => {
+        if (!origin.current) return;
+
         const mult = BASE_YAW_RADIANS * sensitivity;
 
-        // consume accumulated mouse delta
-        yaw.current -= input.look.x * mult;
+        // apply accumulated x delta to the origin's yaw
+        origin.current.rotation.y -= input.look.x * mult;
+        input.look.x = 0;
+
+        // apply accumulated y delta to the camera's pitch
         pitch.current -= input.look.y * mult;
         pitch.current = Math.max(
             -PITCH_LIMIT,
             Math.min(PITCH_LIMIT, pitch.current)
         );
-        input.look.x = 0;
         input.look.y = 0;
 
-        euler.set(pitch.current, yaw.current, 0);
-        camera.quaternion.setFromEuler(euler);
+        // still need to apply the yaw to the camera as it isn't a child of the origin
+        camera.rotation.set(pitch.current, origin.current.rotation.y, 0, "YXZ");
 
-        const o = origin.current;
-        if (o) {
-            o.getWorldPosition(head);
-            head.y += (player_height_cm / 100) - 0.15;
-            camera.position.copy(head);
-        }
+        origin.current.getWorldPosition(head);
+        head.y += (player_height_cm / 100) - 0.15;
+        camera.position.copy(head);
     });
 
     return null;

@@ -36,22 +36,22 @@ class Player {
             target_username: this.#selected_username
         });
 
-        if (!res || !res.position || !res.facing) {
+        if (!res || res.position === undefined || res.yaw === undefined) {
             throw new Error("Failed to get player position");
         }
 
         return {
             position: res.position,
-            facing: res.facing
+            yaw: res.yaw,
         }
     }
 
-    async teleport_to(position?: [number, number, number], facing?: [number, number, number]) {
+    async teleport_to(position?: [number, number, number], yaw?: number) {
         const res = await send_via_rtc({
             action: "HVRSDK_PLAYER_TELEPORT_TO",
             target_username: this.#selected_username,
             position,
-            facing // as euler XYZ
+            yaw
         });
 
         if (!res) {
@@ -60,7 +60,7 @@ class Player {
 
         return {
             new_position: res.new_position,
-            new_facing: res.new_facing
+            new_yaw: res.new_yaw,
         }
     }
 }

@@ -134,7 +134,7 @@ interface WebSDKPlayerTeleportToAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_PLAYER_TELEPORT_TO";
     target_username: string | null;
     position?: [number, number, number];
-    facing?: [number, number, number]; // as euler XYZ
+    yaw?: number;
 }
 
 export type WebSDKActionMessage =
@@ -250,13 +250,13 @@ interface WebSDKInteractionCommandReplyMessage extends BaseWebSDKReplyMessage {
 interface WebSDKPlayerGetPositionReplyMessage extends BaseWebSDKReplyMessage {
     for: "HVRSDK_PLAYER_GET_POSITION";
     position: [number, number, number];
-    facing: [number, number, number]; // as euler XYZ
+    yaw: number;
 }
 
 interface WebSDKPlayerTeleportToReplyMessage extends BaseWebSDKReplyMessage {
     for: "HVRSDK_PLAYER_TELEPORT_TO";
     new_position: [number, number, number];
-    new_facing: [number, number, number]; // as euler XYZ
+    new_yaw: number;
 }
 
 export type WebSDKReplyMessage =
