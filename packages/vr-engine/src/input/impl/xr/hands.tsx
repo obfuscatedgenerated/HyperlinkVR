@@ -169,8 +169,11 @@ export const XRHandsPublisher = () => {
         const connected: Hand[] = [];
         if (left_slot.state) connected.push(left_slot.hand);
         if (right_slot.state) connected.push(right_slot.hand);
-        set_hands(connected);
-        return () => set_hands([]);
+
+        set_hands(prev => [...prev, ...connected]);
+        return () => {
+            set_hands(prev => prev.filter(hand => !connected.includes(hand)));
+        };
     }, [
         left_slot.state,
         right_slot.state,

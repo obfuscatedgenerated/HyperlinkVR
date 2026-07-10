@@ -247,13 +247,13 @@ const EngineHostInternal = memo(
                             {mode === "flat" && <Crosshair />}
 
                             <AvatarProvider>
-                                <HandsProvider>
-                                    <PlayerOriginProvider value={player_ref}>
-                                        <Canvas
-                                            gl={make_xr_compatible_renderer}
-                                            onCreated={handle_created}
-                                        >
-                                            <AudioListenerProvider>
+                                <PlayerOriginProvider value={player_ref}>
+                                    <Canvas
+                                        gl={make_xr_compatible_renderer}
+                                        onCreated={handle_created}
+                                    >
+                                        <AudioListenerProvider>
+                                            <HandsProvider>
                                                 <Physics interpolate gravity={[0, -9.81, 0]} debug={show_colliders}>
                                                     <CameraSetup />
                                                     <CanvasResizer
@@ -296,10 +296,10 @@ const EngineHostInternal = memo(
                                                         </ErrorBoundary>
                                                     )}
                                                 </Physics>
-                                            </AudioListenerProvider>
-                                        </Canvas>
-                                    </PlayerOriginProvider>
-                                </HandsProvider>
+                                            </HandsProvider>
+                                        </AudioListenerProvider>
+                                    </Canvas>
+                                </PlayerOriginProvider>
                             </AvatarProvider>
                         </div>
                     </WebSDKMessagingProvider>
