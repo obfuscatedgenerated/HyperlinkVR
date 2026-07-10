@@ -9,3 +9,4 @@ export const Avatar = () => (
 );
 
 // TODO: bounce torso and head on walk (only visually)
+// TODO: visual wind effect on sprint (definitely flat, maybe in vr?)

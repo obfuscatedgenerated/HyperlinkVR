@@ -1,11 +1,11 @@
 import {useXRControllerLocomotion, useXRInputSourceState, XRControllerState, XRSpace} from "@react-three/xr";
-import {RefObject, useMemo, useRef} from "react";
+import {RefObject, useMemo, useRef, useState} from "react";
 import {Group, Quaternion, Vector3} from "three";
 import {useSetting} from "@hyperlinkvr/react";
 import {usePlayerOrigin} from "../../../contexts";
 import {useRapier} from "@react-three/rapier";
 import {createPortal, useFrame, useThree} from "@react-three/fiber";
-import {WALK_SPEED} from "../../values";
+import {SPRINT_SPEED, WALK_SPEED} from "../../values";
 
 const TELEPORT_STICK_FORWARD_THRESHOLD = 0.7;
 const TELEPORT_STICK_RELEASE_THRESHOLD = 0.3;
@@ -25,16 +25,72 @@ export const XRLocomotion = ({ origin }: { origin: RefObject<Group | null> }) =>
     const [locomotion_hand] = useSetting("vr_locomotion_hand");
     const rotation_hand = useMemo(() => (locomotion_hand === "left" ? "right" : "left"), [locomotion_hand]);
 
+    const locomotion_controller = useXRInputSourceState("controller", locomotion_hand);
+    const rotation_controller = useXRInputSourceState("controller", rotation_hand);
+
     const [rotation] = useSetting("vr_rotation");
     const [snap_angle] = useSetting("vr_snap_rotation_angle");
     const [smooth_speed] = useSetting("vr_smooth_rotation_speed");
     const smooth_speed_rad = useMemo(() => smooth_speed * (Math.PI / 180), [smooth_speed]);
 
-    // in teleport mode, explictly disable the translation, but keep rotation
-    // teleportation is handled by TeleportSurface, not this component
+    // TODO: context for this so sdk can set
+    const can_sprint = true;
+
+    const sprint_enabled = useRef(false);
+    const sprint_just_pressed = useRef(false);
+    const thumbstick_just_reset = useRef(false);
+    const [speed, setSpeed] = useState(WALK_SPEED);
+
+    useFrame(() => {
+        if (!locomotion_controller || !can_sprint) {
+            sprint_enabled.current = false;
+            setSpeed(WALK_SPEED);
+            return;
+        }
+
+        const thumbstick = locomotion_controller.gamepad["xr-standard-thumbstick"];
+        if (!thumbstick) {
+            sprint_enabled.current = false;
+            setSpeed(WALK_SPEED);
+            return;
+        }
+
+        if (!thumbstick_just_reset.current && Math.abs(thumbstick.xAxis) < 0.05 && Math.abs(thumbstick.yAxis) < 0.05) {
+            thumbstick_just_reset.current = true;
+
+            // end a sprint if the thumbstick is released
+            // TODO: allow this behaviour to be disabled for pure toggle sprint
+            if (sprint_enabled.current) {
+                sprint_enabled.current = false;
+                setSpeed(WALK_SPEED);
+                return;
+            }
+        } else {
+            thumbstick_just_reset.current = false;
+        }
+
+        const sprint_pressed = thumbstick.state === "pressed";
+        const sprint_rising_edge = sprint_pressed && !sprint_just_pressed.current;
+
+        // toggle sprint
+        if (sprint_rising_edge) {
+            sprint_enabled.current = !sprint_enabled.current;
+            sprint_just_pressed.current = true;
+
+            setSpeed(sprint_enabled.current ? SPRINT_SPEED : WALK_SPEED);
+        }
+
+        // reset rising edge if the button is released
+        if (!sprint_pressed) {
+            sprint_just_pressed.current = false;
+        }
+    });
+
     useXRControllerLocomotion(origin,
         {
-            speed: locomotion === "walk" ? WALK_SPEED : false
+            // in teleport mode, explictly disable the translation, but keep rotation
+            // teleportation is handled by TeleportSurface, not this component
+            speed: locomotion === "walk" ? speed : false
         },
         {
             // built in smooth rotation doesn't offset properly, so just disable snap angle when on smooth mode and implement our own
@@ -45,7 +101,6 @@ export const XRLocomotion = ({ origin }: { origin: RefObject<Group | null> }) =>
     );
 
     // manual implementation of smooth turn
-    const controller = useXRInputSourceState("controller", rotation_hand);
     const {camera} = useThree();
 
     const cam_local_pos = useMemo(() => new Vector3(), []);
@@ -53,9 +108,9 @@ export const XRLocomotion = ({ origin }: { origin: RefObject<Group | null> }) =>
     const y_axis = useMemo(() => new Vector3(0, 1, 0), []);
 
     useFrame((_, delta) => {
-        if (rotation !== "smooth" || !origin.current || !controller) return;
+        if (rotation !== "smooth" || !origin.current || !rotation_controller) return;
 
-        const thumbstick = controller.gamepad["xr-standard-thumbstick"];
+        const thumbstick = rotation_controller.gamepad["xr-standard-thumbstick"];
         if (!thumbstick) return;
 
         const turn_axis = thumbstick.xAxis ?? 0;
@@ -110,15 +165,19 @@ export const XRTeleportControl = ({
 
     const {scene} = useThree();
 
-    // TODO: switch to sprint speed when implemented (provided no restrictions on sprinting from room)
-    const available_distance_m = useRef(WALK_SPEED * TELEPORT_LIMIT_WINDOW_S);
+    // TODO: context for this so sdk can set
+    const can_sprint = true;
+
+    const speed = can_sprint ? SPRINT_SPEED : WALK_SPEED;
+
+    const available_distance_m = useRef(speed * TELEPORT_LIMIT_WINDOW_S);
 
     useFrame((_, delta) => {
-        const max_burst_distance = WALK_SPEED * TELEPORT_LIMIT_WINDOW_S;
+        const max_burst_distance = speed * TELEPORT_LIMIT_WINDOW_S;
 
         available_distance_m.current = Math.min(
             max_burst_distance,
-            available_distance_m.current + (WALK_SPEED * delta)
+            available_distance_m.current + (speed * delta)
         );
 
         const max_distance = available_distance_m.current;
