@@ -440,7 +440,7 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
             const created = (await send_via_rtc({
                 action: "HVRSDK_CREATE_ENGINE_OBJECT",
                 object: built_object
-            })) as NamedReply<"HVRSDK_CREATE_ENGINE_OBJECT">;
+            }));
             // TODO: handle timeouts and errors
 
             let burned = false;
@@ -478,7 +478,7 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
                     const refreshed = (await send_via_rtc({
                         action: "HVRSDK_REFRESH_ENGINE_OBJECT",
                         object_id: created.object.id
-                    })) as NamedReply<"HVRSDK_REFRESH_ENGINE_OBJECT">;
+                    }));
 
                     ret_val.object = Object.freeze(refreshed.object);
                 }

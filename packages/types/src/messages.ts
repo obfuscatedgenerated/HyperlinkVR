@@ -125,6 +125,17 @@ interface WebSDKMetaAction extends BaseWebSDKActionMessage {
     content: "supported" | "defer" | "disable";
 }
 
+interface WebSDKPlayerGetPositionAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_PLAYER_GET_POSITION";
+    target_username: string | null;
+}
+
+interface WebSDKPlayerTeleportToAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_PLAYER_TELEPORT_TO";
+    target_username: string | null;
+    position?: [number, number, number];
+    facing?: [number, number, number]; // as euler XYZ
+}
 
 export type WebSDKActionMessage =
     WebSDKAuthQueryAction
@@ -137,6 +148,8 @@ export type WebSDKActionMessage =
     | WebSDKModifyEngineObjectAction
     | WebSDKRefreshEngineObjectAction
     | WebSDKInteractionCommandAction
+    | WebSDKPlayerGetPositionAction
+    | WebSDKPlayerTeleportToAction
     | WebSDKMetaAction;
 
 export type ActionMessage =
@@ -234,6 +247,18 @@ interface WebSDKInteractionCommandReplyMessage extends BaseWebSDKReplyMessage {
     response?: any;
 }
 
+interface WebSDKPlayerGetPositionReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_PLAYER_GET_POSITION";
+    position: [number, number, number];
+    facing: [number, number, number]; // as euler XYZ
+}
+
+interface WebSDKPlayerTeleportToReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_PLAYER_TELEPORT_TO";
+    new_position: [number, number, number];
+    new_facing: [number, number, number]; // as euler XYZ
+}
+
 export type WebSDKReplyMessage =
     WebSDKAuthQueryReplyMessage
     | WebSDKAuthWhoAmIReplyMessage
@@ -242,7 +267,9 @@ export type WebSDKReplyMessage =
     | WebSDKObjectDestroyedReplyMessage
     | WebSDKObjectModifiedReplyMessage
     | WebSDKObjectRefreshReplyMessage
-    | WebSDKInteractionCommandReplyMessage;
+    | WebSDKInteractionCommandReplyMessage
+    | WebSDKPlayerGetPositionReplyMessage
+    | WebSDKPlayerTeleportToReplyMessage;
 
 export type ReplyMessage =
     WebSDKReplyMessage;
@@ -259,6 +286,12 @@ type SelectFromUnion<T, K extends string, V> = Extract<T, { [P in K]: V }>;
 export type NamedAction<T extends string, M extends ActionMessage = ActionMessage> = SelectFromUnion<M, "action", T>;
 export type NamedEvent<T extends string, M extends EventMessage = EventMessage> = SelectFromUnion<M, "type", T>;
 export type NamedReply<T extends string, M extends ReplyMessage = ReplyMessage> = SelectFromUnion<M, "for", T>;
+export type NamedWebSDKAction<T extends WebSDKActionName> = NamedAction<T, WebSDKActionMessage>;
+export type NamedWebSDKEvent<T extends WebSDKEventMessage["type"]> = NamedEvent<T, WebSDKEventMessage>;
+export type NamedWebSDKReply<T extends WebSDKReplyFor> = NamedReply<T, WebSDKReplyMessage>;
+
+type NeverToVoid<T> = [T] extends [never] ? void : T;
+export type NamedWebSDKReplyOrVoid<T extends WebSDKActionName> = NeverToVoid<SelectFromUnion<WebSDKReplyMessage, "for", T>>;
 
 export type ActionName = ActionMessage["action"];
 export type EventType = EventMessage["type"];

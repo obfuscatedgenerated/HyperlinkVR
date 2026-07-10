@@ -1,7 +1,7 @@
 import { useSetting } from "@hyperlinkvr/react";
 import { Text } from "@react-three/drei";
 import { XROrigin } from "@react-three/xr";
-import { useImperativeHandle, useRef } from "react";
+import {useEffect, useImperativeHandle, useRef} from "react";
 import { Group } from "three";
 
 import {
@@ -19,6 +19,8 @@ import { XRHandsPublisher } from "../input/impl/xr/hands";
 import { FlatHandsPublisher } from "../input/impl/flat/hands";
 import {ComfortVignette} from "./ComfortVignette";
 import {PlayerGravity} from "./PlayerGravity";
+import {useWebSDKMessaging} from "../contexts";
+import {EULER_ORDER} from "../consts";
 
 const MouthTest = ({
     mouth_name,
@@ -86,6 +88,69 @@ export const Player = ({ ref = null }: { ref?: React.Ref<Group> }) => {
     useImperativeHandle(ref, () => origin_ref.current!);
 
     const session_mode = useSessionMode();
+
+    const {on_action} = useWebSDKMessaging();
+    useEffect(() => {
+        // TODO: these ignore target username on the message and assume its for us, nothing to do rn but just remember this is the case when multiplayer happens
+
+        const unlisten_get_pos = on_action("HVRSDK_PLAYER_GET_POSITION", (message, reply) => {
+            if (!origin_ref.current) {
+                reply({
+                    for: "HVRSDK_PLAYER_GET_POSITION",
+                    // TODO: error envelope!
+                    error: "Player origin not available"
+                });
+                return;
+            }
+
+            const pos = origin_ref.current.position;
+            const euler = origin_ref.current.rotation;
+            reply({
+                for: "HVRSDK_PLAYER_GET_POSITION",
+                position: [pos.x, pos.y, pos.z],
+                facing: [euler.x, euler.y, euler.z] // as euler XYZ
+            });
+        });
+
+        const unlisten_teleport_to = on_action("HVRSDK_PLAYER_TELEPORT_TO", (message, reply) => {
+            if (!origin_ref.current) {
+                reply({
+                    for: "HVRSDK_PLAYER_TELEPORT_TO",
+                    error: "Player origin not available"
+                });
+                return;
+            }
+
+            // TODO: optional (maybe default) fade out and in, will at least do vignette for now but would help to have them differentiate between teleporting and lag!
+            const pos = message.position;
+            const facing = message.facing;
+
+            if (pos) {
+                origin_ref.current.position.set(pos[0], pos[1], pos[2]);
+            }
+
+            if (facing) {
+                // as euler XYZ
+                origin_ref.current.rotation.set(facing[0], facing[1], facing[2], EULER_ORDER);
+            }
+
+            const new_pos = origin_ref.current.position;
+            const new_euler = origin_ref.current.rotation;
+
+            reply({
+                for: "HVRSDK_PLAYER_TELEPORT_TO",
+                new_position: [new_pos.x, new_pos.y, new_pos.z],
+                new_facing: [new_euler.x, new_euler.y, new_euler.z] // as euler XYZ
+            });
+        });
+
+        // TODO: rotating origin doesnt rotate camera/vr player! so facing doesnt work currently
+
+        return () => {
+            unlisten_get_pos();
+            unlisten_teleport_to();
+        }
+    }, []);
 
     return (
         <group name="Player">

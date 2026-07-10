@@ -37,12 +37,27 @@
 - [ ] Billboard positioning interaction
 - [ ] Implement monitors in engine
 - [ ] Ensure all interaction properties implemented
-- [ ] Prefab for links between worlds (a door? a portal? a big link logo? or as an interaction to allow customisation? perhaps both with some prefabbed links)
 - [ ] Anchored option on kinematic-pos rigid body builder
 - [ ] Decide if/how to deal with duplicate interactions
-- [ ] Environment props via SDK (sky, fog, maybe even gravity!)
+- [ ] Environment props via SDK (sky, fog, maybe even gravity and rain!)
 - [ ] Expression input
-- [ ] Player stuff via SDK (freeze player, set max speed, change other locomotion restrictions, change if flat allowed via meta, force avatar items, teleport player, force spectator camera mode/pos, player pos monitors, force expressions, force non-teleport locomotion)
+- [ ] Player stuff via SDK
+  - [x] read player position
+  - [ ] read player velocity
+  - [x] teleport player
+  - [ ] freeze player
+  - [ ] set max speed(s)
+  - [ ] set jump force
+  - [ ] set scale
+  - [ ] set gravity of player individually to rest of world
+  - [ ] change whether can sprint/jump/fly
+  - [ ] force avatar items
+  - [ ] force spectator camera mode/pos
+  - [ ] force avatar expression
+  - [ ] player monitors (e.g. position, expression, velocity, etc)
+  - [ ] offer to send the player to a different world (could allow skipping prompt on same origin?)
+- [ ] Change if flat and teleport allowed via meta
+- [ ] Prefab for links that use player sending (a door? a portal? a big link logo?). If clearly displays text then could bypass prompt
 - [ ] Way for SDK to add HUD layer stuff (could reuse vignette layer)
 - [ ] `wait_for_ready()` and `is_ready` on SDK as alternative to DOM event
 - [ ] Meta value to tell the engine to preload assets from URLs to make mesh and audio loading immediate when used (shows as loading)
@@ -56,8 +71,10 @@
 - [ ] DOMMirror prefab
 - [ ] Physics reporting: `usePhysicsReporting`, collision reports
 - [ ] Rigid body extras: angular velocity, friction, damping; ignore-player-collisions option
+- [ ] Extend prefab library in general (adding props, weapons, sports stuff, maybe even vehicles etc)
 - [ ] Flat controller support
 - [ ] Flat rebinding support
+- [ ] Scripted object pathways/full keyframing system on SDK (could a gradual tween already do this? But I guess less annoying to just define a path in advance)
 - [ ] Avatar walk animation
 - [ ] Avatar clothing, more hair options
 - [ ] Avatar slots
@@ -82,6 +99,7 @@
 - [ ] Implement raw input via debugger perm in sidecar extension for least privilege (if not, then disable the option for now)
 - [ ] Single-node P2P multiplayer, making sure to define the discovery and transport interfaces abstractly so the later relay idea is a drop-in swap
 - [ ] If multiplayer has voice chat, extend audio effects to be able to abe applied to player voices too
+- [ ] If multiplayer has text chat, positional narration, and let players choose their own TTS voice
 - [ ] SDK-hosted XR session handoff: investigate feasibility first (can we host on their behalf so they don't need a permission prompt?) and implement in a multiplayer friendly way or drop the idea entirely
 - [ ] Arrange informal testing with friends
 - [ ] Prepare for first release
@@ -92,7 +110,7 @@
 - [ ] Replace `SmartSlider` workaround once pmndrs/uikit#247 is fixed
 - [ ] Some form of formal test suite :P
 - [ ] Tab hopping
-- [ ] World editor tool that generates builders. Might not be awfully necessary if the sandbox mode is good enough
+- [ ] World editor tool that generates builders. Might not be awfully necessary if the sandbox mode is good enough. Maybe add blockly or roll our own declarative scripting to allow quick out the box logic?
 - [ ] Ability to customise the default space for non-immersive pages
 - [ ] "3DOM" builder that allows websites to half dip into immersive by being able to make existing DOM elements pop out (or try to do it automatically based on Z-index?!)
 - [ ] World discovery (crawling? explicit lists? via world links but then how is that declared in advance? needs research)

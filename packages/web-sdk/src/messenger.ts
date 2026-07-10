@@ -1,22 +1,27 @@
-import type { NamedEvent, WebSDKActionMessage, WebSDKEventMessage, WebSDKReplyMessage, WithCorrelation } from "@hyperlinkvr/types";
-
-
-
+import type {
+    NamedWebSDKAction,
+    NamedWebSDKEvent,
+    NamedWebSDKReplyOrVoid,
+    WebSDKActionMessage,
+    WebSDKActionName,
+    WebSDKEventMessage,
+    WithCorrelation
+} from "@hyperlinkvr/types";
 
 
 let rtc_data_channel: RTCDataChannel | null = null;
-export const send_via_messaging = async (
-    message: WebSDKActionMessage
-): Promise<WebSDKReplyMessage> => {
+export const send_via_messaging = async <T extends WebSDKActionName>(
+    message: NamedWebSDKAction<T>
+): Promise<NamedWebSDKReplyOrVoid<T>> => {
     const correlation_id = crypto.randomUUID();
-    const message_with_correlation: WithCorrelation<WebSDKActionMessage> = {
+    const message_with_correlation: WithCorrelation<NamedWebSDKAction<T>> = {
         ...message,
         correlation_id
     };
 
     return new Promise((resolve, reject) => {
         const handle_message = (event: MessageEvent) => {
-            const data = event.data as any;
+            const data = event.data as NamedWebSDKReplyOrVoid<T> & { correlation_id?: string; };
             // TODO: should this check for HVRSDK prefix?
             if (
                 "for" in data &&
@@ -27,7 +32,7 @@ export const send_via_messaging = async (
                 window.removeEventListener("message", handle_message);
 
                 const { correlation_id, ...without_correlation } = data;
-                resolve(without_correlation);
+                resolve(without_correlation as NamedWebSDKReplyOrVoid<T>);
             }
         };
 
@@ -37,20 +42,20 @@ export const send_via_messaging = async (
 };
 
 type EventListenerMap = {
-    [E in WebSDKEventMessage["type"]]?: Set<(event: NamedEvent<E>) => void>;
+    [E in WebSDKEventMessage["type"]]?: Set<(event: NamedWebSDKEvent<E>) => void>;
 };
 
 const event_listeners: EventListenerMap = {};
 
 export const bind_rtc_event = <E extends WebSDKEventMessage["type"]>(
     event_type: E,
-    callback: (event: NamedEvent<E>) => void
+    callback: (event: NamedWebSDKEvent<E>) => void
 ) => {
     if (!rtc_data_channel || rtc_data_channel.readyState !== "open") {
         throw new Error("RTC data channel is not open");
     }
 
-    let listeners = event_listeners[event_type] as Set<(event: NamedEvent<E>) => void> | undefined;
+    let listeners = event_listeners[event_type] as Set<(event: NamedWebSDKEvent<E>) => void> | undefined;
     if (!listeners) {
         listeners = new Set();
         event_listeners[event_type] = listeners as EventListenerMap[E];
@@ -158,9 +163,9 @@ export const facilitate_rtc = async () => {
     });
 };
 
-export const send_via_rtc = async (
-    message: WebSDKActionMessage
-): Promise<WebSDKReplyMessage> => {
+export const send_via_rtc = async <T extends WebSDKActionName>(
+    message: NamedWebSDKAction<T>
+): Promise<NamedWebSDKReplyOrVoid<T>> => {
     if (!rtc_data_channel || rtc_data_channel.readyState !== "open") {
         throw new Error("RTC data channel is not open");
     }
@@ -192,9 +197,9 @@ export const send_via_rtc = async (
     });
 };
 
-export const send = async (
-    message: WebSDKActionMessage
-): Promise<WebSDKReplyMessage> => {
+export const send = async <T extends WebSDKActionName>(
+    message: NamedWebSDKAction<T>
+): Promise<NamedWebSDKReplyOrVoid<T>> => {
     if (!rtc_data_channel || rtc_data_channel.readyState !== "open") {
         return send_via_messaging(message);
     }
