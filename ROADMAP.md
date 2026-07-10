@@ -30,6 +30,7 @@
 - [ ] Expression input
 - [ ] Player stuff via SDK (freeze player, set max speed, change other locomotion restrictions, change if flat allowed via meta, force avatar items, teleport player, force spectator camera mode/pos, player pos monitors, force expressions, force non-teleport locomotion)
 - [ ] `wait_for_ready()` and `is_ready` on SDK as alternative to DOM event
+- [ ] Meta value to tell the engine to preload assets from URLs to make mesh and audio loading immediate when used (shows as loading)
 
 ### Phase 3
 - [ ] VR keyboard for DOM and watch input
