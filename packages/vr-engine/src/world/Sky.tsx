@@ -1,41 +1,9 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import { BackSide, Color, CubeCamera, Mesh, PMREMGenerator, Scene, ShaderMaterial, SphereGeometry, SRGBColorSpace, Vector3, WebGLCubeRenderTarget, type ColorRepresentation, type Texture, type WebGLRenderTarget } from "three";
+import {WorldSky} from "@hyperlinkvr/vr-engine-schemas";
 
 type Vec3Like = Vector3 | [number, number, number];
-
-export interface SkyProps {
-    sky_zenith_color?: ColorRepresentation;
-    sky_horizon_color?: ColorRepresentation;
-
-    ground_horizon_color?: ColorRepresentation;
-    ground_nadir_color?: ColorRepresentation;
-
-    sun_direction?: Vec3Like;
-    sun_color?: ColorRepresentation;
-    sun_intensity?: number;
-    sun_size?: number;
-    sun_glow?: number;
-
-    // tightness of the gradient transition of the sky. 1 is linear, >1 is more spread, <1 is more abrupt
-    horizon_sharpness?: number;
-
-    // tightness of blend between ground and sky at the horizon seam. 0 is abrupt, >0 is more spread
-    horizon_band?: number;
-
-    // 1024 is a decent default as only baked once
-    resolution?: number;
-
-    // whether to emit a point light from the sun
-    cast_light?: boolean;
-    light_intensity?: number;
-    light_distance?: number;
-
-    sky_light_intensity?: number;
-
-    ambient_override_color?: ColorRepresentation;
-    ambient_override_intensity?: number;
-}
 
 const VERTEX = `
 varying vec3 v_dir;
@@ -101,6 +69,8 @@ const srgb_vec3 = (c: ColorRepresentation): Vector3 => {
 const as_vector3 = (v: Vec3Like): Vector3 =>
     Array.isArray(v) ? new Vector3(v[0], v[1], v[2]) : v.clone();
 
+const RESOLUTION = 1024;
+
 export const Sky = ({
     sky_zenith_color = "#2a6cd6",
     sky_horizon_color = "#bfe0ff",
@@ -113,14 +83,13 @@ export const Sky = ({
     sun_glow = 6,
     horizon_sharpness = 1.0,
     horizon_band = 0.02,
-    resolution = 1024,
     cast_light = true,
     light_intensity = 1.0,
     light_distance = 50,
     sky_light_intensity = 0.5,
     ambient_override_color,
     ambient_override_intensity = 0.25
-}: SkyProps) => {
+}: WorldSky) => {
     const { gl, scene } = useThree();
 
     // uniforms changed in place
@@ -144,7 +113,7 @@ export const Sky = ({
     // scene for baking
     const { sky_scene, cube_camera, cube_rt, material, geometry } =
         useMemo(() => {
-            const rt = new WebGLCubeRenderTarget(resolution, {
+            const rt = new WebGLCubeRenderTarget(RESOLUTION, {
                 generateMipmaps: false
             });
             rt.texture.colorSpace = SRGBColorSpace;
@@ -174,7 +143,7 @@ export const Sky = ({
                 material: mat,
                 geometry: geo
             };
-        }, [resolution, uniforms]);
+        }, [RESOLUTION, uniforms]);
 
     const pmrem = useMemo(() => new PMREMGenerator(gl), [gl]);
     const env_rt_ref = useRef<WebGLRenderTarget | null>(null);

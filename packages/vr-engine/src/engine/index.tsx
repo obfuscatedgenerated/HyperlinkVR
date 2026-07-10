@@ -34,6 +34,7 @@ import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
 import {TweenRunner} from "./TweenRunner";
 import {AudioListenerProvider} from "../contexts/AudioListenerContext";
+import {useWorldEnvironment} from "../world/WorldEnvironmentContext";
 
 
 configureTextBuilder({
@@ -157,17 +158,16 @@ const SceneContents = ({
         });
     }, [session.url, setRecentWorlds]);
 
+    const {sky, fog} = useWorldEnvironment();
+
     return (
         <>
             <FloorCollider />
+
             <Sky
-                sky_zenith_color={0x111111}
-                sky_horizon_color={0x222222}
-                ground_horizon_color={0x111111}
-                ground_nadir_color={0x000000}
-                sun_color={0xffffff}
+                {...sky}
             />
-            <fog attach="fog" args={[0x222222, 10, 75]} />
+            <fog attach="fog" args={[fog.color, fog.near, fog.far]} />
 
             <Player ref={internal_ref} />
 
