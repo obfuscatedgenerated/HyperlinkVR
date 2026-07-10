@@ -12,9 +12,14 @@ const OPEN_RADIUS = 1.3;
 const MIN_RADIUS = 0.2;
 
 // detection of snap turns
-const TURN_PULSE_INTENSITY = 0.8;
+const TURN_PULSE_INTENSITY = 0.8; // change in quaternion above this in one frame will trigger a pulse
 const TURN_PULSE_THRESHOLD = 0.05;
 const TURN_PULSE_DECAY = 0.6;
+
+// detection of teleports
+const TELEPORT_PULSE_INTENSITY = 1.0; // change in distance above this in one frame will trigger a pulse
+const TELEPORT_PULSE_THRESHOLD = 0.5;
+const TELEPORT_PULSE_DECAY = 0.6;
 
 const VERTEX_SHADER = `
 varying vec2 view_tan;
@@ -58,6 +63,7 @@ export const ComfortVignette = ({
 
     const last_position = useRef(new Vector3());
     const last_quat = useRef(new Quaternion());
+    const teleport_pulse = useRef(0);
     const turn_pulse = useRef(0);
 
     const initialised = useRef(false);
@@ -90,6 +96,12 @@ export const ComfortVignette = ({
         const distance_moved = current_pos.distanceTo(last_position.current);
         const linear_speed = distance_moved / dt;
         const normalised_linear = MathUtils.clamp(linear_speed / max_linear_speed, 0.0, 1.0);
+
+        if (distance_moved > TELEPORT_PULSE_THRESHOLD) {
+            teleport_pulse.current = TELEPORT_PULSE_INTENSITY;
+        } else {
+            teleport_pulse.current = Math.max(0, teleport_pulse.current - delta / TELEPORT_PULSE_DECAY);
+        }
 
         const angle_rotated = current_qua.angleTo(last_quat.current);
         const angular_speed = angle_rotated / dt;
@@ -133,7 +145,7 @@ export const ComfortVignette = ({
             return;
         }
 
-        const movement_factor = Math.max(normalised_linear, normalised_angular, turn_pulse.current);
+        const movement_factor = Math.max(normalised_linear, normalised_angular, teleport_pulse.current, turn_pulse.current);
         const effective_movement_factor = preview_active ? 1.0 : movement_factor;
 
         const target_radius = vignette_enabled

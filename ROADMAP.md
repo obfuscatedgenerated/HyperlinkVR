@@ -1,16 +1,22 @@
 # Roadmap
 
 ### Phase 1
-- [x] Disable locomotion while watch UI is open (for flat)
-- [ ] Comfort options:
-  - [x] vignette/masking on move and turn
-  - [x] snap/smooth turn toggle
-  - [x] option for teleport locomotion
-  - [x] option to swap locomotion hands
-  - [ ] make vignette work for teleport
-- [x] Match flat locomotion speed to VR speed
-- [x] Match teleport locomotion to walk speed by using window to limit distance within timeframe
-- [x] Split SDK builders into per-domain files (physics, interactions, prefabs, monitors, modification), barrel-export from one `index.ts` so consumer imports don't change
+<details>
+<summary>Completed, open for list </summary>
+<ul>
+<li>Disable locomotion while watch UI is open (for flat)</li>
+<li>Comfort options:<ul>
+  <li>vignette/masking on move and turn</li>
+  <li>snap/smooth turn toggle</li>
+  <li>option for teleport locomotion</li>
+  <li>option to swap locomotion hands</li>
+  <li>make vignette work for teleport</li>
+</ul></li>
+<li>Match flat locomotion speed to VR speed</li>
+<li>Match teleport locomotion to walk speed by using window to limit distance within timeframe</li>
+<li>Split SDK builders into per-domain files (physics, interactions, prefabs, monitors, modification), barrel-export from one `index.ts` so consumer imports don't change</li>
+</ul>
+</details>
 
 ### Phase 2
 - [x] Player gravity
