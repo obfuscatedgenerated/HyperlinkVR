@@ -57,6 +57,7 @@
 - [ ] Physics reporting: `usePhysicsReporting`, collision reports
 - [ ] Rigid body extras: angular velocity, friction, damping; ignore-player-collisions option
 - [ ] Flat controller support
+- [ ] Flat rebinding support
 - [ ] Avatar walk animation
 - [ ] Avatar clothing, more hair options
 - [ ] Avatar slots
