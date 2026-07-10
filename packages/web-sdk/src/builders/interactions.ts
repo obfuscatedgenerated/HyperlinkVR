@@ -6,12 +6,12 @@ import {
     ControllerButtonInteractionSchema,
     ControllerButtonWhenListen,
     FollowPlayerInteractionInput,
-    FollowPlayerInteractionSchema,
+    FollowPlayerInteractionSchema, GlobalAudioInteraction, GlobalAudioInteractionInput, GlobalAudioInteractionSchema,
     GrabbableInteraction,
     GrabbableInteractionInput,
     GrabbableInteractionSchema,
     GrabCollider,
-    GrabOffsetInput,
+    GrabOffsetInput, PositionalAudioInteraction, PositionalAudioInteractionInput, PositionalAudioInteractionSchema,
     TriggerVolumeInteraction,
     TriggerVolumeInteractionInput,
     TriggerVolumeInteractionSchema
@@ -163,5 +163,72 @@ export class FollowPlayerInteractionBuilder extends BaseBuilder<FollowPlayerInte
 
     build(): FollowPlayerInteractionInput {
         return FollowPlayerInteractionSchema.parse(this._internal);
+    }
+}
+
+export class PositionalAudioInteractionBuilder extends BaseBuilder<PositionalAudioInteractionInput> {
+    constructor() {
+        super({type: "positional-audio"} as PositionalAudioInteractionInput);
+    }
+
+    set_url(url: string) {
+        this._internal.url = url;
+        return this;
+    }
+
+    set_max_distance(distance: number) {
+        this._internal.max_distance = distance;
+        return this;
+    }
+
+    set_offset(offset: [number, number, number]) {
+        this._internal.offset = offset;
+        return this;
+    }
+
+    loop(loop = true) {
+        this._internal.loop = loop;
+        return this;
+    }
+
+    autoplay(autoplay = true) {
+        this._internal.autoplay = autoplay;
+        return this;
+    }
+
+    // TODO: a way to dispatch play and pause events
+
+    build(): PositionalAudioInteraction {
+        return PositionalAudioInteractionSchema.parse(this._internal);
+    }
+}
+
+export class GlobalAudioInteractionBuilder extends BaseBuilder<GlobalAudioInteractionInput> {
+    constructor() {
+        super({type: "global-audio"} as GlobalAudioInteractionInput);
+    }
+
+    set_url(url: string) {
+        this._internal.url = url;
+        return this;
+    }
+
+    set_volume(volume: number) {
+        this._internal.volume = volume;
+        return this;
+    }
+
+    loop(loop = true) {
+        this._internal.loop = loop;
+        return this;
+    }
+
+    autoplay(autoplay = true) {
+        this._internal.autoplay = autoplay;
+        return this;
+    }
+
+    build(): GlobalAudioInteraction {
+        return GlobalAudioInteractionSchema.parse(this._internal);
     }
 }

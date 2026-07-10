@@ -33,6 +33,7 @@ import { Sky } from "../world/Sky";
 import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
 import {TweenRunner} from "./TweenRunner";
+import {AudioListenerProvider} from "../contexts/AudioListenerContext";
 
 
 configureTextBuilder({
@@ -252,48 +253,50 @@ const EngineHostInternal = memo(
                                             gl={make_xr_compatible_renderer}
                                             onCreated={handle_created}
                                         >
-                                            <Physics interpolate gravity={[0, -9.81, 0]} debug={show_colliders}>
-                                            <CameraSetup />
-                                            <CanvasResizer
-                                                containerRef={canvas_container_ref}
-                                            />
+                                            <AudioListenerProvider>
+                                                <Physics interpolate gravity={[0, -9.81, 0]} debug={show_colliders}>
+                                                    <CameraSetup />
+                                                    <CanvasResizer
+                                                        containerRef={canvas_container_ref}
+                                                    />
 
-                                            <SceneDebug />
+                                                    <SceneDebug />
 
-                                            {mode === "vr" ? (
-                                                <XR store={xr_store}>
-                                                    <ErrorBoundary
-                                                        FallbackComponent={
-                                                            VRErrorFallback
-                                                        }
-                                                        onReset={() =>
-                                                            window.location.reload()
-                                                        }>
-                                                        <SceneContents
-                                                            player_ref={player_ref}
-                                                            extra_in_origin={
-                                                                <SpectatorCamera />
+                                                    {mode === "vr" ? (
+                                                        <XR store={xr_store}>
+                                                            <ErrorBoundary
+                                                                FallbackComponent={
+                                                                    VRErrorFallback
+                                                                }
+                                                                onReset={() =>
+                                                                    window.location.reload()
+                                                                }>
+                                                                <SceneContents
+                                                                    player_ref={player_ref}
+                                                                    extra_in_origin={
+                                                                        <SpectatorCamera />
+                                                                    }
+                                                                />
+                                                            </ErrorBoundary>
+                                                        </XR>
+                                                    ) : (
+                                                        <ErrorBoundary
+                                                            FallbackComponent={
+                                                                FlatErrorFallback
                                                             }
-                                                        />
-                                                    </ErrorBoundary>
-                                                </XR>
-                                            ) : (
-                                                <ErrorBoundary
-                                                    FallbackComponent={
-                                                        FlatErrorFallback
-                                                    }
-                                                    onReset={() =>
-                                                        window.location.reload()
-                                                    }
-                                                >
-                                                    <FlatInputProvider>
-                                                        <FlatClickRaycaster />
-                                                        <FlatAvatarHands />
-                                                        <SceneContents player_ref={player_ref} />
-                                                    </FlatInputProvider>
-                                                </ErrorBoundary>
-                                            )}
-                                            </Physics>
+                                                            onReset={() =>
+                                                                window.location.reload()
+                                                            }
+                                                        >
+                                                            <FlatInputProvider>
+                                                                <FlatClickRaycaster />
+                                                                <FlatAvatarHands />
+                                                                <SceneContents player_ref={player_ref} />
+                                                            </FlatInputProvider>
+                                                        </ErrorBoundary>
+                                                    )}
+                                                </Physics>
+                                            </AudioListenerProvider>
                                         </Canvas>
                                     </PlayerOriginProvider>
                                 </HandsProvider>

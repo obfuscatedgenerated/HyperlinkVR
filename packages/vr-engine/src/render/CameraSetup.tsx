@@ -3,6 +3,7 @@ import {useEffect} from "react";
 
 import {compute_layer_mask, Layer} from "./layers";
 import {get_united_head_camera} from "../util/get_head_cameras";
+import {useAudioListener} from "../contexts/AudioListenerContext";
 
 
 const layer_mask = compute_layer_mask([
@@ -14,10 +15,14 @@ const layer_mask = compute_layer_mask([
 
 export const CameraSetup = () => {
     const { gl, camera } = useThree();
+    const listener = useAudioListener();
 
     useEffect(() => {
+        const head_camera = get_united_head_camera(gl, camera);
+        head_camera.add(listener);
+
         const set_layers = () => {
-            get_united_head_camera(gl, camera).layers.mask = layer_mask;
+            head_camera.layers.mask = layer_mask;
         };
 
         // set immediately in case remounted in vr, but listen for sessionstart to cover both cameras when vr starts
@@ -27,8 +32,9 @@ export const CameraSetup = () => {
 
         return () => {
             gl.xr.removeEventListener("sessionstart", set_layers);
+            head_camera.remove(listener);
         };
-    }, [gl, layer_mask]);
+    }, [gl, layer_mask, listener]);
 
     return null;
 }

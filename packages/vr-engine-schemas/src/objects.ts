@@ -245,11 +245,40 @@ export const FollowPlayerInteractionSchema = z.object({
 export type FollowPlayerInteraction = z.infer<typeof FollowPlayerInteractionSchema>;
 export type FollowPlayerInteractionInput = z.input<typeof FollowPlayerInteractionSchema>;
 
+export const PositionalAudioInteractionSchema = z.object({
+    type: z.literal("positional-audio"),
+    url: z.url({
+        protocol: /^https?$/,
+        hostname: z.regexes.domain
+    }),
+    max_distance: z.number().positive().default(10),
+    loop: z.boolean().default(false),
+    autoplay: z.boolean().default(false),
+    offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+});
+export type PositionalAudioInteraction = z.infer<typeof PositionalAudioInteractionSchema>;
+export type PositionalAudioInteractionInput = z.input<typeof PositionalAudioInteractionSchema>
+
+export const GlobalAudioInteractionSchema = z.object({
+    type: z.literal("global-audio"),
+    url: z.url({
+        protocol: /^https?$/,
+        hostname: z.regexes.domain
+    }),
+    loop: z.boolean().default(false),
+    autoplay: z.boolean().default(false),
+    volume: z.number().min(0).max(1).default(1)
+});
+export type GlobalAudioInteraction = z.infer<typeof GlobalAudioInteractionSchema>;
+export type GlobalAudioInteractionInput = z.input<typeof GlobalAudioInteractionSchema>
+
 export const InteractionSchema = z.discriminatedUnion("type", [
     GrabbableInteractionSchema,
     ControllerButtonInteractionSchema,
     TriggerVolumeInteractionSchema,
-    FollowPlayerInteractionSchema
+    FollowPlayerInteractionSchema,
+    PositionalAudioInteractionSchema,
+    GlobalAudioInteractionSchema
 ]);
 export type Interaction = z.infer<typeof InteractionSchema>;
 export type InteractionInput = z.input<typeof InteractionSchema>;
@@ -423,3 +452,4 @@ export type TweenInput = z.input<typeof TweenSchema>;
 
 // TODO: prefab for dom mirror
 // TODO: support parenting
+// TODO: split these schemas too in the same manner as builders

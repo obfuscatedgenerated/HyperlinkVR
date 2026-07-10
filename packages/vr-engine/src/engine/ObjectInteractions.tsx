@@ -1,14 +1,19 @@
-import type { FollowPlayerInteraction, GrabbableInteraction, Interaction, TriggerVolumeInteraction } from "@hyperlinkvr/vr-engine-schemas";
-import { useMemo, useRef } from "react";
+import type {
+    FollowPlayerInteraction, GlobalAudioInteraction, GrabbableInteraction, Interaction,
+    PositionalAudioInteraction, TriggerVolumeInteraction
+} from "@hyperlinkvr/vr-engine-schemas";
+import {useEffect, useMemo, useRef} from "react";
 
 
 
 import { useObjectRefs } from "../contexts/ObjectRefsContext";
+import { useAudioListener } from "../contexts/AudioListenerContext";
 import { useReportEmitter } from "../hooks/useReportEmitter";
 import { Grabbable } from "../interaction";
 import { FollowPlayer } from "../interaction/FollowPlayer";
 import { resolve_body_part, TriggerVolume } from "../interaction/TriggerVolume";
-import { Group } from "three";
+import {Audio, AudioLoader, Group} from "three";
+import {PositionalAudio} from "@react-three/drei";
 
 
 interface InteractionWrapperProps<I extends Interaction = Interaction> {
@@ -86,11 +91,53 @@ const FollowPlayerWrapper = ({interaction, children}: InteractionWrapperProps<Fo
     )
 }
 
+const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps<PositionalAudioInteraction>) => {
+    return (
+        <>
+            <PositionalAudio
+                url={interaction.url}
+                loop={interaction.loop}
+                autoplay={interaction.autoplay}
+                distance={interaction.max_distance}
+                position={interaction.offset}
+            />
+            {children}
+        </>
+    );
+}
+
+const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<GlobalAudioInteraction>) => {
+    const audio_listener = useAudioListener();
+
+    // TODO: split into per dep effects
+    useEffect(() => {
+        const audio = new Audio(audio_listener);
+        const loader = new AudioLoader();
+        loader.load(interaction.url, (buffer) => {
+            audio.setBuffer(buffer);
+            audio.setLoop(interaction.loop);
+            audio.setVolume(interaction.volume ?? 1.0);
+            if (interaction.autoplay) {
+                audio.play();
+            }
+        });
+
+        return () => {
+            audio.stop();
+            audio.disconnect();
+        };
+    }, [audio_listener, interaction.url, interaction.loop, interaction.autoplay, interaction.volume]);
+
+    return children;
+}
+
 const INTERACTION_MAP: Record<Interaction["type"], React.ComponentType<InteractionWrapperProps<any>> | null> = {
     "grabbable": GrabbableWrapper,
     "follow-player": FollowPlayerWrapper,
     "trigger-volume": TriggerVolumeWrapper,
-    "controller-button": null
+    "controller-button": null,
+    "positional-audio": PositionalAudioWrapper,
+    "global-audio": GlobalAudioWrapper
 } as const;
 
 // follow player must be the parent to grabbable, others dont matter
@@ -99,7 +146,9 @@ const WRAPPER_STRICT_ORDER: Interaction["type"][] = [
     "follow-player",
     "grabbable",
     "controller-button",
-    "trigger-volume"
+    "trigger-volume",
+    "positional-audio",
+    "global-audio"
 ];
 
 export const ObjectInteractions = ({interactions, children}: {interactions: Interaction[], children: React.ReactNode}) => {
