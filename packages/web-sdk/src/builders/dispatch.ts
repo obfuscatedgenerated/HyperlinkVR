@@ -1,4 +1,5 @@
 import {
+    Bindable,
     CreatedEngineObject,
     EngineObject,
     EngineObjectDispatch,
@@ -6,7 +7,7 @@ import {
     EngineObjectDispatchSchema,
     EngineObjectModification,
     EngineObjectModificationInput,
-    EngineObjectModificationSchema,
+    EngineObjectModificationSchema, Interaction,
     Monitor,
     PartialTransformInput,
     PrefabInput,
@@ -19,6 +20,7 @@ import {BaseBuilder} from "./base";
 import {subscribe_report} from "../event_bus";
 import {send_via_rtc} from "../messenger";
 import type {NamedReply} from "@hyperlinkvr/types";
+import {INTERACTION_API_MAKERS} from "./interactions";
 
 export interface EngineObjectCreationResult {
     object: CreatedEngineObject;
@@ -126,7 +128,7 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
             this._internal.monitors = [];
         }
 
-        this._internal.monitors.push({...monitor, reporting: {name}});
+        this._internal.monitors.push({...monitor, binding: {name}});
     }
 
     remove_monitors(name: string) {
@@ -140,7 +142,7 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
 
         // multiple monitors are allowed to have the same name, so remove all with that name but check if any were actually removed
         const original_length = this._internal.monitors.length;
-        this._internal.monitors = this._internal.monitors.filter((monitor) => monitor.reporting?.name !== name);
+        this._internal.monitors = this._internal.monitors.filter((monitor) => monitor.binding?.name !== name);
 
         if (this._internal.monitors.length === original_length) {
             throw new Error(`No monitors were found with name "${name}".`);
@@ -296,7 +298,7 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         if (!this._internal.monitors) {
             this._internal.monitors = [];
         }
-        this._internal.monitors.push({...monitor, reporting: {name}});
+        this._internal.monitors.push({...monitor, binding: {name}});
         return this;
     }
 
@@ -304,7 +306,7 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         if (!this._internal.monitors) {
             this._internal.monitors = [];
         }
-        this._internal.monitors.push(...monitors.map(({name, monitor}) => ({...monitor, reporting: {name}})));
+        this._internal.monitors.push(...monitors.map(({name, monitor}) => ({...monitor, binding: {name}})));
         return this;
     }
 
@@ -329,14 +331,32 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         // every named reporting source in this dispatch, plus how to stamp its id back
         const named_sources: Array<{ name: string; assign_id: (id: string) => void }> = [];
 
-        // find all interactions with reporting names
+        // progressively bound as ids acquired with currying
+        const unbound_interaction_apis: Record<string, (binding_id: string) => (object_id: string) => any> = {};
+        const partially_bound_interaction_apis: Record<string, (object_id: string) => any> = {};
+
+        // find all interactions with binding names
         if (dispatch.object.type === "custom" && dispatch.object.interactions) {
             for (const interaction of dispatch.object.interactions) {
-                if ("reporting" in interaction && interaction.reporting?.name) {
+                const name = "binding" in interaction && interaction.binding?.name ? interaction.binding.name : null;
+
+                if (name) {
+                    if (interaction.type in INTERACTION_API_MAKERS) {
+                        const make_api = INTERACTION_API_MAKERS[interaction.type];
+                        unbound_interaction_apis[name] = (binding_id) => (object_id) => make_api(object_id, binding_id);
+                    }
+
                     named_sources.push({
-                        name: interaction.reporting.name,
+                        name,
                         assign_id: (id) => {
-                            interaction.reporting = {...interaction.reporting, id};
+                            const bindable = interaction as Bindable;
+                            bindable.binding = {...bindable.binding, id};
+
+                            if (name in unbound_interaction_apis) {
+                                // uncurry to bind the interaction id
+                                partially_bound_interaction_apis[name] = unbound_interaction_apis[name](id);
+                                console.log(`Bound interaction API for "${name}" with id ${id}`);
+                            }
                         }
                     });
                 }
@@ -344,23 +364,23 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         }
 
         // if prefab has reporting, add it
-        if (dispatch.object.type === "prefab" && dispatch.object.reporting?.name) {
+        if (dispatch.object.type === "prefab" && dispatch.object.binding?.name) {
             const prefab_object = dispatch.object as PrefabInput;
             named_sources.push({
-                name: dispatch.object.reporting.name,
+                name: dispatch.object.binding.name,
                 assign_id: (id) => {
-                    prefab_object.reporting = {...prefab_object.reporting, id};
+                    prefab_object.binding = {...prefab_object.binding, id};
                 }
             });
         }
 
         // add any reporting monitors
         for (const monitor of dispatch.monitors ?? []) {
-            if (monitor.reporting?.name) {
+            if (monitor.binding?.name) {
                 named_sources.push({
-                    name: monitor.reporting.name,
+                    name: monitor.binding.name,
                     assign_id: (id) => {
-                        monitor.reporting = {...monitor.reporting, id};
+                        monitor.binding = {...monitor.binding, id};
                     }
                 });
             }
@@ -379,13 +399,13 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         const unbound = new Set(this.#callbacks.keys());
 
         for (const source of named_sources) {
+            const id = crypto.randomUUID();
+            source.assign_id(id);
+
             const callback = this.#callbacks.get(source.name);
             if (!callback) {
                 continue; // no callback bound for this source, so don't subscribe
             }
-
-            const id = crypto.randomUUID();
-            source.assign_id(id);
 
             unsubscribes.push(subscribe_report(id, callback));
 
@@ -398,12 +418,23 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
             throw new Error(`No reporting source named ${missing} in this dispatch.`);
         }
 
-        return unsubscribes;
+        const bind_interaction_apis = (object_id: string) => {
+            const apis: Record<string, Function> = {};
+
+            // finalise binding of every api with the object id
+            for (const api of Object.entries(partially_bound_interaction_apis)) {
+                apis[api[0]] = api[1](object_id);
+            }
+
+            return apis;
+        }
+
+        return {unsubscribes, bind_interaction_apis};
     }
 
     async create(): Promise<EngineObjectCreationResult> {
         const built_object = this.build();
-        const unsubscribes = this.#bind_callbacks(built_object);
+        const {unsubscribes, bind_interaction_apis} = this.#bind_callbacks(built_object);
 
         try {
             const created = (await send_via_rtc({
@@ -415,6 +446,7 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
             let burned = false;
             const ret_val = {
                 object: Object.freeze(created.object),
+                interactions: bind_interaction_apis(created.object.id),
                 destroy: async () => {
                     if (burned) {
                         throw new Error("This object has already been destroyed.");

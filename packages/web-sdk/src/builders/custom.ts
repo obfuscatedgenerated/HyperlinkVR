@@ -49,7 +49,7 @@ export class CustomObjectBuilder extends BaseBuilder<CustomObjectInput> {
             }
             const clash = (this._internal.interactions ?? []).some(
                 (candidate) =>
-                    "reporting" in candidate && candidate.reporting?.name === name
+                    "binding" in candidate && candidate.binding?.name === name
             );
             if (clash) {
                 throw new Error(
@@ -58,7 +58,7 @@ export class CustomObjectBuilder extends BaseBuilder<CustomObjectInput> {
             }
             interaction = {
                 ...maybe_interaction,
-                reporting: {name}
+                binding: {name}
             } as Interaction;
         } else {
             interaction = name_or_interaction;
@@ -85,6 +85,7 @@ export class CustomObjectBuilder extends BaseBuilder<CustomObjectInput> {
     }
 
     build(): CustomObject {
+        // TODO: error if trying to bind a non-bindable rather than silently dropping
         return CustomObjectSchema.parse(this._internal);
     }
 }

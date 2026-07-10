@@ -81,8 +81,11 @@ export const FlatHandsPublisher = () => {
     );
 
     useEffect(() => {
-        set_hands([active_hand, passive_hand]);
-        return () => set_hands([]);
+        set_hands(prev => [...prev, active_hand, passive_hand]);
+
+        return () => {
+            set_hands(prev => prev.filter(h => h !== active_hand && h !== passive_hand));
+        };
     }, [active_hand, passive_hand, set_hands]);
 
     const scratch = useMemo(

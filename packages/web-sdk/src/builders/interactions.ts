@@ -16,6 +16,30 @@ import {
     TriggerVolumeInteractionInput,
     TriggerVolumeInteractionSchema
 } from "@hyperlinkvr/vr-engine-schemas";
+import {send_via_rtc} from "../messenger";
+
+const interaction_command = async (object_id: string, interaction_id: string, command: string, args?: any) => {
+    try {
+        const res = await send_via_rtc({
+            action: "HVRSDK_INTERACTION_COMMAND",
+            object_id,
+            interaction_id,
+            command,
+            args
+        });
+
+        if ("response" in res) {
+            return res.response;
+        } else {
+            return undefined;
+        }
+    } catch (err) {
+        console.error("Error sending interaction command:", err);
+        throw err;
+    }
+}
+
+export type InteractionMakeAPIFunc = (object_id: string, interaction_id: string) => any;
 
 export class GrabbableInteractionBuilder extends BaseBuilder<GrabbableInteractionInput> {
     constructor() {
@@ -71,6 +95,9 @@ export class GrabbableInteractionBuilder extends BaseBuilder<GrabbableInteractio
     build(): GrabbableInteraction {
         return GrabbableInteractionSchema.parse(this._internal);
     }
+
+
+    // TODO: set enabled/disabled, api to change that, api to eject
 }
 
 export class ControllerButtonInteractionBuilder extends BaseBuilder<ControllerButtonInteractionInput> {
@@ -164,6 +191,15 @@ export class FollowPlayerInteractionBuilder extends BaseBuilder<FollowPlayerInte
     build(): FollowPlayerInteractionInput {
         return FollowPlayerInteractionSchema.parse(this._internal);
     }
+
+
+    static _make_api(object_id: string, interaction_id: string) {
+        return {
+            set_enabled: async (enabled: boolean) => {
+                return await interaction_command(object_id, interaction_id, "set_enabled", {enabled});
+            }
+        }
+    }
 }
 
 export class PositionalAudioInteractionBuilder extends BaseBuilder<PositionalAudioInteractionInput> {
@@ -196,10 +232,32 @@ export class PositionalAudioInteractionBuilder extends BaseBuilder<PositionalAud
         return this;
     }
 
-    // TODO: a way to dispatch play and pause events
-
     build(): PositionalAudioInteraction {
         return PositionalAudioInteractionSchema.parse(this._internal);
+    }
+
+
+    static _make_api(object_id: string, interaction_id: string) {
+        return {
+            play: async () => {
+                return await interaction_command(object_id, interaction_id, "play");
+            },
+            pause: async () => {
+                return await interaction_command(object_id, interaction_id, "pause");
+            },
+            stop: async () => {
+                return await interaction_command(object_id, interaction_id, "stop");
+            },
+            set_loop: async (loop: boolean) => {
+                return await interaction_command(object_id, interaction_id, "set_loop", {loop});
+            },
+            set_max_distance: async (max_distance: number) => {
+                return await interaction_command(object_id, interaction_id, "set_max_distance", {max_distance});
+            },
+            set_offset: async (offset: [number, number, number]) => {
+                return await interaction_command(object_id, interaction_id, "set_offset", {offset});
+            }
+        }
     }
 }
 
@@ -231,4 +289,31 @@ export class GlobalAudioInteractionBuilder extends BaseBuilder<GlobalAudioIntera
     build(): GlobalAudioInteraction {
         return GlobalAudioInteractionSchema.parse(this._internal);
     }
+
+
+    static _make_api(object_id: string, interaction_id: string) {
+        return {
+            play: async () => {
+                return await interaction_command(object_id, interaction_id, "play");
+            },
+            pause: async () => {
+                return await interaction_command(object_id, interaction_id, "pause");
+            },
+            stop: async () => {
+                return await interaction_command(object_id, interaction_id, "stop");
+            },
+            set_volume: async (volume: number) => {
+                return await interaction_command(object_id, interaction_id, "set_volume", {volume});
+            },
+            set_loop: async (loop: boolean) => {
+                return await interaction_command(object_id, interaction_id, "set_loop", {loop});
+            }
+        }
+    }
 }
+
+export const INTERACTION_API_MAKERS = {
+    "follow-player": FollowPlayerInteractionBuilder._make_api,
+    "positional-audio": PositionalAudioInteractionBuilder._make_api,
+    "global-audio": GlobalAudioInteractionBuilder._make_api
+} as Record<string, InteractionMakeAPIFunc>;

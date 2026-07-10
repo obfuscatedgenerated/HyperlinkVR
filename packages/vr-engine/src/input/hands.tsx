@@ -1,6 +1,6 @@
 import { useFrame } from "@react-three/fiber";
 import { PointerCursorModel, PointerRayModel, useRayPointer } from "@react-three/xr";
-import { createContext, useContext, useState, type ReactNode, type RefObject } from "react";
+import {createContext, useContext, useState, type ReactNode, type RefObject, Dispatch, SetStateAction} from "react";
 import type { Object3D } from "three";
 
 export interface ButtonState {
@@ -35,7 +35,7 @@ export interface Hand {
 }
 
 const HandsContext = createContext<Hand[] | null>(null);
-const SetHandsContext = createContext<((hands: Hand[]) => void) | null>(null);
+const SetHandsContext = createContext<Dispatch<SetStateAction<Hand[]>> | null>(null);
 
 export const HandsProvider = ({ children }: { children: ReactNode }) => {
     const [hands, set_hands] = useState<Hand[]>([]);

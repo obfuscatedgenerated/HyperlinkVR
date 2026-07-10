@@ -112,6 +112,14 @@ interface WebSDKRefreshEngineObjectAction extends BaseWebSDKActionMessage {
     object_id: string;
 }
 
+interface WebSDKInteractionCommandAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_INTERACTION_COMMAND";
+    object_id: string;
+    interaction_id: string;
+    command: string;
+    args?: any;
+}
+
 interface WebSDKMetaAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_META";
     content: "supported" | "defer" | "disable";
@@ -128,6 +136,7 @@ export type WebSDKActionMessage =
     | WebSDKDestroyEngineObjectAction
     | WebSDKModifyEngineObjectAction
     | WebSDKRefreshEngineObjectAction
+    | WebSDKInteractionCommandAction
     | WebSDKMetaAction;
 
 export type ActionMessage =
@@ -218,6 +227,13 @@ interface WebSDKObjectRefreshReplyMessage extends BaseWebSDKReplyMessage {
     object: CreatedEngineObject;
 }
 
+interface WebSDKInteractionCommandReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_INTERACTION_COMMAND";
+    object_id: string;
+    interaction_id: string;
+    response?: any;
+}
+
 export type WebSDKReplyMessage =
     WebSDKAuthQueryReplyMessage
     | WebSDKAuthWhoAmIReplyMessage
@@ -225,7 +241,8 @@ export type WebSDKReplyMessage =
     | WebSDKObjectCreatedReplyMessage
     | WebSDKObjectDestroyedReplyMessage
     | WebSDKObjectModifiedReplyMessage
-    | WebSDKObjectRefreshReplyMessage;
+    | WebSDKObjectRefreshReplyMessage
+    | WebSDKInteractionCommandReplyMessage;
 
 export type ReplyMessage =
     WebSDKReplyMessage;

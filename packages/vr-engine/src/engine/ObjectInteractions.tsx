@@ -8,12 +8,13 @@ import {useEffect, useMemo, useRef} from "react";
 
 import { useObjectRefs } from "../contexts/ObjectRefsContext";
 import { useAudioListener } from "../contexts/AudioListenerContext";
-import { useReportEmitter } from "../hooks/useReportEmitter";
+import { useInteractionBinding } from "../hooks/useInteractionBinding";
 import { Grabbable } from "../interaction";
 import { FollowPlayer } from "../interaction/FollowPlayer";
 import { resolve_body_part, TriggerVolume } from "../interaction/TriggerVolume";
 import {Audio, AudioLoader, Group} from "three";
 import {PositionalAudio} from "@react-three/drei";
+import type { PositionalAudio as PositionalAudioType } from "three";
 
 
 interface InteractionWrapperProps<I extends Interaction = Interaction> {
@@ -22,27 +23,28 @@ interface InteractionWrapperProps<I extends Interaction = Interaction> {
 }
 
 const GrabbableWrapper = ({interaction, children}: InteractionWrapperProps<GrabbableInteraction>) => {
-    const emit = useReportEmitter(interaction.reporting);
+    const {emit_report} = useInteractionBinding(interaction.binding);
 
     // TODO: add remaining props to grabbable
     // TODO: should we pass through the root ref? or let the wrapper impls manage their own?
+    // TODO: handle grab offset
     return (
         <Grabbable
             collider={interaction.collider}
             grab_distance={interaction.grab_distance}
             on_grab_start={
                 interaction.report_grabs
-                    ? (hand) => emit({ kind: "grab", payload: { type: "grab", handedness: hand.handedness } })
+                    ? (hand) => emit_report({ kind: "grab", payload: { type: "grab", handedness: hand.handedness } })
                     : undefined
             }
             on_grab_end={
                 interaction.report_releases
-                    ? (hand) => emit({ kind: "grab", payload: { type: "release", handedness: hand?.handedness ?? "right" } })
+                    ? (hand) => emit_report({ kind: "grab", payload: { type: "release", handedness: hand?.handedness ?? "right" } })
                     : undefined
             }
             on_nearby_start={
                 interaction.report_proximity
-                    ? (hand) => emit({ kind: "grab", payload: { type: "proximity", handedness: hand.handedness } })
+                    ? (hand) => emit_report({ kind: "grab", payload: { type: "proximity", handedness: hand.handedness } })
                     : undefined
             }
         >
@@ -52,7 +54,7 @@ const GrabbableWrapper = ({interaction, children}: InteractionWrapperProps<Grabb
 }
 
 const TriggerVolumeWrapper = ({interaction, children}: InteractionWrapperProps<TriggerVolumeInteraction>) => {
-    const emit = useReportEmitter(interaction.reporting);
+    const {emit_report} = useInteractionBinding(interaction.binding);
     const anchor_ref = useRef<Group>(null);
 
     return (
@@ -65,7 +67,7 @@ const TriggerVolumeWrapper = ({interaction, children}: InteractionWrapperProps<T
                     ? (payload) => {
                         const part = resolve_body_part(payload);
                         if (!part) return;
-                        emit({ kind: "trigger-volume", payload: { type: "enter", part } })
+                        emit_report({ kind: "trigger-volume", payload: { type: "enter", part } })
                     }
                     : undefined
                 }
@@ -73,7 +75,7 @@ const TriggerVolumeWrapper = ({interaction, children}: InteractionWrapperProps<T
                     ? (payload) => {
                         const part = resolve_body_part(payload);
                         if (!part) return;
-                        emit({ kind: "trigger-volume", payload: { type: "exit", part } })
+                        emit_report({ kind: "trigger-volume", payload: { type: "exit", part } })
                     }
                     : undefined
                 }
@@ -92,9 +94,52 @@ const FollowPlayerWrapper = ({interaction, children}: InteractionWrapperProps<Fo
 }
 
 const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps<PositionalAudioInteraction>) => {
+    const {on_command} = useInteractionBinding(interaction.binding);
+    const audio_ref = useRef<PositionalAudioType>(null);
+
+    useEffect(() => {
+        const handle_command = async (command: string, args?: any) => {
+            const audio = audio_ref.current;
+            if (!audio) {
+                return {success: false, error: "Audio not ready"};
+            }
+
+            switch (command) {
+                case "play":
+                    audio.play();
+                    break;
+                case "pause":
+                    audio.pause();
+                    break;
+                case "stop":
+                    audio.stop();
+                    break;
+                case "set_loop":
+                    interaction.loop = args.loop;
+                    break;
+                case "set_max_distance":
+                    interaction.max_distance = args.max_distance;
+                    break;
+                case "set_offset":
+                    interaction.offset = args.offset;
+                    break;
+                default:
+                    return {success: false, error: `Unknown command ${command}`};
+            }
+
+            return {success: true};
+        }
+
+        const unlisten = on_command(handle_command);
+        return () => {
+            unlisten();
+        }
+    }, [on_command, interaction]);
+
     return (
         <>
             <PositionalAudio
+                ref={audio_ref}
                 url={interaction.url}
                 loop={interaction.loop}
                 autoplay={interaction.autoplay}
@@ -107,11 +152,13 @@ const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps
 }
 
 const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<GlobalAudioInteraction>) => {
+    const {on_command} = useInteractionBinding(interaction.binding);
+
     const audio_listener = useAudioListener();
+    const audio = useMemo(() => new Audio(audio_listener), [audio_listener]);
 
     // TODO: split into per dep effects
     useEffect(() => {
-        const audio = new Audio(audio_listener);
         const loader = new AudioLoader();
         loader.load(interaction.url, (buffer) => {
             audio.setBuffer(buffer);
@@ -126,7 +173,38 @@ const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<Glo
             audio.stop();
             audio.disconnect();
         };
-    }, [audio_listener, interaction.url, interaction.loop, interaction.autoplay, interaction.volume]);
+    }, [interaction.url, interaction.loop, interaction.autoplay, interaction.volume]);
+
+    useEffect(() => {
+        const handle_command = async (command: string, args?: any) => {
+            switch (command) {
+                case "play":
+                    audio.play();
+                    break;
+                case "pause":
+                    audio.pause();
+                    break;
+                case "stop":
+                    audio.stop();
+                    break;
+                case "set_loop":
+                    interaction.loop = args.loop;
+                    break;
+                case "set_volume":
+                    interaction.volume = args.volume;
+                    break;
+                default:
+                    return {success: false, error: `Unknown command ${command}`};
+            }
+
+            return {success: true};
+        }
+
+        const unlisten = on_command(handle_command);
+        return () => {
+            unlisten();
+        }
+    }, [on_command, interaction]);
 
     return children;
 }
@@ -140,6 +218,7 @@ const INTERACTION_MAP: Record<Interaction["type"], React.ComponentType<Interacti
     "global-audio": GlobalAudioWrapper
 } as const;
 
+// first is outermost, last is innermost
 // follow player must be the parent to grabbable, others dont matter
 // TODO: should we enforce only 1 of each interaction type per object? maybe allow multiple controller buttons and trigger volumes tho
 const WRAPPER_STRICT_ORDER: Interaction["type"][] = [
@@ -157,7 +236,9 @@ export const ObjectInteractions = ({interactions, children}: {interactions: Inte
     const sorted_interactions = useMemo(() => [...interactions].sort((a, b) => {
         const a_index = WRAPPER_STRICT_ORDER.indexOf(a.type);
         const b_index = WRAPPER_STRICT_ORDER.indexOf(b.type);
-        return a_index - b_index;
+
+        // reverse order
+        return b_index - a_index;
     }), [interactions]);
 
     let wrapped_children = children;

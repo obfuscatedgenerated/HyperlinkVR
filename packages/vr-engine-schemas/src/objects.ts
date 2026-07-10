@@ -1,12 +1,14 @@
 import { z } from "zod";
 
-export const ReportConfigSchema = z.object({
+export const BindingConfigSchema = z.object({
     id: z.string().optional(),   // routing id, minted at dispatch
     name: z.string().optional()  // author label, used to bind callbacks
 });
-export type ReportConfig = z.infer<typeof ReportConfigSchema>;
-const reportable = <T extends z.ZodRawShape>(shape: T) =>
-    z.object({ ...shape, reporting: ReportConfigSchema.optional() });
+export type BindingConfig = z.infer<typeof BindingConfigSchema>;
+const bindable = <T extends z.ZodRawShape>(shape: T) =>
+    z.object({ ...shape, binding: BindingConfigSchema.optional() });
+
+export type Bindable<T extends z.ZodRawShape = any> = z.infer<ReturnType<typeof bindable<T>>> & {binding?: BindingConfig};
 
 // TODO: collider offsets. and is collider combo possible?
 
@@ -183,7 +185,7 @@ export const GrabColliderSchema = z.discriminatedUnion("type", [
 export type GrabCollider = z.infer<typeof GrabColliderSchema>;
 
 
-export const GrabbableInteractionSchema = reportable({
+export const GrabbableInteractionSchema = bindable({
     type: z.literal("grabbable"),
     collider: GrabColliderSchema.default({ type: "auto-bounding-box" }),
     grab_distance: z.number().positive().optional(),
@@ -207,7 +209,7 @@ export type ControllerButtonWhenListen = z.infer<
     typeof ControllerButtonWhenListenSchema
 >;
 
-export const ControllerButtonInteractionSchema = reportable({
+export const ControllerButtonInteractionSchema = bindable({
     type: z.literal("controller-button"),
     button: z.string(),
     report_press: z.boolean().default(true),
@@ -221,7 +223,7 @@ export type ControllerButtonInteractionInput = z.input<
     typeof ControllerButtonInteractionSchema
 >;
 
-export const TriggerVolumeInteractionSchema = reportable({
+export const TriggerVolumeInteractionSchema = bindable({
     type: z.literal("trigger-volume"),
     collider: ColliderSchema,
     report_enter: z.boolean().default(true),
@@ -245,7 +247,7 @@ export const FollowPlayerInteractionSchema = z.object({
 export type FollowPlayerInteraction = z.infer<typeof FollowPlayerInteractionSchema>;
 export type FollowPlayerInteractionInput = z.input<typeof FollowPlayerInteractionSchema>;
 
-export const PositionalAudioInteractionSchema = z.object({
+export const PositionalAudioInteractionSchema = bindable({
     type: z.literal("positional-audio"),
     url: z.url({
         protocol: /^https?$/,
@@ -259,7 +261,7 @@ export const PositionalAudioInteractionSchema = z.object({
 export type PositionalAudioInteraction = z.infer<typeof PositionalAudioInteractionSchema>;
 export type PositionalAudioInteractionInput = z.input<typeof PositionalAudioInteractionSchema>
 
-export const GlobalAudioInteractionSchema = z.object({
+export const GlobalAudioInteractionSchema = bindable({
     type: z.literal("global-audio"),
     url: z.url({
         protocol: /^https?$/,
@@ -322,7 +324,7 @@ export type CustomObjectInput = z.input<typeof CustomObjectSchema>;
 export const HexNumericalColorSchema = z.number().int().min(0).max(0xffffff);
 export type HexNumericalColor = z.infer<typeof HexNumericalColorSchema>;
 
-export const ButtonPrefabSchema = reportable({
+export const ButtonPrefabSchema = bindable({
     type: z.literal("prefab"),
     name: z.literal("button"),
     label: z.string(),
@@ -358,7 +360,7 @@ export const AxisRangeSchema = z.union([
 ]);
 export type AxisRange = z.infer<typeof AxisRangeSchema>;
 
-export const AxesBasedMonitorSchema = reportable({
+export const AxesBasedMonitorSchema = bindable({
     type: z.enum(["position", "rotation", "linear-velocity", "angular-velocity"]),
     when: z.enum(["any", "all", "xor"]).default("all"),
     x: AxisRangeSchema.optional(),

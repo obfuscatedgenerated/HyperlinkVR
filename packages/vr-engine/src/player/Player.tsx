@@ -118,5 +118,3 @@ export const Player = ({ ref = null }: { ref?: React.Ref<Group> }) => {
         </group>
     );
 };
-
-// TODO: apply gravity
