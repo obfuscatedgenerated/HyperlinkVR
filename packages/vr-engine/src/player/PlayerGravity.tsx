@@ -1,6 +1,6 @@
 import { useFrame, useThree } from "@react-three/fiber";
-import { useRapier } from "@react-three/rapier";
-import {RefObject, useMemo, useRef} from "react";
+import {RapierCollider, useRapier} from "@react-three/rapier";
+import {RefObject, useCallback, useMemo, useRef} from "react";
 import { Vector3 } from "three";
 import {usePlayerOrigin} from "../contexts";
 import {useSetting} from "@hyperlinkvr/react";
@@ -21,10 +21,15 @@ const VRJumpButton = ({jump_pressed_ref}: {jump_pressed_ref: RefObject<boolean>}
 
     const state = useXRInputSourceState("controller", jump_hand);
 
-    if (state?.gamepad) {
+    useFrame(() => {
+        if (!state) {
+            jump_pressed_ref.current = false;
+            return;
+        }
+
         const jump_pressed = state.gamepad["a-button"]?.state === "pressed";
         jump_pressed_ref.current = jump_pressed;
-    }
+    });
 
     return null;
 }
@@ -44,7 +49,7 @@ const FlatJumpButton = ({jump_pressed_ref}: {jump_pressed_ref: RefObject<boolean
 export const PlayerGravity = () => {
     const origin_ref = usePlayerOrigin();
 
-    const { world, rapier } = useRapier();
+    const { world, rapier, rigidBodyStates } = useRapier();
     const { camera } = useThree();
     const velocity_y = useRef(0);
 
@@ -52,6 +57,24 @@ export const PlayerGravity = () => {
     const ray_direction = useRef(new Vector3(0, -1, 0));
 
     const jump_pressed_ref = useRef(false);
+
+    const should_hit_environment = useCallback(
+        (collider: RapierCollider): boolean => {
+            const body = collider.parent();
+            if (!body) return true;
+
+            const name = rigidBodyStates.get(body.handle)?.object.name ?? "";
+
+            const is_player_part =
+                name.startsWith("avatar_head_rb") ||
+                name.startsWith("avatar_torso_rb") ||
+                name.startsWith("avatar_hand_rb");
+
+            return !is_player_part;
+        },
+        [rigidBodyStates]
+    );
+
 
     useFrame((_, delta) => {
         if (!origin_ref.current) return;
@@ -67,7 +90,16 @@ export const PlayerGravity = () => {
 
         const ray = new rapier.Ray(ray_origin.current, ray_direction.current);
 
-        const hit = world.castRay(ray, 10.0, true);
+        const hit = world.castRay(
+            ray,
+            10.0,
+            true,
+            undefined, // filterFlags
+            undefined, // filterGroups
+            undefined, // filterExcludeCollider
+            undefined, // filterExcludeRigidBody
+            should_hit_environment
+        );
 
         if (hit && hit.timeOfImpact <= RAY_START_HEIGHT) {
             if (jump_pressed_ref.current) {
