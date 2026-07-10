@@ -86,6 +86,27 @@ const TriggerVolumeWrapper = ({interaction, children}: InteractionWrapperProps<T
 }
 
 const FollowPlayerWrapper = ({interaction, children}: InteractionWrapperProps<FollowPlayerInteraction>) => {
+    const {on_command} = useInteractionBinding(interaction.binding);
+
+    useEffect(() => {
+        const handle_command = async (command: string, args?: any) => {
+            switch (command) {
+                case "set_enabled":
+                    interaction.enabled = args.enabled;
+                    break;
+                default:
+                    return {success: false, error: `Unknown command ${command}`};
+            }
+
+            return {success: true};
+        }
+
+        const unlisten = on_command(handle_command);
+        return () => {
+            unlisten();
+        }
+    }, [on_command, interaction]);
+
     return (
         <FollowPlayer enabled={interaction.enabled} snap_on_release={interaction.snap_on_release}>
             {children}

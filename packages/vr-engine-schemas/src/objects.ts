@@ -239,7 +239,7 @@ export type TriggerVolumeInteractionInput = z.input<
     typeof TriggerVolumeInteractionSchema
 >;
 
-export const FollowPlayerInteractionSchema = z.object({
+export const FollowPlayerInteractionSchema = bindable({
     type: z.literal("follow-player"),
     enabled: z.boolean().default(true),
     snap_on_release: z.boolean().default(false) // if true, disabling follow will make the object obey its position coordinates rather than freezing in place. likely irrelevant for most implementations

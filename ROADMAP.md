@@ -18,15 +18,16 @@
 - [ ] Option for SDK rigid body to forbid teleport onto
 - [ ] Light prefabs: point, spot, directional
 - [x] Positional audio interaction/prefab (with option for 2D audio for consistency even though they could do it via their own DOM if they wished)
-- [ ] A way to control playback. Perhaps interactions need to be able to expose a custom API on the SDK ret_val
+- [x] A way to control playback. Perhaps interactions need to be able to expose a custom API on the SDK ret_val
   - [x] Implement interaction command message and API binding
-  - [ ] Actually handle the created commands in engine
+  - [x] Actually handle the created commands in engine
 - [ ] Camera interaction/prefab: activating one moves the player POV there (race games etc, altho those could use a forced sit interaction instead added later. figure out what difference there could be)
 - [ ] Implement ControllerButtonInteraction
 - [ ] Expand ControllerButtonInteraction to also read flat input, and axes like movement. Provide option to use consolidated input, or to use raw input per control scheme to customise it
 - [ ] Billboard positioning interaction
-- [ ] Prefab for links between worlds (a door? a portal? a big link logo? or as an interaction to allow customisation? perhaps both with some prefabbed links)
 - [ ] Implement monitors in engine
+- [ ] Ensure all interaction properties implemented
+- [ ] Prefab for links between worlds (a door? a portal? a big link logo? or as an interaction to allow customisation? perhaps both with some prefabbed links)
 - [ ] Anchored option on kinematic-pos rigid body builder
 - [ ] Decide if/how to deal with duplicate interactions
 - [ ] Environment props via SDK (sky, fog, maybe even gravity!)

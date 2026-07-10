@@ -48,6 +48,10 @@ export const useInteractionBinding = (binding: BindingConfig | undefined) => {
     }, []);
 
     useEffect(() => {
+        if (!source_id) {
+            return;
+        }
+
         const unlisten = on_action("HVRSDK_INTERACTION_COMMAND", async (data, reply) => {
             if (data.object_id !== object_id || data.interaction_id !== source_id) {
                 return;
