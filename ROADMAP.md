@@ -63,6 +63,8 @@
 - [ ] Sit interaction (player initiated or forced) and chair prefabs
 - [ ] SDK audio effects (for all audio, or for specific audio sources)
 - [ ] SDK visual effects (b&w, sepia, bloom, anything else possible within vr context, beware react-three/postprocessing limitations with xr! might have to resort to vignette layer shaders)
+- [ ] Show spectator cam preview in settings or on third party cam
+- [ ] Sandbox mode that allows spawning object a la Maker Pen, maybe with a way to serialise to builders/built objects
 
 ### Phase 4
 - [ ] Internal docstrings across engine + SDK, then public-facing SDK docs
@@ -87,7 +89,7 @@
 - [ ] Replace `SmartSlider` workaround once pmndrs/uikit#247 is fixed
 - [ ] Some form of formal test suite :P
 - [ ] Tab hopping
-- [ ] World editor tool that generates builders
+- [ ] World editor tool that generates builders. Might not be awfully necessary if the sandbox mode is good enough
 - [ ] Ability to customise the default space for non-immersive pages
 - [ ] "3DOM" builder that allows websites to half dip into immersive by being able to make existing DOM elements pop out (or try to do it automatically based on Z-index?!)
 - [ ] World discovery (crawling? explicit lists? via world links but then how is that declared in advance? needs research)
