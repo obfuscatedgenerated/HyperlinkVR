@@ -1,8 +1,48 @@
 import {createContext, useContext} from "react";
-import type {WorldEnv, WorldEnvDeepRequired, WorldEnvFull, WorldEnvRequired} from "@hyperlinkvr/vr-engine-schemas";
+import type {WorldEnvFull} from "@hyperlinkvr/vr-engine-schemas";
 import {useWebSDKMessaging} from "../contexts";
 
-export const DEFAULT_WORLD_ENV: WorldEnvFull = {
+export const WORLD_ENV_DEFAULT: WorldEnvFull = {
+    sky: {
+        sky_zenith_color: 0x1e5b9f,
+        sky_horizon_color: 0x6a9ac7,
+
+        ground_horizon_color: 0x42302a,
+        ground_nadir_color: 0x241714,
+
+        sun_direction: [0.5, 0.8, 0.3],
+        sun_color: 0xfcecc5,
+        sun_intensity: 1.0,
+
+        sun_size: 2.0,
+        sun_glow: 8,
+
+        horizon_sharpness: 1,
+        horizon_band: 0.1,
+
+        cast_light: true,
+        light_intensity: 0.9,
+        light_distance: 100,
+
+        sky_light_intensity: 0.5,
+
+        ambient_override_color: undefined,
+        ambient_override_intensity: 0.3,
+    },
+
+    fog: {
+        color: 0x6a9ac7,
+        near: 20,
+        far: 150,
+    },
+
+    physics: {
+        gravity: -9.81,
+    }
+}
+
+// TODO: use this sky when the world is the plain dom
+export const WORLD_ENV_GRAYSPACE: WorldEnvFull = {
     sky: {
         sky_zenith_color: 0x111111,
         sky_horizon_color: 0x222222,
@@ -41,7 +81,7 @@ export const DEFAULT_WORLD_ENV: WorldEnvFull = {
     }
 };
 
-const WorldEnvironmentContext = createContext<WorldEnvFull>(DEFAULT_WORLD_ENV);
+const WorldEnvironmentContext = createContext<WorldEnvFull>(WORLD_ENV_DEFAULT);
 
 export const FixedWorldEnvironmentProvider = WorldEnvironmentContext.Provider;
 
