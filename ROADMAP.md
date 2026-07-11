@@ -87,6 +87,7 @@
 - [ ] Show spectator cam preview in settings or on third party cam
 - [ ] Sandbox mode that allows spawning object a la Maker Pen, maybe with a way to serialise to builders/built objects
 - [ ] A way for SDK to grab frame delta? Probably not possible though with RTC overhead. Good reason to have paths though, and maybe some stable timing system too
+- [ ] Backpack API for storing arbitrary data that can be shared across worlds perhaps
 
 ### Phase 4
 - [ ] Internal docstrings across engine + SDK, then public-facing SDK docs
@@ -97,6 +98,8 @@
 - [ ] Create other official worlds and games (i.e. our version of the Rec Center, some games that show off features, etc)
 - [ ] Free hand movement on flat with keypress
 - [ ] Flat gestures
+- [ ] Use of backpack API to add custom clothing/cross world items? Would probably do it by approving creators on a baked in list of public keys (but obvs needs vetting and may not be the best idea)
+- [ ] Improve error resillience with more error boundaries (can isolate errors per object and per the scene contents as a whole to make sure the user can still navigate out with the watch UI)
 - [ ] SDK can set time scale changes (if possible)
 - [ ] Implement raw input via debugger perm in sidecar extension for least privilege (if not, then disable the option for now)
 - [ ] Single-node P2P multiplayer, making sure to define the discovery and transport interfaces abstractly so the later relay idea is a drop-in swap
