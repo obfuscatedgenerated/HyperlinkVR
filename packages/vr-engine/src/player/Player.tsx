@@ -1,4 +1,4 @@
-import { useSetting } from "@hyperlinkvr/react";
+import {useMessageEngine, useSetting, useTabSession} from "@hyperlinkvr/react";
 import { Text } from "@react-three/drei";
 import { XROrigin } from "@react-three/xr";
 import {useEffect, useImperativeHandle, useRef} from "react";
@@ -90,6 +90,9 @@ export const Player = ({ ref = null }: { ref?: React.Ref<Group> }) => {
     const session_mode = useSessionMode();
 
     const {on_action} = useWebSDKMessaging();
+    const messenger = useMessageEngine();
+    const {id: tab_id} = useTabSession();
+
     useEffect(() => {
         // TODO: these ignore target username on the message and assume its for us, nothing to do rn but just remember this is the case when multiplayer happens
 
@@ -140,6 +143,38 @@ export const Player = ({ ref = null }: { ref?: React.Ref<Group> }) => {
                 for: "HVRSDK_PLAYER_TELEPORT_TO",
                 new_position: [new_pos.x, new_pos.y, new_pos.z],
                 new_yaw
+            });
+        });
+
+        const unlisten_send_to_world = on_action("HVRSDK_PLAYER_SEND_TO_WORLD", (message, reply) => {
+            // verify url
+            try {
+                new URL(message.url);
+            } catch (e) {
+                reply({
+                    for: "HVRSDK_PLAYER_SEND_TO_WORLD",
+                    error: `Invalid URL: ${message.url}`
+                });
+                return;
+            }
+
+            // TODO: implement prompt, for now will always send
+            // prompt behaviours: show = always show a prompt, try_skip = try to skip the prompt if possible (same origin/trust check to implement), but otherwise show it, skip_or_fail = skip the prompt if possible, but if it cannot be skipped then auto-fail
+
+            // ask the background to send them there
+            messenger.send({
+                action: "HVR_NAVIGATE",
+                url: message.url,
+                tab: tab_id
+            }).then(() => reply({
+                // chance they might never get this, but it's not their problem at that point, the new page will load
+                for: "HVRSDK_PLAYER_SEND_TO_WORLD",
+                going: true
+            })).catch((err) => {
+                reply({
+                    for: "HVRSDK_PLAYER_SEND_TO_WORLD",
+                    error: err.message || "Failed to send player to world"
+                });
             });
         });
 

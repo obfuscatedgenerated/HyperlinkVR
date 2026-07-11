@@ -359,6 +359,22 @@ export default defineBackground(() => {
             });
 
             dropped = false;
+        } else if (msg.action === "HVR_NAVIGATE") {
+            if (!msg.url || !msg.tab) {
+                console.error("No url or tab specified for HVR_NAVIGATE");
+                return;
+            }
+
+            chrome.tabs.update(msg.tab, { url: msg.url });
+
+            // TODO: why isnt ingame tab session url updating?
+            chrome.runtime.sendMessage({
+                type: "HVR_URL_UPDATE",
+                tab: msg.tab,
+                url: msg.url
+            });
+
+            dropped = false;
         }
 
         // TODO: subscription based routing

@@ -65,6 +65,12 @@ interface CreateWindowAction extends BaseActionMessage {
     height?: number;
 }
 
+interface NavigateAction extends BaseActionMessage {
+    action: "HVR_NAVIGATE";
+    url: string;
+    tab: number; // TODO sbr
+}
+
 interface WebSDKAuthQueryAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_AUTH_QUERY";
     identity: Identity;
@@ -137,6 +143,13 @@ interface WebSDKPlayerTeleportToAction extends BaseWebSDKActionMessage {
     yaw?: number;
 }
 
+interface WebSDKPlayerSendToWorldAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_PLAYER_SEND_TO_WORLD";
+    target_username: string | null;
+    url: string;
+    prompt: "show" | "try_skip" | "skip_or_fail";
+}
+
 export type WebSDKActionMessage =
     WebSDKAuthQueryAction
     | WebSDKAuthWhoAmIAction
@@ -150,6 +163,7 @@ export type WebSDKActionMessage =
     | WebSDKInteractionCommandAction
     | WebSDKPlayerGetPositionAction
     | WebSDKPlayerTeleportToAction
+    | WebSDKPlayerSendToWorldAction
     | WebSDKMetaAction;
 
 export type ActionMessage =
@@ -259,6 +273,11 @@ interface WebSDKPlayerTeleportToReplyMessage extends BaseWebSDKReplyMessage {
     new_yaw: number;
 }
 
+interface WebSDKPlayerSendToWorldReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_PLAYER_SEND_TO_WORLD";
+    going: boolean;
+}
+
 export type WebSDKReplyMessage =
     WebSDKAuthQueryReplyMessage
     | WebSDKAuthWhoAmIReplyMessage
@@ -269,6 +288,7 @@ export type WebSDKReplyMessage =
     | WebSDKObjectRefreshReplyMessage
     | WebSDKInteractionCommandReplyMessage
     | WebSDKPlayerGetPositionReplyMessage
+    | WebSDKPlayerSendToWorldReplyMessage
     | WebSDKPlayerTeleportToReplyMessage;
 
 export type ReplyMessage =

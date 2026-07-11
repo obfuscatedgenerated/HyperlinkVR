@@ -55,7 +55,8 @@
   - [ ] force spectator camera mode/pos
   - [ ] force avatar expression
   - [ ] player monitors (e.g. position, expression, velocity, etc)
-  - [ ] offer to send the player to a different world (could allow skipping prompt on same origin?)
+  - [x] send player to another world
+  - [ ] show prompt to confirm going to another world (could allow skipping prompt on same origin)
 - [ ] Change if flat and teleport allowed via meta
 - [ ] Prefab for links that use player sending (a door? a portal? a big link logo?). If clearly displays text then could bypass prompt
 - [ ] Way for SDK to add HUD layer stuff (could reuse vignette layer)
@@ -85,6 +86,7 @@
 - [ ] SDK visual effects (b&w, sepia, bloom, anything else possible within vr context, beware react-three/postprocessing limitations with xr! might have to resort to vignette layer shaders)
 - [ ] Show spectator cam preview in settings or on third party cam
 - [ ] Sandbox mode that allows spawning object a la Maker Pen, maybe with a way to serialise to builders/built objects
+- [ ] A way for SDK to grab frame delta? Probably not possible though with RTC overhead. Good reason to have paths though, and maybe some stable timing system too
 
 ### Phase 4
 - [ ] Internal docstrings across engine + SDK, then public-facing SDK docs
@@ -115,3 +117,4 @@
 - [ ] "3DOM" builder that allows websites to half dip into immersive by being able to make existing DOM elements pop out (or try to do it automatically based on Z-index?!)
 - [ ] World discovery (crawling? explicit lists? via world links but then how is that declared in advance? needs research)
 - [ ] Sidecar extension for OSC via native messaging? Or ASIO audio input? I suppose depends how and what is implemented in multiplayer first. Not at all necessary
+- [ ] More cosmetic types (gloves, hats, shades, glasses, wheelchairs, etc)
