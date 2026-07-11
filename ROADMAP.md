@@ -40,6 +40,8 @@
 - [ ] Anchored option on kinematic-pos rigid body builder
 - [ ] Decide if/how to deal with duplicate interactions
 - [ ] Environment props via SDK (sky, fog, maybe even gravity and rain!)
+- [ ] Watch UI backstack and standardised screen layout
+- [ ] Detached watch mode
 - [ ] Expression input
 - [ ] Player stuff via SDK
   - [x] read player position
@@ -54,14 +56,22 @@
   - [ ] force avatar items
   - [ ] force spectator camera mode/pos
   - [ ] force avatar expression
-  - [ ] player monitors (e.g. position, expression, velocity, etc)
+  - [ ] player monitors (e.g. position, expression, velocity, fall of x height/velocity for fall damage, etc)
   - [x] send player to another world
   - [ ] show prompt to confirm going to another world (could allow skipping prompt on same origin)
+  - [ ] storing user_data on player for custom tag
 - [ ] Change if flat and teleport allowed via meta
+- [ ] Disable hand colliders for grabbed objects
+- [ ] Grabbable option for hand positioning or hiding (guns, gauntlets, gloves, etc)
+- [ ] Scene/collection dispatch
 - [ ] Prefab for links that use player sending (a door? a portal? a big link logo?). If clearly displays text then could bypass prompt
 - [ ] Way for SDK to add HUD layer stuff (could reuse vignette layer)
 - [ ] `wait_for_ready()` and `is_ready` on SDK as alternative to DOM event
 - [ ] Meta value to tell the engine to preload assets from URLs to make mesh and audio loading immediate when used (shows as loading)
+- [ ] Layers debugger devtool
+- [ ] Camera debugger devtool
+- [ ] Do we add first party health system? Or have them build it themself?
+- [ ] Reset scene state on world change (perhaps with loading screen if assets to be preloaded)
 
 ### Phase 3
 - [ ] VR keyboard for DOM and watch input
@@ -101,6 +111,8 @@
 - [ ] Use of backpack API to add custom clothing/cross world items? Would probably do it by approving creators on a baked in list of public keys (but obvs needs vetting and may not be the best idea)
 - [ ] Improve error resillience with more error boundaries (can isolate errors per object and per the scene contents as a whole to make sure the user can still navigate out with the watch UI)
 - [ ] SDK can set time scale changes (if possible)
+- [ ] externalcamera.cfg for MR camera position
+- [ ] Third person camera lockable to avoid accidental moving
 - [ ] Implement raw input via debugger perm in sidecar extension for least privilege (if not, then disable the option for now)
 - [ ] Single-node P2P multiplayer, making sure to define the discovery and transport interfaces abstractly so the later relay idea is a drop-in swap
 - [ ] If multiplayer has voice chat, extend audio effects to be able to abe applied to player voices too

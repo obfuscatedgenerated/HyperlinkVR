@@ -8,6 +8,7 @@ import "./SchemaForm.css";
 
 import { ControlledSelect } from "./ControlledSelect";
 
+// TODO: autoform has been patched, might be able to switch back off controlledselect to default
 export const SchemaForm = ({
     schema,
     title = "Schema Form",
