@@ -36,7 +36,7 @@ const EndButtons = ({ current, change_screen }: { current: ScreenName | null, ch
 
     return (
         current === "home" && (
-            <Button onPointerDown={() => change_screen("settings")} opacity={opacity}>
+            <Button variant="link" color="white" onPointerDown={() => change_screen("settings")} opacity={opacity}>
                 <Settings />
             </Button>
         )
@@ -58,7 +58,7 @@ const CurrentScreen = () => {
         <Container width="100%" maxWidth="100%" height="100%" flexDirection="column" padding={16} gap={12}>
             <Header nav_state={state} end_buttons={<EndButtons current={current} change_screen={change_screen} />} />
 
-            <Crossfader content_key={current || "none"}>
+            <Crossfader content_key={current || "none"} width="100%" flexGrow={1} height="100%">
                 <Container width="100%" maxWidth="100%" flexDirection="column" gap={16} overflow="hidden">
                     <ScreenContent />
                 </Container>

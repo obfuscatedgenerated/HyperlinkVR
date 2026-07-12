@@ -9,13 +9,15 @@ interface HeaderProps {
     end_buttons?: React.ReactNode;
 }
 
-const BackButton = ({back, show}: {back: () => void, show: boolean}) => {
+const BackButton = ({nav_state}: {nav_state: ReturnType<typeof useNavState>}) => {
     const opacity = useCrossfadeOpacity();
 
+    const {backwards, back, name_to_title} = nav_state;
     return (
-        show && (
-            <Button onPointerDown={back} opacity={opacity}>
+        backwards.length !== 0 && (
+            <Button variant="link" color="white" onPointerDown={back} opacity={opacity} gap={16}>
                 <ArrowLeft />
+                <Text color={0xdddddd} fontSize={16}>{name_to_title(backwards[backwards.length - 1])}</Text>
             </Button>
         )
     );
@@ -26,21 +28,21 @@ export const Header = ({nav_state, end_buttons = null}: HeaderProps) => {
         return null;
     }
 
-    const {current, backwards, back, name_to_title} = nav_state;
+    const {current, backwards, name_to_title} = nav_state;
 
     return (
-        <Container height="10%" width="100%" flexDirection="row" alignItems="center" justifyContent="space-between" gap={16}>
-            <Crossfader content_key={backwards.length} width="10%" height="100%" alignItems="center" justifyContent="flex-start">
-                <BackButton back={back} show={backwards.length !== 0} />
+        <Container height="10%" width="100%" flexDirection="row" alignItems="center" justifyContent="space-between">
+            <Crossfader content_key={backwards.length} width="25%" height="100%" alignItems="center" justifyContent="flex-start">
+                <BackButton nav_state={nav_state} />
             </Crossfader>
 
-            <Crossfader content_key={current || "none"}>
+            <Crossfader content_key={current || "none"} width="50%" height="100%" alignItems="center" justifyContent="center">
                 <Text color="white" fontSize={32} fontWeight="bold">
                     {name_to_title(current)}
                 </Text>
             </Crossfader>
 
-            <Crossfader content_key={current || "none"} width="10%" height="100%" flexShrink={0} alignItems="center" justifyContent="flex-end">
+            <Crossfader content_key={current || "none"} width="25%" height="100%" flexShrink={0} alignItems="center" justifyContent="flex-end">
                 {end_buttons}
             </Crossfader>
         </Container>
