@@ -5,7 +5,7 @@ export const screen_names = ["home", "settings"] as const;
 export type ScreenName = (typeof screen_names)[number];
 
 export interface ScreenProps {
-    change_screen: (screen_name: ScreenName) => void;
+
 }
 
 export const screens: Record<ScreenName, React.ComponentType<ScreenProps>> = {

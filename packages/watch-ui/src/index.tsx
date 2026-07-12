@@ -6,6 +6,7 @@ import { configureTextBuilder } from "troika-three-text";
 
 
 import { ScreenName, screens } from "./screens";
+import {NavStateProvider, useNavState} from "./contexts/NavStateContext";
 
 
 // its not happy! turn off web workers
@@ -26,10 +27,22 @@ class DoubleSidedSolidPanel extends MeshBasicMaterial {
     }
 }
 
-export const WatchUI = () => {
-    const [screen, setScreen] = useState<ScreenName>("home");
-    const ScreenComponent = useMemo(() => screens[screen], [screen]);
+const CurrentScreen = () => {
+    const {current} = useNavState();
+    const ScreenComponent = useMemo(() => {
+        if (!current) return () => null;
+        const screen = screens[current];
+        if (!screen) return () => null;
+        return screen;
+    }, [current]);
 
+    // TODO: transition
+    return (
+        <ScreenComponent />
+    );
+}
+
+export const WatchUI = () => {
     return (
         <Container
             width={WATCH_UI_WIDTH}
@@ -48,7 +61,9 @@ export const WatchUI = () => {
             onPointerMove={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
         >
-            <ScreenComponent change_screen={setScreen} />
+            <NavStateProvider>
+                <CurrentScreen />
+            </NavStateProvider>
         </Container>
     );
 };

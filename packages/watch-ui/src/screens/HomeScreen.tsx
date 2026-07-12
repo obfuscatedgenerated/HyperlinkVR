@@ -5,13 +5,16 @@ import { useStorage, useTabSession } from "@hyperlinkvr/react";
 import type { ScreenProps } from "./index";
 import { Settings, Star } from "@react-three/uikit-lucide";
 import { useMemo } from "react";
+import {Header} from "../layout/Header";
+import {useNavState} from "../contexts/NavStateContext";
 
 const star_filled_url = new URL("../assets/lucide_star_filled.svg", import.meta.url).href;
 const StarFilled = () => (
     <Svg src={star_filled_url} width={24} height={24}  />
 );
 
-export const HomeScreen = ({change_screen}: ScreenProps) => {
+export const HomeScreen = ({}: ScreenProps) => {
+    const { change_screen } = useNavState();
     const session = useTabSession();
 
     const [favourite_worlds, setFavouriteWorlds] = useStorage("sync", "favourite_worlds", [] as string[]);
@@ -30,15 +33,11 @@ export const HomeScreen = ({change_screen}: ScreenProps) => {
             padding={24}
             flexDirection="column"
         >
-            <Container flexDirection="row" alignItems="center" justifyContent="space-between" gap={16} marginBottom={24}>
-                <Text color="white" fontSize={32} fontWeight="bold">
-                    Home
-                </Text>
-
+            <Header end_buttons={(
                 <Button onPointerDown={() => change_screen("settings")}>
                     <Settings />
                 </Button>
-            </Container>
+            )} />
 
             <Container flexDirection="row" alignItems="center" gap={8} marginBottom={16} backgroundColor="#ffffff" padding={12} borderRadius={6}>
                 <Text fontWeight="bold">Current world:</Text>

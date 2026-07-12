@@ -4,8 +4,7 @@ import { useMemo, useState } from "react";
 import type { SettingsTree, SettingKey } from "@hyperlinkvr/types";
 import { WatchSettingWidget } from "../settings/WatchSettingWidget";
 import { ScreenProps } from "./index";
-import { Button } from "@react-three/uikit-default";
-import { ArrowLeft } from "@react-three/uikit-lucide";
+import {Header} from "../layout/Header";
 
 const SettingSubtree = ({
     index,
@@ -92,7 +91,7 @@ const TabButton = ({ label, active, on_click }: { label: string; active: boolean
     );
 };
 
-export const SettingsScreen = ({change_screen}: ScreenProps) => {
+export const SettingsScreen = ({}: ScreenProps) => {
     const tree = useSettingsTree("watch");
 
     const [tab, setTab] = useState("General");
@@ -104,15 +103,7 @@ export const SettingsScreen = ({change_screen}: ScreenProps) => {
             padding={24}
             flexDirection="column"
         >
-            <Container flexDirection="row" alignItems="center" gap={16} marginBottom={24}>
-                <Button onPointerDown={() => change_screen("home")}>
-                    <ArrowLeft />
-                </Button>
-
-                <Text color="white" fontSize={32} fontWeight="bold">
-                    Settings
-                </Text>
-            </Container>
+            <Header />
 
             <Container flexDirection="row" gap={8}>
                 {Object.keys(tree.subtrees).map(subtab => (
