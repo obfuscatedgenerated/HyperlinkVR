@@ -1,11 +1,6 @@
 import { createContext, useContext, useLayoutEffect, useRef, useState } from "react";
 import { useThree } from "@react-three/fiber";
 import { Container, type ContainerProperties } from "@react-three/uikit";
-
-/** The opacity of the layer you are currently inside. 1 when not fading.
- *  uikit's `opacity` only multiplies into descendants that don't set their own — uikit-default's
- *  Button sets its background/border opacity explicitly and so ignores the parent. Anything like
- *  that has to read this and apply it by hand (see FadeButton). */
 const CrossfadeOpacityContext = createContext(1);
 
 export const useCrossfadeOpacity = () => useContext(CrossfadeOpacityContext);
@@ -15,13 +10,14 @@ interface FadeLayer {
     node: React.ReactNode;
 }
 
-interface CrossfaderProps extends Omit<ContainerProperties, "children"> {
+interface CrossfaderProps extends Omit<ContainerProperties, "children" | "fill"> {
     content_key: React.Key;
     children: React.ReactNode;
     duration?: number;
+    fill?: boolean;
 }
 
-export const Crossfader = ({ content_key, children, duration = 300, ...container_props }: CrossfaderProps) => {
+export const Crossfader = ({ content_key, children, fill, duration = 300, ...container_props }: CrossfaderProps) => {
     const {
         flexDirection,
         alignItems,
@@ -51,7 +47,7 @@ export const Crossfader = ({ content_key, children, duration = 300, ...container
         paddingRight,
     };
 
-    const has_definite_box = root_props.width != null && root_props.height != null;
+    const should_fill = fill ?? (root_props.width != null && root_props.height != null);
 
     const [fade, setFade] = useState<{ key: React.Key; previous: FadeLayer | null }>({
         key: content_key,
@@ -108,9 +104,13 @@ export const Crossfader = ({ content_key, children, duration = 300, ...container
         };
     }, [previous_key, duration, invalidate]);
 
-    const ghost_box = has_definite_box
+    const live_box = should_fill ? { width: "100%" as const, height: "100%" as const } : {};
+
+    const ghost_box = should_fill
         ? { positionTop: 0, positionLeft: 0, positionRight: 0, positionBottom: 0 }
         : { positionTop: 0, positionLeft: 0 };
+
+    const ghost_opacity = 1 - progress;
 
     return (
         <Container positionType="relative" {...root_props}>
@@ -119,6 +119,7 @@ export const Crossfader = ({ content_key, children, duration = 300, ...container
                     key={content_key}
                     opacity={progress}
                     flexGrow={1}
+                    {...live_box}
                     {...layer_layout}
                 >
                     {children}
@@ -126,10 +127,10 @@ export const Crossfader = ({ content_key, children, duration = 300, ...container
             </CrossfadeOpacityContext.Provider>
 
             {fade.previous != null && (
-                <CrossfadeOpacityContext.Provider value={1 - progress}>
+                <CrossfadeOpacityContext.Provider value={ghost_opacity}>
                     <Container
                         key={fade.previous.key}
-                        opacity={1 - progress}
+                        opacity={ghost_opacity}
                         positionType="absolute"
                         pointerEvents="none"
                         {...ghost_box}

@@ -98,12 +98,8 @@ export const SettingsScreen = ({}: ScreenProps) => {
     const [tab, setTab] = useState("General");
 
     return (
-        <Container
-            width="100%"
-            height="100%"
-            flexDirection="column"
-        >
-            <Container flexDirection="row" gap={8}>
+        <Container width="100%" flexDirection="column">
+            <Container flexDirection="row" gap={8} flexShrink={0}>
                 {Object.keys(tree.subtrees).map(subtab => (
                     <Crossfader content_key={tab} key={subtab} duration={150}>
                         <TabButton
@@ -116,13 +112,14 @@ export const SettingsScreen = ({}: ScreenProps) => {
             </Container>
 
             <Container
+                width="100%"
                 backgroundColor="rgba(0, 0, 0, 0.2)"
                 padding={16}
                 borderBottomRadius={6}
                 borderWidth={1}
                 borderColor="rgba(255, 255, 255, 0.2)"
             >
-                <Crossfader content_key={tab} duration={150}>
+                <Crossfader content_key={tab} duration={150} width="100%" maxHeight="100%" overflow="scroll">
                     {tree.subtrees[tab] && (
                         <SettingSubtree index={tab} tree={tree} is_root />
                     )}

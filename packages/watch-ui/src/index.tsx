@@ -55,14 +55,24 @@ const CurrentScreen = () => {
     }, [current]);
 
     return (
-        <Container width="100%" maxWidth="100%" height="100%" flexDirection="column" padding={16} gap={12}>
+        <Container width="100%" maxWidth="100%" height="100%" flexDirection="column" gap={12}>
             <Header nav_state={state} end_buttons={<EndButtons current={current} change_screen={change_screen} />} />
 
-            <Crossfader content_key={current || "none"} width="100%" flexGrow={1} height="100%">
-                <Container width="100%" maxWidth="100%" flexDirection="column" gap={16} overflow="hidden">
-                    <ScreenContent />
-                </Container>
-            </Crossfader>
+            <Container
+                width="100%"
+                flexGrow={1}
+                minHeight={0}
+                overflow="scroll"
+                scrollbarWidth={6}
+                scrollbarColor="rgba(255, 255, 255, 0.35)"
+                scrollbarBorderRadius={3}
+            >
+                <Crossfader content_key={current || "none"} width="100%" flexShrink={0}>
+                    <Container width="100%" maxWidth="100%" flexDirection="column" gap={16}>
+                        <ScreenContent />
+                    </Container>
+                </Crossfader>
+            </Container>
         </Container>
     );
 }
@@ -77,6 +87,7 @@ export const WatchUI = () => {
             justifyContent="center"
             backgroundColor="#547299"
             opacity={0.85}
+            padding={16}
             borderRadius={16}
             panelMaterialClass={DoubleSidedSolidPanel}
 
