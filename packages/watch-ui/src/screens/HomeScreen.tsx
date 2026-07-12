@@ -7,6 +7,7 @@ import { Settings, Star } from "@react-three/uikit-lucide";
 import { useMemo } from "react";
 import {Header} from "../layout/Header";
 import {useNavState} from "../contexts/NavStateContext";
+import {Crossfader} from "../animation/Crossfader";
 
 const star_filled_url = new URL("../assets/lucide_star_filled.svg", import.meta.url).href;
 const StarFilled = () => (
@@ -14,7 +15,6 @@ const StarFilled = () => (
 );
 
 export const HomeScreen = ({}: ScreenProps) => {
-    const { change_screen } = useNavState();
     const session = useTabSession();
 
     const [favourite_worlds, setFavouriteWorlds] = useStorage("sync", "favourite_worlds", [] as string[]);
@@ -27,19 +27,8 @@ export const HomeScreen = ({}: ScreenProps) => {
     const [recent_worlds] = useStorage("local", "recent_worlds", [] as string[]);
 
     return (
-        <Container
-            width="100%"
-            height="100%"
-            padding={24}
-            flexDirection="column"
-        >
-            <Header end_buttons={(
-                <Button onPointerDown={() => change_screen("settings")}>
-                    <Settings />
-                </Button>
-            )} />
-
-            <Container flexDirection="row" alignItems="center" gap={8} marginBottom={16} backgroundColor="#ffffff" padding={12} borderRadius={6}>
+        <>
+            <Container width="100%" flexDirection="row" alignItems="center" gap={8} marginBottom={16} backgroundColor="#ffffff" padding={12} borderRadius={6}>
                 <Text fontWeight="bold">Current world:</Text>
                 <Text>{session.url}</Text>
 
@@ -54,7 +43,7 @@ export const HomeScreen = ({}: ScreenProps) => {
                     {is_world_favourite ? <StarFilled /> : <Star />}
                 </Button>
             </Container>
-        </Container>
+        </>
     );
 };
 
