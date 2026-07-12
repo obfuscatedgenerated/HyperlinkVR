@@ -40,7 +40,7 @@
 - [ ] Anchored option on kinematic-pos rigid body builder
 - [ ] Decide if/how to deal with duplicate interactions
 - [ ] Environment props via SDK (sky, fog, maybe even gravity and rain!)
-- [ ] Watch UI backstack and standardised screen layout
+- [x] Watch UI backstack and standardised screen layout
 - [ ] Detached watch mode
 - [ ] Expression input
 - [ ] Player stuff via SDK
