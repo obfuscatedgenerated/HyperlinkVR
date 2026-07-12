@@ -55,7 +55,7 @@ const CurrentScreen = () => {
     }, [current]);
 
     return (
-        <Container width="100%" maxWidth="100%" height="100%" flexDirection="column" padding={24} gap={16}>
+        <Container width="100%" maxWidth="100%" height="100%" flexDirection="column" padding={16} gap={12}>
             <Header nav_state={state} end_buttons={<EndButtons current={current} change_screen={change_screen} />} />
 
             <Crossfader content_key={current || "none"}>

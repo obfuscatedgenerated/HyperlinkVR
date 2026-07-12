@@ -5,6 +5,7 @@ import type { SettingsTree, SettingKey } from "@hyperlinkvr/types";
 import { WatchSettingWidget } from "../settings/WatchSettingWidget";
 import { ScreenProps } from "./index";
 import {Header} from "../layout/Header";
+import {Crossfader} from "../animation/Crossfader";
 
 const SettingSubtree = ({
     index,
@@ -100,19 +101,17 @@ export const SettingsScreen = ({}: ScreenProps) => {
         <Container
             width="100%"
             height="100%"
-            padding={24}
             flexDirection="column"
         >
-            <Header />
-
             <Container flexDirection="row" gap={8}>
                 {Object.keys(tree.subtrees).map(subtab => (
-                    <TabButton
-                        key={subtab}
-                        label={subtab}
-                        active={tab === subtab}
-                        on_click={() => setTab(subtab)}
-                    />
+                    <Crossfader content_key={tab} key={subtab} duration={150}>
+                        <TabButton
+                            label={subtab}
+                            active={tab === subtab}
+                            on_click={() => setTab(subtab)}
+                        />
+                    </Crossfader>
                 ))}
             </Container>
 
@@ -123,9 +122,11 @@ export const SettingsScreen = ({}: ScreenProps) => {
                 borderWidth={1}
                 borderColor="rgba(255, 255, 255, 0.2)"
             >
-                {tree.subtrees[tab] && (
-                    <SettingSubtree index={tab} tree={tree} is_root />
-                )}
+                <Crossfader content_key={tab} duration={150}>
+                    {tree.subtrees[tab] && (
+                        <SettingSubtree index={tab} tree={tree} is_root />
+                    )}
+                </Crossfader>
             </Container>
         </Container>
     );

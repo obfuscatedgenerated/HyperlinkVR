@@ -1,6 +1,7 @@
 import { ThreeEvent } from "@react-three/fiber";
 import { Container, Input, Text } from "@react-three/uikit";
 import { useEffect, useRef, useState } from "react";
+import {useCrossfadeOpacity} from "../animation/Crossfader";
 
 
 interface RawDraggableTrackProps {
@@ -19,15 +20,15 @@ interface RawDraggableTrackProps {
 // replace with uikit slider when fixed for maintainability
 
 const RawDraggableTrack = ({
-                               value,
-                               min,
-                               max,
-                               step,
-                               disabled = false,
-                               onValueChange,
-                               onDragStart,
-                               onDragEnd
-                           }: RawDraggableTrackProps) => {
+    value,
+    min,
+    max,
+    step,
+    disabled = false,
+    onValueChange,
+    onDragStart,
+    onDragEnd
+}: RawDraggableTrackProps) => {
     const is_dragging_ref = useRef(false);
 
     const handle_pointer_event = (e: ThreeEvent<PointerEvent>) => {
@@ -44,6 +45,8 @@ const RawDraggableTrack = ({
 
     const progress_pct = Math.max(0, Math.min(1, (value - min) / (max - min))) * 100;
 
+    const opacity = useCrossfadeOpacity();
+
     return (
         <Container
             width="100%"
@@ -51,6 +54,7 @@ const RawDraggableTrack = ({
             height={24}
             flexDirection="row"
             alignItems="center"
+            opacity={disabled ? opacity/2 : opacity}
         >
             <Container width="100%" height={4} backgroundColor="#475569" borderRadius={2} />
 
@@ -151,6 +155,8 @@ export const SmartSlider = ({
 
     const is_dragging_ref = useRef(false);
 
+    const opacity = useCrossfadeOpacity();
+
     useEffect(() => {
         if (!is_focused && !is_dragging_ref.current) {
             setInputStr(value.toFixed(precision_dp));
@@ -190,7 +196,7 @@ export const SmartSlider = ({
             width="100%"
             maxWidth={384}
             paddingY={8}
-            opacity={disabled ? 0.5 : 1}
+            opacity={disabled ? opacity/2 : opacity}
         >
             {label && (
                 <Text fontSize={12} flexWrap="no-wrap" marginRight={16} color="white">

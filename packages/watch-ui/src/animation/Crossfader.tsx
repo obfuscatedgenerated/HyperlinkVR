@@ -1,6 +1,14 @@
-import {createContext, useContext, useLayoutEffect, useRef, useState} from "react";
+import { createContext, useContext, useLayoutEffect, useRef, useState } from "react";
 import { useThree } from "@react-three/fiber";
 import { Container, type ContainerProperties } from "@react-three/uikit";
+
+/** The opacity of the layer you are currently inside. 1 when not fading.
+ *  uikit's `opacity` only multiplies into descendants that don't set their own — uikit-default's
+ *  Button sets its background/border opacity explicitly and so ignores the parent. Anything like
+ *  that has to read this and apply it by hand (see FadeButton). */
+const CrossfadeOpacityContext = createContext(1);
+
+export const useCrossfadeOpacity = () => useContext(CrossfadeOpacityContext);
 
 interface FadeLayer {
     key: React.Key;
@@ -13,11 +21,38 @@ interface CrossfaderProps extends Omit<ContainerProperties, "children"> {
     duration?: number;
 }
 
-const CrossfadeOpacityContext = createContext(1);
-
-export const useCrossfadeOpacity = () => useContext(CrossfadeOpacityContext);
-
 export const Crossfader = ({ content_key, children, duration = 300, ...container_props }: CrossfaderProps) => {
+    const {
+        flexDirection,
+        alignItems,
+        justifyContent,
+        gap,
+        padding,
+        paddingX,
+        paddingY,
+        paddingTop,
+        paddingBottom,
+        paddingLeft,
+        paddingRight,
+        ...root_props
+    } = container_props;
+
+    const layer_layout = {
+        flexDirection,
+        alignItems,
+        justifyContent,
+        gap,
+        padding,
+        paddingX,
+        paddingY,
+        paddingTop,
+        paddingBottom,
+        paddingLeft,
+        paddingRight,
+    };
+
+    const has_definite_box = root_props.width != null && root_props.height != null;
+
     const [fade, setFade] = useState<{ key: React.Key; previous: FadeLayer | null }>({
         key: content_key,
         previous: null,
@@ -73,10 +108,19 @@ export const Crossfader = ({ content_key, children, duration = 300, ...container
         };
     }, [previous_key, duration, invalidate]);
 
+    const ghost_box = has_definite_box
+        ? { positionTop: 0, positionLeft: 0, positionRight: 0, positionBottom: 0 }
+        : { positionTop: 0, positionLeft: 0 };
+
     return (
-        <Container positionType="relative" {...container_props}>
+        <Container positionType="relative" {...root_props}>
             <CrossfadeOpacityContext.Provider value={progress}>
-                <Container key={content_key} opacity={progress} flexGrow={1}>
+                <Container
+                    key={content_key}
+                    opacity={progress}
+                    flexGrow={1}
+                    {...layer_layout}
+                >
                     {children}
                 </Container>
             </CrossfadeOpacityContext.Provider>
@@ -87,9 +131,9 @@ export const Crossfader = ({ content_key, children, duration = 300, ...container
                         key={fade.previous.key}
                         opacity={1 - progress}
                         positionType="absolute"
-                        positionTop={0}
-                        positionLeft={0}
                         pointerEvents="none"
+                        {...ghost_box}
+                        {...layer_layout}
                     >
                         {fade.previous.node}
                     </Container>
@@ -98,3 +142,5 @@ export const Crossfader = ({ content_key, children, duration = 300, ...container
         </Container>
     );
 };
+
+// TODO: re-export uikit-default components except they respect useCrossfadeOpacity automatically

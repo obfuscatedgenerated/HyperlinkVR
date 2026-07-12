@@ -1,6 +1,7 @@
 import { Container, Text } from "@react-three/uikit";
 import { ChevronDown, ChevronUp } from "@react-three/uikit-lucide";
 import { useState } from "react";
+import {useCrossfadeOpacity} from "../animation/Crossfader";
 
 export interface Option {
     label: string;
@@ -26,6 +27,8 @@ export const Dropdown = ({
 
     const active_option = options.find((opt) => opt.value === value) || options[0];
 
+    const opacity = useCrossfadeOpacity();
+
     return (
         <Container
             flexDirection="row"
@@ -34,7 +37,7 @@ export const Dropdown = ({
             width="100%"
             maxWidth={384}
             paddingY={8}
-            opacity={disabled ? 0.5 : 1}>
+            opacity={disabled ? opacity/2 : opacity}>
 
             {label && (
                 <Text fontSize={12} flexWrap="no-wrap" marginRight={16} color="white">

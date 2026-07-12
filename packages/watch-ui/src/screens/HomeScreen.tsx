@@ -7,7 +7,7 @@ import { Settings, Star } from "@react-three/uikit-lucide";
 import { useMemo } from "react";
 import {Header} from "../layout/Header";
 import {useNavState} from "../contexts/NavStateContext";
-import {Crossfader} from "../animation/Crossfader";
+import {Crossfader, useCrossfadeOpacity} from "../animation/Crossfader";
 
 const star_filled_url = new URL("../assets/lucide_star_filled.svg", import.meta.url).href;
 const StarFilled = () => (
@@ -26,13 +26,15 @@ export const HomeScreen = ({}: ScreenProps) => {
 
     const [recent_worlds] = useStorage("local", "recent_worlds", [] as string[]);
 
+    const opacity = useCrossfadeOpacity();
+
     return (
         <>
             <Container width="100%" flexDirection="row" alignItems="center" gap={8} marginBottom={16} backgroundColor="#ffffff" padding={12} borderRadius={6}>
                 <Text fontWeight="bold">Current world:</Text>
                 <Text>{session.url}</Text>
 
-                <Button variant="link" color="black" marginLeft="auto" onPointerDown={() => {
+                <Button opacity={opacity} variant="link" color="black" marginLeft="auto" onPointerDown={() => {
                     if (!session.url) return;
                     if (is_world_favourite) {
                         setFavouriteWorlds(favourite_worlds.filter(url => url !== session.url));
