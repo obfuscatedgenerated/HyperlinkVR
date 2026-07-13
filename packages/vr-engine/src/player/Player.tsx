@@ -83,7 +83,7 @@ const ExpressionTest = () => {
     );
 };
 
-export const Player = ({ ref = null }: { ref?: React.Ref<Group> }) => {
+export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>; can_move?: boolean }) => {
     const origin_ref = useRef<Group>(null);
     useImperativeHandle(ref, () => origin_ref.current!);
 
@@ -181,6 +181,7 @@ export const Player = ({ ref = null }: { ref?: React.Ref<Group> }) => {
         return () => {
             unlisten_get_pos();
             unlisten_teleport_to();
+            unlisten_send_to_world();
         }
     }, []);
 
@@ -199,7 +200,7 @@ export const Player = ({ ref = null }: { ref?: React.Ref<Group> }) => {
                             <XRHandsPublisher />
                             <ExpressionTest />
                         </XROrigin>
-                        <XRLocomotion origin={origin_ref} />
+                        {can_move && <XRLocomotion origin={origin_ref} />}
                     </>
                 ) : (
                     <>
@@ -208,7 +209,7 @@ export const Player = ({ ref = null }: { ref?: React.Ref<Group> }) => {
                             <FlatCameraRig origin={origin_ref} />
                             <ExpressionTest />
                         </group>
-                        <FlatLocomotion origin={origin_ref} />
+                        {can_move && <FlatLocomotion origin={origin_ref} />}
                     </>
                 )}
             </PlayerExpressionProvider>

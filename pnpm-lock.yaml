@@ -393,6 +393,9 @@ importers:
       '@hyperlinkvr/types':
         specifier: workspace:*
         version: link:../types
+      '@hyperlinkvr/ui-dom':
+        specifier: workspace:*
+        version: link:../ui-dom
       '@hyperlinkvr/vr-engine-schemas':
         specifier: workspace:*
         version: link:../vr-engine-schemas

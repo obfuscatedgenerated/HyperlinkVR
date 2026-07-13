@@ -41,8 +41,8 @@ import {
     WORLD_ENV_GRAYSPACE
 } from "../world/WorldEnvironmentContext";
 import {useEngineObjectStore} from "../stores/EngineObjectStore";
-import {WebSDKActionMessage} from "@hyperlinkvr/types";
-
+import {useLoadingStore} from "../stores/LoadingStore";
+import {FlatLoadingScreen, VRLoadingScreen} from "./LoadingScreen";
 
 configureTextBuilder({
     useWorker: false
@@ -206,6 +206,7 @@ const SceneContents = ({
 
     useEffect(() => {
         const unlisten_loading_finished = on_action("HVRSDK_LOADING_FINISHED", () => {
+            console.log("World signalled ready");
             setWorldReady(true);
         });
 
@@ -230,6 +231,12 @@ const SceneContents = ({
         };
     }, [show_loader, setWorldEnv]);
 
+    const set_loading = useLoadingStore((store) => store.set_loading);
+
+    useEffect(() => {
+        set_loading(show_loader);
+    }, [show_loader, set_loading]);
+
     return (
         <>
             <FloorCollider />
@@ -239,7 +246,7 @@ const SceneContents = ({
             />
             <fog attach="fog" args={[fog.color, fog.near, fog.far]} />
 
-            <Player ref={internal_ref} />
+            <Player can_move={!show_loader} ref={internal_ref} />
 
             {show_default_world && (
                 <>
@@ -259,13 +266,7 @@ const SceneContents = ({
 
             {spawning_enabled && <EngineObjectSpawner />}
 
-            {show_loader && (
-                // TODO: actual loader
-                <mesh>
-                    <boxGeometry args={[0.5, 0.5, 0.5]} />
-                    <meshBasicMaterial color="orange" />
-                </mesh>
-            )}
+            {show_loader && <VRLoadingScreen />}
 
             <TweenRunner />
 
@@ -324,6 +325,7 @@ const EngineHostInternal = memo(
         );
 
         const player_ref = useRef<Group>(null);
+        const loading = useLoadingStore((store) => store.loading);
 
         return (
             <SessionModeProvider value={mode}>
@@ -337,6 +339,8 @@ const EngineHostInternal = memo(
                         >
                             {mode === "vr" && <LogoOverlay />}
                             {mode === "flat" && <Crosshair />}
+
+                            {loading && <FlatLoadingScreen />}
 
                             <AvatarProvider>
                                 <PlayerOriginProvider value={player_ref}>

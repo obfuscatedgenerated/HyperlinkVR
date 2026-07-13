@@ -26,6 +26,7 @@
         "@hyperlinkvr/types": "workspace:*",
         "@hyperlinkvr/vr-engine-schemas": "workspace:*",
         "@hyperlinkvr/watch-ui": "workspace:*",
+        "@hyperlinkvr/ui-dom": "workspace:*",
         "@hyperlinkvr/web-sdk-handlers": "workspace:*",
         "@react-three/drei": "catalog:",
         "@react-three/fiber": "catalog:",

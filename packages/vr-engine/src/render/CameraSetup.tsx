@@ -4,22 +4,31 @@ import {useEffect} from "react";
 import {compute_layer_mask, Layer} from "./layers";
 import {get_united_head_camera} from "../util/get_head_cameras";
 import {useAudioListener} from "../contexts/AudioListenerContext";
+import {useLoadingStore} from "../stores/LoadingStore";
 
 
-const layer_mask = compute_layer_mask([
+const world_layer_mask = compute_layer_mask([
     Layer.Default,
     Layer.PlayerModel_TorsoAndHands,
     Layer.ThirdPerson_ForceHide,
     Layer.Vignette
 ]);
 
+// while loading, the world isnt rendered, only the loader
+const loader_layer_mask = compute_layer_mask([
+    Layer.Loader
+]);
+
 export const CameraSetup = () => {
     const { gl, camera } = useThree();
     const listener = useAudioListener();
+    const loading = useLoadingStore((store) => store.loading);
 
     useEffect(() => {
         const head_camera = get_united_head_camera(gl, camera);
         head_camera.add(listener);
+
+        const layer_mask = loading ? loader_layer_mask : world_layer_mask;
 
         const set_layers = () => {
             head_camera.layers.mask = layer_mask;
@@ -34,7 +43,7 @@ export const CameraSetup = () => {
             gl.xr.removeEventListener("sessionstart", set_layers);
             head_camera.remove(listener);
         };
-    }, [gl, layer_mask, listener]);
+    }, [gl, camera, listener, loading]);
 
     return null;
 }
