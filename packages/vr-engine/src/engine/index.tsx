@@ -153,7 +153,7 @@ const SceneContents = ({
     const internal_ref = useRef<Group>(null);
     useImperativeHandle(player_ref, () => internal_ref.current!);
 
-    const {url, meta} = useTabSession();
+    const {url, meta, meta_generation} = useTabSession();
     const setRecentWorlds = useStorage("local", "recent_worlds", [] as string[])[1];
 
     useEffect(() => {
@@ -180,6 +180,20 @@ const SceneContents = ({
     const show_default_world = resolved_meta !== "supported";
     const spawning_enabled = resolved_meta !== "disable";
     const show_loader = resolved_meta === "supported" && !world_ready;
+
+    // reset world env and player position/rotation on new document load
+    useEffect(() => {
+        if (meta_generation === 0) {
+            return;
+        }
+
+        setWorldEnv(meta === "supported" ? WORLD_ENV_DEFAULT : WORLD_ENV_GRAYSPACE);
+
+        if (internal_ref.current) {
+            internal_ref.current.position.set(0, 0, 0);
+            internal_ref.current.rotation.set(0, 0, 0);
+        }
+    }, [meta_generation, meta, setWorldEnv]);
 
     useEffect(() => {
         if (!show_loader) {
@@ -281,6 +295,7 @@ const WorldSessionListener = () => {
 
         console.log("New document, meta:", meta);
 
+        // reset world
         clear_all_objects();
         reset_for_new_document();
     }, [meta_generation, meta, clear_all_objects, reset_for_new_document]);
