@@ -74,7 +74,7 @@ export const facilitate_rtc = async () => {
         if (event.candidate) {
             send_via_messaging({
                 action: "HVRSDK_RTC_ICE_CANDIDATE",
-                candidate: event.candidate
+                candidate: event.candidate.toJSON()
             });
         }
     };

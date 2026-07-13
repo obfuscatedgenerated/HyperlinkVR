@@ -163,7 +163,8 @@ export default defineBackground(() => {
         color: "#fff"
     });
 
-    // only notify if the meta is ready and the vr host has a ready port
+    // only notify if the meta is ready and the vr host has a ready port (and not sent already)
+    const tabs_ready_notified = new Set<number>();
     const try_notify_ready = (tab_id: number) => {
         const host_ready =
             !!active_session &&
@@ -173,6 +174,12 @@ export default defineBackground(() => {
         if (!host_ready || !tab_meta.has(tab_id)) {
             return;
         }
+
+        if (tabs_ready_notified.has(tab_id)) {
+            return;
+        }
+
+        tabs_ready_notified.add(tab_id);
 
         console.log("Notifying content script that HyperlinkVR is ready for tab", tab_id, tab_meta.get(tab_id));
         chrome.tabs.sendMessage(tab_id, { type: "HVRSDK_READY" }).catch(() => {});

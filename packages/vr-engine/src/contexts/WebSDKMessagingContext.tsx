@@ -90,7 +90,7 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
                             target: "cs",
                             tab: id,
                             action: "HVRSDK_RTC_ICE_CANDIDATE",
-                            candidate: event.candidate
+                            candidate: event.candidate.toJSON()
                         });
                     }
                 };
