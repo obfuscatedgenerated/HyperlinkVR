@@ -8,12 +8,10 @@ import {useXRInputSourceState} from "@react-three/xr";
 import {useFlatFrameInput} from "../input/impl/flat/bindings";
 import {useSessionMode} from "../contexts/SessionModeContext";
 import {JUMP_SPEED} from "../input/values";
+import {useWorldEnvironment} from "../world/WorldEnvironmentContext";
 
 // 0.5 meters (roughly knee height) ensures we don't start the raycast inside the floor
 const RAY_START_HEIGHT = 0.5;
-
-// TODO: sync gravity with rapier gravity for if we allow it to change later (either shared hook or reading from rapier)
-const GRAVITY = -9.81;
 
 const VRJumpButton = ({jump_pressed_ref}: {jump_pressed_ref: RefObject<boolean>}) => {
     const [locomotion_hand] = useSetting("vr_locomotion_hand");
@@ -58,6 +56,8 @@ export const PlayerGravity = () => {
 
     const jump_pressed_ref = useRef(false);
 
+    const world_env = useWorldEnvironment();
+
     const should_hit_environment = useCallback(
         (collider: RapierCollider): boolean => {
             const body = collider.parent();
@@ -79,7 +79,7 @@ export const PlayerGravity = () => {
     useFrame((_, delta) => {
         if (!origin_ref.current) return;
 
-        velocity_y.current += GRAVITY * delta;
+        velocity_y.current += world_env.physics.gravity * delta;
 
         // cast from the players current head x/z, but from knee height y
         ray_origin.current.set(

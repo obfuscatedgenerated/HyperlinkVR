@@ -233,6 +233,8 @@ const EngineHostInternal = memo(
 
         const player_ref = useRef<Group>(null);
 
+        const world_env = useWorldEnvironment();
+
         return (
             <SessionModeProvider value={mode}>
                 <TabSessionProvider>
@@ -254,7 +256,7 @@ const EngineHostInternal = memo(
                                     >
                                         <AudioListenerProvider>
                                             <HandsProvider>
-                                                <Physics interpolate gravity={[0, -9.81, 0]} debug={show_colliders}>
+                                                <Physics interpolate gravity={[0, world_env.physics.gravity, 0]} debug={show_colliders}>
                                                     <CameraSetup />
                                                     <CanvasResizer
                                                         containerRef={canvas_container_ref}
