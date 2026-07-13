@@ -6,7 +6,7 @@ export * as auth from "./auth";
 export * as builders from "./builders";
 export * as players from "./players";
 
-import { bind_rtc_event, facilitate_rtc} from "./messenger";
+import {bind_rtc_event, facilitate_rtc, send_via_rtc} from "./messenger";
 
 export const connect = async () => {
     await facilitate_rtc();
@@ -29,6 +29,12 @@ export const bind_messages = () => {
             writable: false,
             configurable: false,
         });
+    });
+}
+
+export const finished_loading = () => {
+    send_via_rtc({
+        action: "HVRSDK_LOADING_FINISHED"
     });
 }
 

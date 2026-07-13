@@ -62,6 +62,27 @@ export default defineBackground(() => {
     // only one vr host is allowed at a time to prvent sync issues
     let active_session: ActiveSession | null = null;
 
+    // hvr-tab-session ports per tab, so session state (url, dimensions, meta)
+    // can be pushed rather than broadcast. broadcasts never reach port listeners.
+    const tab_session_ports = new Map<number, Set<chrome.runtime.Port>>();
+
+    // last known meta per tab, replayed when a session port connects so a host
+    // launched after the page loaded still learns the page's declared mode
+    const tab_meta = new Map<number, string>();
+
+    const post_to_tab_sessions = (tab_id: number, message: unknown) => {
+        const ports = tab_session_ports.get(tab_id);
+        if (!ports) return;
+
+        for (const port of ports) {
+            try {
+                port.postMessage(message);
+            } catch {
+                // dead port, removed by its own onDisconnect
+            }
+        }
+    };
+
     const resolve_real_host_url = () => new URL(VR_HOST_URL, location.href).href;
     const REAL_HOST_URL = resolve_real_host_url();
 
@@ -143,7 +164,7 @@ export default defineBackground(() => {
     });
 
     // hvr-ready:<tab_id>: opened by the VR host's WebSDKMessagingProvider for the duration of its RTC session to signal it is ready to receive connections
-    // hvr-tab-session:<tab_id>: opened by TabSessionProvider on mount, so we can push the url and dimensions specifically when ready
+    // hvr-tab-session:<tab_id>: opened by TabSessionProvider on mount; session state (url, dimensions, meta) is pushed down these ports
     chrome.runtime.onConnect.addListener((port) => {
         const ready_match = port.name.match(/^hvr-ready:(\d+)$/);
         if (ready_match) {
@@ -169,6 +190,23 @@ export default defineBackground(() => {
         if (session_match) {
             const tab_id = parseInt(session_match[1], 10);
 
+            let ports = tab_session_ports.get(tab_id);
+            if (!ports) {
+                ports = new Set();
+                tab_session_ports.set(tab_id, ports);
+            }
+            ports.add(port);
+
+            port.onDisconnect.addListener(() => {
+                const current_ports = tab_session_ports.get(tab_id);
+                if (current_ports) {
+                    current_ports.delete(port);
+                    if (current_ports.size === 0) {
+                        tab_session_ports.delete(tab_id);
+                    }
+                }
+            });
+
             chrome.tabs.get(tab_id, (tab) => {
                 if (chrome.runtime.lastError || !tab) return;
 
@@ -184,6 +222,15 @@ export default defineBackground(() => {
                     width: tab.width,
                     height: tab.height
                 });
+
+                const cached_meta = tab_meta.get(tab_id);
+                if (cached_meta !== undefined) {
+                    port.postMessage({
+                        type: "HVR_META_UPDATE",
+                        tab: tab_id,
+                        content: cached_meta
+                    });
+                }
             });
             return;
         }
@@ -225,17 +272,32 @@ export default defineBackground(() => {
             if (msg.action === "HVRSDK_META") {
                 // TODO: should there be an option that calls openPopup to indicate only vr content exists, or is that obnoxious
 
-                if (msg.content === "disable") {
-                    chrome.action.setBadgeText({
-                        tabId: sender.tab.id,
-                    });
-                } else {
+                if (!sender.tab?.id) {
+                    dropped = false;
+                    return;
+                }
+
+                tab_meta.set(sender.tab.id, msg.content);
+
+                if (msg.content === "supported") {
                     chrome.action.setBadgeText({
                         tabId: sender.tab.id,
                         text: "✓"
                     });
+                } else {
+                    chrome.action.setBadgeText({
+                        tabId: sender.tab.id,
+                    });
                 }
+
+                post_to_tab_sessions(sender.tab.id, {
+                    type: "HVR_META_UPDATE",
+                    tab: sender.tab.id,
+                    content: msg.content
+                });
+
                 dropped = false;
+
                 return;
             }
 
@@ -299,14 +361,14 @@ export default defineBackground(() => {
                                 tab: tab.id
                             });
 
-                            chrome.runtime.sendMessage({
+                            post_to_tab_sessions(tab.id!, {
                                 type: "HVR_DIMENSIONS_UPDATE",
                                 tab: tab.id,
                                 width: tab.width,
                                 height: tab.height
                             });
 
-                            chrome.runtime.sendMessage({
+                            post_to_tab_sessions(tab.id!, {
                                 type: "HVR_URL_UPDATE",
                                 tab: tab.id,
                                 url: tab.url
@@ -365,14 +427,8 @@ export default defineBackground(() => {
                 return;
             }
 
+            // tabs.onUpdated fires with the new url and pushes it down the session port
             chrome.tabs.update(msg.tab, { url: msg.url });
-
-            // TODO: why isnt ingame tab session url updating?
-            chrome.runtime.sendMessage({
-                type: "HVR_URL_UPDATE",
-                tab: msg.tab,
-                url: msg.url
-            });
 
             dropped = false;
         }
@@ -404,7 +460,7 @@ export default defineBackground(() => {
         });
 
         if (tab && tab.id) {
-            chrome.runtime.sendMessage({
+            post_to_tab_sessions(tab.id, {
                 type: "HVR_DIMENSIONS_UPDATE",
                 tab: tab.id,
                 width: tab.width,
@@ -416,7 +472,7 @@ export default defineBackground(() => {
     // alert the vr host of changes in url
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         if (changeInfo.url) {
-            chrome.runtime.sendMessage({
+            post_to_tab_sessions(tabId, {
                 type: "HVR_URL_UPDATE",
                 tab: tabId,
                 url: changeInfo.url
@@ -426,10 +482,12 @@ export default defineBackground(() => {
 
     // alert the vr host of the session closing
     chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
-        chrome.runtime.sendMessage({
+        post_to_tab_sessions(tabId, {
             type: "HVR_TAB_CLOSED",
             tab: tabId
         });
+
+        tab_meta.delete(tabId);
 
         if (active_session?.tab_id === tabId) {
             active_session = null;

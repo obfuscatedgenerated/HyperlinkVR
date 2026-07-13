@@ -131,6 +131,10 @@ interface WebSDKMetaAction extends BaseWebSDKActionMessage {
     content: "supported" | "defer" | "disable";
 }
 
+interface WebSDKLoadingFinishedAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_LOADING_FINISHED";
+}
+
 interface WebSDKPlayerGetPositionAction extends BaseWebSDKActionMessage {
     action: "HVRSDK_PLAYER_GET_POSITION";
     target_username: string | null;
@@ -175,6 +179,7 @@ export type WebSDKActionMessage =
     | WebSDKPlayerTeleportToAction
     | WebSDKPlayerSendToWorldAction
     | WebSDKMetaAction
+    | WebSDKLoadingFinishedAction
     | WebSDKUpdateWorldEnvironmentAction
     | WebSDKResetWorldEnvironmentAction;
 
@@ -206,6 +211,12 @@ interface URLUpdateEvent extends BaseEventMessage {
     url: string;
 }
 
+interface MetaUpdateEvent extends BaseEventMessage {
+    type: "HVR_META_UPDATE";
+    tab: number; // TODO sbr
+    content: "supported" | "defer" | "disable";
+}
+
 interface TabClosedEvent extends BaseEventMessage { // TODO: rename to sessionclosed
     type: "HVR_TAB_CLOSED";
     tab: number; // TODO sbr
@@ -228,6 +239,7 @@ export type EventMessage =
     StreamEvent |
     DimensionsUpdateEvent |
     URLUpdateEvent |
+    MetaUpdateEvent |
     TabClosedEvent |
     WebSDKEventMessage;
 

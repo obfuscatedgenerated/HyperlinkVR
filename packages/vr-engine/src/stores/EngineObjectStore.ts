@@ -8,6 +8,8 @@ interface EngineObjectState {
     add_object: (obj: CreatedEngineObject) => void;
     remove_object: (id: string) => void;
     get_object: (id: string) => CreatedEngineObject | null;
+
+    clear_all_objects: () => void;
 }
 
 export const useEngineObjectStore = create<EngineObjectState>((set, get) => ({
@@ -31,5 +33,10 @@ export const useEngineObjectStore = create<EngineObjectState>((set, get) => ({
             return null;
         }
         return obj;
-    }
+    },
+
+    clear_all_objects: () =>
+        set(() => ({
+            objects: {}
+        }))
 }));

@@ -81,7 +81,15 @@ export const WORLD_ENV_GRAYSPACE: WorldEnvFull = {
     }
 };
 
-const WorldEnvironmentContext = createContext<WorldEnvFull>(WORLD_ENV_DEFAULT);
+interface WorldEnvironmentContextType {
+    world_env: WorldEnvFull;
+    setWorldEnv: (env: WorldEnvFull) => void;
+}
+
+const WorldEnvironmentContext = createContext<WorldEnvironmentContextType>({
+    world_env: WORLD_ENV_DEFAULT,
+    setWorldEnv: () => {throw new Error("WorldEnvironment cannot be changed")}
+});
 
 export const FixedWorldEnvironmentProvider = WorldEnvironmentContext.Provider;
 
@@ -143,7 +151,7 @@ export const SDKWorldEnvironmentProvider = ({children}: {children: React.ReactNo
     }, []);
 
     return (
-        <WorldEnvironmentContext.Provider value={world_env}>
+        <WorldEnvironmentContext.Provider value={{world_env, setWorldEnv}}>
             {children}
         </WorldEnvironmentContext.Provider>
     );

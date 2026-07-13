@@ -1,10 +1,10 @@
-import { TabSessionProvider, useSetting, useStorage, useTabSession } from "@hyperlinkvr/react";
+import {TabSessionProvider, useMessageEngine, useSetting, useStorage, useTabSession} from "@hyperlinkvr/react";
 import { Text } from "@react-three/drei";
 import { Canvas, RootState } from "@react-three/fiber";
 import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
 import { Physics } from "@react-three/rapier";
 import { createXRStore, XR } from "@react-three/xr";
-import {memo, useCallback, useEffect, useImperativeHandle, useRef} from "react";
+import {memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from "react";
 import { ErrorBoundary, getErrorMessage, type FallbackProps } from "react-error-boundary";
 import { Group, NeutralToneMapping, WebGLRenderer } from "three";
 import { configureTextBuilder } from "troika-three-text";
@@ -13,7 +13,7 @@ import { configureTextBuilder } from "troika-three-text";
 
 import { DOMMirror } from "../browser/DOMMirror";
 import { URLBar } from "../browser/URLBar";
-import { AvatarProvider, PlayerOriginProvider } from "../contexts";
+import {AvatarProvider, PlayerOriginProvider, useWebSDKMessaging} from "../contexts";
 import { SessionModeProvider } from "../contexts/SessionModeContext";
 import { WebSDKMessagingProvider } from "../contexts/WebSDKMessagingContext";
 import { SceneDebug } from "../debug/SceneDebug";
@@ -34,7 +34,14 @@ import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
 import {TweenRunner} from "./TweenRunner";
 import {AudioListenerProvider} from "../contexts/AudioListenerContext";
-import {SDKWorldEnvironmentProvider, useWorldEnvironment} from "../world/WorldEnvironmentContext";
+import {
+    SDKWorldEnvironmentProvider,
+    useWorldEnvironment,
+    WORLD_ENV_DEFAULT,
+    WORLD_ENV_GRAYSPACE
+} from "../world/WorldEnvironmentContext";
+import {useEngineObjectStore} from "../stores/EngineObjectStore";
+import {WebSDKActionMessage} from "@hyperlinkvr/types";
 
 
 configureTextBuilder({
@@ -134,6 +141,8 @@ const FatalErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => (
 
 const FlatErrorFallback = VRErrorFallback; // TODO: make it follow player more properly
 
+const LOADER_TIMEOUT_MS = 15_000; // the game has 15 seconds to tell us it's done loading, otherwise we assume it's stuck and show the default world
+
 const SceneContents = ({
     player_ref,
     extra_in_origin
@@ -144,21 +153,82 @@ const SceneContents = ({
     const internal_ref = useRef<Group>(null);
     useImperativeHandle(player_ref, () => internal_ref.current!);
 
-    const session = useTabSession();
+    const {url, meta, meta_generation} = useTabSession();
     const setRecentWorlds = useStorage("local", "recent_worlds", [] as string[])[1];
 
     useEffect(() => {
-        if (!session.url) {
+        if (!url) {
             return;
         }
 
         setRecentWorlds((prev) => {
-            const newList = [session.url!, ...prev.filter((url) => url !== session.url)];
+            const newList = [url, ...prev.filter((uri) => uri !== url)];
             return newList.slice(0, 25); // Keep only the last 25 unique worlds
         });
-    }, [session.url, setRecentWorlds]);
+    }, [url, setRecentWorlds]);
 
-    const {sky, fog} = useWorldEnvironment();
+    const {world_env, setWorldEnv} = useWorldEnvironment();
+    const {sky, fog} = world_env;
+
+    const {on_action} = useWebSDKMessaging();
+
+    const [world_ready, setWorldReady] = useState(false);
+    const [timed_out, setTimedOut] = useState(false);
+
+    // timeout downgrades presentation to defer without pretending the page said so
+    const resolved_meta = timed_out ? "defer" : meta;
+
+    // null = no document signal yet, treat like defer
+    const show_default_world = resolved_meta !== "supported";
+    const spawning_enabled = resolved_meta !== "disable";
+    const show_loader = resolved_meta === "supported" && !world_ready;
+
+    const clear_all_objects = useEngineObjectStore((store) => store.clear_all_objects);
+
+    useEffect(() => {
+        if (meta_generation === 0) {
+            return;
+        }
+
+        console.log("New document, meta:", meta);
+
+        // reset world
+        clear_all_objects();
+        setWorldEnv(meta === "supported" ? WORLD_ENV_DEFAULT : WORLD_ENV_GRAYSPACE);
+        setWorldReady(false);
+        setTimedOut(false);
+
+        if (internal_ref.current) {
+            internal_ref.current.position.set(0, 0, 0);
+            internal_ref.current.rotation.set(0, 0, 0);
+        }
+    }, [meta_generation, meta, clear_all_objects, setWorldEnv]);
+
+    useEffect(() => {
+        const unlisten_loading_finished = on_action("HVRSDK_LOADING_FINISHED", () => {
+            setWorldReady(true);
+        });
+
+        return () => {
+            unlisten_loading_finished();
+        };
+    }, [on_action]);
+
+    useEffect(() => {
+        if (!show_loader) {
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            console.warn("World never signalled ready, falling back to defer");
+            setTimedOut(true);
+            setWorldEnv(WORLD_ENV_GRAYSPACE);
+        }, LOADER_TIMEOUT_MS);
+
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [show_loader, setWorldEnv]);
 
     return (
         <>
@@ -171,19 +241,32 @@ const SceneContents = ({
 
             <Player ref={internal_ref} />
 
-            <URLBar
-                position={[0, 3.25, -4]}
-                height={0.25}
-                height_of_dom_mirror={3}
-            />
-            <DOMMirror position={[0, 1.5, -4]} height={3} />
+            {show_default_world && (
+                <>
+                    <URLBar
+                        position={[0, 3.25, -4]}
+                        height={0.25}
+                        height_of_dom_mirror={3}
+                    />
+                    <DOMMirror position={[0, 1.5, -4]} height={3} />
 
-            <AvatarMirror
-                x_z_position={[2, 0]}
-                rotation={[0, -Math.PI / 2, 0]}
-            />
+                    <AvatarMirror
+                        x_z_position={[2, 0]}
+                        rotation={[0, -Math.PI / 2, 0]}
+                    />
+                </>
+            )}
 
-            <EngineObjectSpawner />
+            {spawning_enabled && <EngineObjectSpawner />}
+
+            {show_loader && (
+                // TODO: actual loader
+                <mesh>
+                    <boxGeometry args={[0.5, 0.5, 0.5]} />
+                    <meshBasicMaterial color="orange" />
+                </mesh>
+            )}
+
             <TweenRunner />
 
             {extra_in_origin || null}
@@ -192,7 +275,7 @@ const SceneContents = ({
 };
 
 const WorldPhysics = ({children}: {children: React.ReactNode}) => {
-    const world_env = useWorldEnvironment();
+    const {world_env} = useWorldEnvironment();
     const [show_colliders] = useSetting("debug_colliders");
 
     return (

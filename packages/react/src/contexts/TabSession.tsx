@@ -3,6 +3,8 @@ import { useMessageEngine } from "./engines";
 import { useWindowArguments } from "./windowing";
 import type { EventMessage } from "@hyperlinkvr/types";
 
+export type TabMeta = "supported" | "defer" | "disable";
+
 export interface TabSessionContextValue {
     id: number;
     url: string | null;
@@ -10,15 +12,15 @@ export interface TabSessionContextValue {
         width: number;
         height: number;
     } | null;
+    meta: TabMeta | null;
+    // increments once per document (every HVR_META_UPDATE), even when the
+    // meta value itself is unchanged. effect on this to reset world state.
+    meta_generation: number;
 }
 
 const TabSessionContext = createContext<TabSessionContextValue | null>(null);
 
-export const TabSessionProvider = ({
-    children
-}: {
-    children: React.ReactNode;
-}) => {
+export const TabSessionProvider = ({children}: { children: React.ReactNode; }) => {
     const window_data = useWindowArguments();
 
     if (!window_data.tab) {
@@ -35,13 +37,14 @@ export const TabSessionProvider = ({
         width: number;
         height: number;
     } | null>(null);
+    const [meta, setMeta] = useState<TabMeta | null>(null);
+    const [meta_generation, setMetaGeneration] = useState(0);
 
-    // listen for tab close
     useEffect(() => {
         const channel = messenger.connect<never, EventMessage>(`hvr-tab-session:${tab}`);
 
         const unlisten = channel.listen(async (msg) => {
-            // still watch for tab close via the general broadcast channel
+            console.log("TabSessionProvider received update:", msg);
             if (msg.type === "HVR_TAB_CLOSED" && msg.tab === tab) {
                 window.close();
                 return;
@@ -53,6 +56,11 @@ export const TabSessionProvider = ({
 
             if (msg.type === "HVR_DIMENSIONS_UPDATE") {
                 setDimensions({ width: msg.width, height: msg.height });
+            }
+
+            if (msg.type === "HVR_META_UPDATE") {
+                setMeta(msg.content);
+                setMetaGeneration((previous) => previous + 1);
             }
         });
 
@@ -67,7 +75,9 @@ export const TabSessionProvider = ({
             value={{
                 id: tab,
                 url,
-                dimensions
+                dimensions,
+                meta,
+                meta_generation
             }}>
             {children}
         </TabSessionContext.Provider>
@@ -88,19 +98,25 @@ export const MockTabSessionProvider = ({
     children,
     id = 1,
     url = "https://example.com",
-    dimensions = { width: 800, height: 600 }
+    dimensions = { width: 800, height: 600 },
+    meta = null,
+    meta_generation = 0
 }: {
     children: React.ReactNode;
     id?: number;
     url?: string;
     dimensions?: { width: number; height: number };
+    meta?: TabMeta | null;
+    meta_generation?: number;
 }) => {
     return (
         <TabSessionContext.Provider
             value={{
                 id,
                 url,
-                dimensions
+                dimensions,
+                meta,
+                meta_generation
             }}>
             {children}
         </TabSessionContext.Provider>

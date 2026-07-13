@@ -56,7 +56,7 @@ export const PlayerGravity = () => {
 
     const jump_pressed_ref = useRef(false);
 
-    const world_env = useWorldEnvironment();
+    const {world_env} = useWorldEnvironment();
 
     const should_hit_environment = useCallback(
         (collider: RapierCollider): boolean => {
