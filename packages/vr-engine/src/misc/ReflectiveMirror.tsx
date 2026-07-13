@@ -1,6 +1,6 @@
 import { useFrame } from "@react-three/fiber";
 import { ComponentProps, useEffect, useMemo } from "react";
-import { Camera, PlaneGeometry, Vector3 } from "three";
+import { Camera, PlaneGeometry } from "three";
 import { Reflector } from "three/examples/jsm/objects/Reflector";
 
 

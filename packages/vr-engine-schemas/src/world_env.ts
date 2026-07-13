@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const ColorSchema = z.union([z.string(), z.number()]);
+type ColorRep = z.infer<typeof ColorSchema>;
 
 export const WorldSkySchema = z.object({
     sky_zenith_color: ColorSchema.optional(),
@@ -55,7 +56,7 @@ export type WorldEnv = z.infer<typeof WorldEnvSchema>;
 export type WorldEnvInput = z.input<typeof WorldEnvSchema>;
 export type WorldEnvRequired = Required<WorldEnv>;
 export type WorldEnvFull = {
-    sky: Required<Omit<WorldSky, "ambient_override_color">> & {ambient_override_color?: number};
+    sky: Required<Omit<WorldSky, "ambient_override_color">> & {ambient_override_color?: ColorRep};
     fog: Required<WorldFog>;
     physics: Required<WorldPhysics>;
 };

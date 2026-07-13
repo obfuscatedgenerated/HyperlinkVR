@@ -1,5 +1,5 @@
-import {createContext, useContext} from "react";
-import type {WorldEnvFull} from "@hyperlinkvr/vr-engine-schemas";
+import {createContext, useContext, useEffect, useState} from "react";
+import {WorldEnvFull, WorldEnvSchema} from "@hyperlinkvr/vr-engine-schemas";
 import {useWebSDKMessaging} from "../contexts";
 
 export const WORLD_ENV_DEFAULT: WorldEnvFull = {
@@ -85,9 +85,68 @@ const WorldEnvironmentContext = createContext<WorldEnvFull>(WORLD_ENV_DEFAULT);
 
 export const FixedWorldEnvironmentProvider = WorldEnvironmentContext.Provider;
 
-export const SDKWorldEnvironmentProvider = () => {
+export const SDKWorldEnvironmentProvider = ({children}: {children: React.ReactNode}) => {
+    const [world_env, setWorldEnv] = useState<WorldEnvFull>(WORLD_ENV_DEFAULT);
     const {on_action} = useWebSDKMessaging();
-    // TODO
+
+    useEffect(() => {
+        const unlisten_reset = on_action("HVRSDK_RESET_WORLD_ENV", (message, reply) => {
+            setWorldEnv(message.type === "grayspace" ? WORLD_ENV_GRAYSPACE : WORLD_ENV_DEFAULT);
+            reply({
+                for: "HVRSDK_RESET_WORLD_ENV",
+                success: true,
+            });
+        });
+
+        const unlisten_update = on_action("HVRSDK_UPDATE_WORLD_ENV", (message, reply) => {
+            // the world env can be partial, patch the value deeply
+            setWorldEnv((prev) => {
+                const {success, data} = WorldEnvSchema.safeParse(message.env);
+                if (!success) {
+                    console.error("Invalid world env update", data);
+                    reply({
+                        for: "HVRSDK_UPDATE_WORLD_ENV",
+                        success: false,
+                        error: "Invalid world env update",
+                    });
+                    return prev;
+                }
+
+                const new_env = {...prev};
+
+                if (data.sky) {
+                    new_env.sky = {...new_env.sky, ...data.sky};
+                }
+
+                if (data.fog) {
+                    new_env.fog = {...new_env.fog, ...data.fog};
+                }
+
+                if (data.physics) {
+                    new_env.physics = {...new_env.physics, ...data.physics};
+                }
+
+                console.log("Updated world env", new_env);
+                return new_env;
+            });
+
+            reply({
+                for: "HVRSDK_UPDATE_WORLD_ENV",
+                success: true,
+            });
+        });
+
+        return () => {
+            unlisten_reset();
+            unlisten_update();
+        }
+    }, []);
+
+    return (
+        <WorldEnvironmentContext.Provider value={world_env}>
+            {children}
+        </WorldEnvironmentContext.Provider>
+    );
 }
 
 export const useWorldEnvironment = () => {

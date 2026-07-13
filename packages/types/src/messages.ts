@@ -1,7 +1,7 @@
 import type {
     CreatedEngineObject,
     EngineObjectDispatch, EngineObjectModification,
-    ReportEvent, Tween
+    ReportEvent, Tween, WorldEnv
 } from "@hyperlinkvr/vr-engine-schemas";
 
 
@@ -150,6 +150,16 @@ interface WebSDKPlayerSendToWorldAction extends BaseWebSDKActionMessage {
     prompt: "show" | "try_skip" | "skip_or_fail";
 }
 
+interface WebSDKUpdateWorldEnvironmentAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_UPDATE_WORLD_ENV";
+    env: WorldEnv;
+}
+
+interface WebSDKResetWorldEnvironmentAction extends BaseWebSDKActionMessage {
+    action: "HVRSDK_RESET_WORLD_ENV";
+    type?: "default" | "grayspace";
+}
+
 export type WebSDKActionMessage =
     WebSDKAuthQueryAction
     | WebSDKAuthWhoAmIAction
@@ -164,13 +174,16 @@ export type WebSDKActionMessage =
     | WebSDKPlayerGetPositionAction
     | WebSDKPlayerTeleportToAction
     | WebSDKPlayerSendToWorldAction
-    | WebSDKMetaAction;
+    | WebSDKMetaAction
+    | WebSDKUpdateWorldEnvironmentAction
+    | WebSDKResetWorldEnvironmentAction;
 
 export type ActionMessage =
     StartStreamAction |
     LaunchAction |
     ClickAction |
     CreateWindowAction |
+    NavigateAction |
     WebSDKActionMessage;
 
 
@@ -278,6 +291,16 @@ interface WebSDKPlayerSendToWorldReplyMessage extends BaseWebSDKReplyMessage {
     going: boolean;
 }
 
+interface WebSDKUpdateWorldEnvironmentReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_UPDATE_WORLD_ENV";
+    success: true;
+}
+
+interface WebSDKResetWorldEnvironmentReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_RESET_WORLD_ENV";
+    success: true;
+}
+
 export type WebSDKReplyMessage =
     WebSDKAuthQueryReplyMessage
     | WebSDKAuthWhoAmIReplyMessage
@@ -289,7 +312,9 @@ export type WebSDKReplyMessage =
     | WebSDKInteractionCommandReplyMessage
     | WebSDKPlayerGetPositionReplyMessage
     | WebSDKPlayerSendToWorldReplyMessage
-    | WebSDKPlayerTeleportToReplyMessage;
+    | WebSDKPlayerTeleportToReplyMessage
+    | WebSDKUpdateWorldEnvironmentReplyMessage
+    | WebSDKResetWorldEnvironmentReplyMessage;
 
 export type ReplyMessage =
     WebSDKReplyMessage;

@@ -4,6 +4,7 @@ export * from "./physics";
 export * from "./prefabs";
 export * from "./custom";
 export * from "./dispatch";
+export * from "./world_env";
 
 // example usage for custom object:
 /*

@@ -34,7 +34,7 @@ import { EngineObjectSpawner } from "./EngineObjectSpawner";
 import { EngineObjectSync } from "./EngineObjectSync";
 import {TweenRunner} from "./TweenRunner";
 import {AudioListenerProvider} from "../contexts/AudioListenerContext";
-import {useWorldEnvironment} from "../world/WorldEnvironmentContext";
+import {SDKWorldEnvironmentProvider, useWorldEnvironment} from "../world/WorldEnvironmentContext";
 
 
 configureTextBuilder({
@@ -191,6 +191,17 @@ const SceneContents = ({
     );
 };
 
+const WorldPhysics = ({children}: {children: React.ReactNode}) => {
+    const world_env = useWorldEnvironment();
+    const [show_colliders] = useSetting("debug_colliders");
+
+    return (
+        <Physics interpolate gravity={[0, world_env.physics.gravity, 0]} debug={show_colliders}>
+            {children}
+        </Physics>
+    );
+}
+
 const EngineHostInternal = memo(
     ({ on_ready, mode }: { on_ready: () => void; mode: "vr" | "flat" }) => {
         // gracefully end session on unmount to avoid renderer crash
@@ -229,11 +240,7 @@ const EngineHostInternal = memo(
             [on_ready]
         );
 
-        const [show_colliders] = useSetting("debug_colliders");
-
         const player_ref = useRef<Group>(null);
-
-        const world_env = useWorldEnvironment();
 
         return (
             <SessionModeProvider value={mode}>
@@ -256,48 +263,50 @@ const EngineHostInternal = memo(
                                     >
                                         <AudioListenerProvider>
                                             <HandsProvider>
-                                                <Physics interpolate gravity={[0, world_env.physics.gravity, 0]} debug={show_colliders}>
-                                                    <CameraSetup />
-                                                    <CanvasResizer
-                                                        containerRef={canvas_container_ref}
-                                                    />
+                                                <SDKWorldEnvironmentProvider>
+                                                    <WorldPhysics>
+                                                        <CameraSetup />
+                                                        <CanvasResizer
+                                                            containerRef={canvas_container_ref}
+                                                        />
 
-                                                    <SceneDebug />
+                                                        <SceneDebug />
 
-                                                    {mode === "vr" ? (
-                                                        <XR store={xr_store}>
+                                                        {mode === "vr" ? (
+                                                            <XR store={xr_store}>
+                                                                <ErrorBoundary
+                                                                    FallbackComponent={
+                                                                        VRErrorFallback
+                                                                    }
+                                                                    onReset={() =>
+                                                                        window.location.reload()
+                                                                    }>
+                                                                    <SceneContents
+                                                                        player_ref={player_ref}
+                                                                        extra_in_origin={
+                                                                            <SpectatorCamera />
+                                                                        }
+                                                                    />
+                                                                </ErrorBoundary>
+                                                            </XR>
+                                                        ) : (
                                                             <ErrorBoundary
                                                                 FallbackComponent={
-                                                                    VRErrorFallback
+                                                                    FlatErrorFallback
                                                                 }
                                                                 onReset={() =>
                                                                     window.location.reload()
-                                                                }>
-                                                                <SceneContents
-                                                                    player_ref={player_ref}
-                                                                    extra_in_origin={
-                                                                        <SpectatorCamera />
-                                                                    }
-                                                                />
+                                                                }
+                                                            >
+                                                                <FlatInputProvider>
+                                                                    <FlatClickRaycaster />
+                                                                    <FlatAvatarHands />
+                                                                    <SceneContents player_ref={player_ref} />
+                                                                </FlatInputProvider>
                                                             </ErrorBoundary>
-                                                        </XR>
-                                                    ) : (
-                                                        <ErrorBoundary
-                                                            FallbackComponent={
-                                                                FlatErrorFallback
-                                                            }
-                                                            onReset={() =>
-                                                                window.location.reload()
-                                                            }
-                                                        >
-                                                            <FlatInputProvider>
-                                                                <FlatClickRaycaster />
-                                                                <FlatAvatarHands />
-                                                                <SceneContents player_ref={player_ref} />
-                                                            </FlatInputProvider>
-                                                        </ErrorBoundary>
-                                                    )}
-                                                </Physics>
+                                                        )}
+                                                    </WorldPhysics>
+                                                </SDKWorldEnvironmentProvider>
                                             </HandsProvider>
                                         </AudioListenerProvider>
                                     </Canvas>
@@ -310,6 +319,8 @@ const EngineHostInternal = memo(
         );
     }
 );
+
+// TODO: how could the contexts be denested for cleanliness
 
 export const EngineHost = ({ on_xr_ready, mode }: { on_xr_ready: () => void, mode: "vr" | "flat" }) => (
     <ErrorBoundary
