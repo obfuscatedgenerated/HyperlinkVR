@@ -82,7 +82,7 @@ const WatchUIPresentation = ({
 
     const previous_mode = useRef<WatchMode>("wrist");
 
-    useFrame(() => {
+    useFrame((_, delta) => {
         const body_group = body_group_ref.current;
         const ui_group = ui_group_ref.current;
         if (!body_group || !ui_group) return;
@@ -229,12 +229,19 @@ const WatchUIPresentation = ({
             }
         }
 
+        const MIN_UI_SCALE = 0.001;
+        const SNAP_EPSILON = 0.002;
+
         const open_scale = ui_open ? 1 : 0;
         ui_group.scale.multiplyScalar(1); // keep world scale from step 2
         if (ui_container) {
-            ui_container.scale.setScalar(
-                MathUtils.lerp(ui_container.scale.x, open_scale, 0.15)
-            );
+            let next_scale = MathUtils.lerp(ui_container.scale.x, open_scale, 1 - Math.exp(-12 * delta));
+            if (Math.abs(next_scale - open_scale) < SNAP_EPSILON) {
+                next_scale = open_scale; // settle instead of decaying forever
+            }
+            next_scale = Math.max(next_scale, MIN_UI_SCALE);
+            ui_container.scale.setScalar(next_scale);
+            ui_container.visible = next_scale > MIN_UI_SCALE;
         }
     });
 
