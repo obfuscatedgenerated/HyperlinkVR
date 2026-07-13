@@ -313,6 +313,11 @@ interface WebSDKResetWorldEnvironmentReplyMessage extends BaseWebSDKReplyMessage
     success: true;
 }
 
+interface WebSDKLoadingFinishedReplyMessage extends BaseWebSDKReplyMessage {
+    for: "HVRSDK_LOADING_FINISHED";
+    success: true;
+}
+
 export type WebSDKReplyMessage =
     WebSDKAuthQueryReplyMessage
     | WebSDKAuthWhoAmIReplyMessage
@@ -326,7 +331,8 @@ export type WebSDKReplyMessage =
     | WebSDKPlayerSendToWorldReplyMessage
     | WebSDKPlayerTeleportToReplyMessage
     | WebSDKUpdateWorldEnvironmentReplyMessage
-    | WebSDKResetWorldEnvironmentReplyMessage;
+    | WebSDKResetWorldEnvironmentReplyMessage
+    | WebSDKLoadingFinishedReplyMessage;
 
 export type ReplyMessage =
     WebSDKReplyMessage;

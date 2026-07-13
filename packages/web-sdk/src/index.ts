@@ -32,10 +32,15 @@ export const bind_messages = () => {
     });
 }
 
-export const finished_loading = () => {
-    send_via_rtc({
+export const finished_loading = async () => {
+    console.log("Notifying host that loading is finished");
+    const res = await send_via_rtc({
         action: "HVRSDK_LOADING_FINISHED"
     });
+
+    if (!res || !res.success) {
+        throw new Error("Failed to notify host that loading is finished");
+    }
 }
 
 // TODO: replace dom event with a wait_for_ready that immeidately returns if already ready?

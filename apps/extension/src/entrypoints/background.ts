@@ -163,6 +163,21 @@ export default defineBackground(() => {
         color: "#fff"
     });
 
+    // only notify if the meta is ready and the vr host has a ready port
+    const try_notify_ready = (tab_id: number) => {
+        const host_ready =
+            !!active_session &&
+            active_session.tab_id === tab_id &&
+            active_session.ready_port !== null;
+
+        if (!host_ready || !tab_meta.has(tab_id)) {
+            return;
+        }
+
+        console.log("Notifying content script that HyperlinkVR is ready for tab", tab_id, tab_meta.get(tab_id));
+        chrome.tabs.sendMessage(tab_id, { type: "HVRSDK_READY" }).catch(() => {});
+    };
+
     // hvr-ready:<tab_id>: opened by the VR host's WebSDKMessagingProvider for the duration of its RTC session to signal it is ready to receive connections
     // hvr-tab-session:<tab_id>: opened by TabSessionProvider on mount; session state (url, dimensions, meta) is pushed down these ports
     chrome.runtime.onConnect.addListener((port) => {
@@ -176,7 +191,7 @@ export default defineBackground(() => {
             }
 
             active_session.ready_port = port;
-            chrome.tabs.sendMessage(tab_id, { type: "HVRSDK_READY" }).catch(() => {});
+            try_notify_ready(tab_id);
 
             port.onDisconnect.addListener(() => {
                 if (active_session?.tab_id === tab_id) {
@@ -295,6 +310,8 @@ export default defineBackground(() => {
                     tab: sender.tab.id,
                     content: msg.content
                 });
+
+                try_notify_ready(sender.tab.id);
 
                 dropped = false;
 

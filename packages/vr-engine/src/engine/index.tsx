@@ -41,7 +41,7 @@ import {
     WORLD_ENV_GRAYSPACE
 } from "../world/WorldEnvironmentContext";
 import {useEngineObjectStore} from "../stores/EngineObjectStore";
-import {useLoadingStore} from "../stores/LoadingStore";
+import {useWorldLoadingStateStore} from "../stores/WorldLoadingStateStore";
 import {FlatLoadingScreen, VRLoadingScreen} from "./LoadingScreen";
 
 configureTextBuilder({
@@ -153,7 +153,7 @@ const SceneContents = ({
     const internal_ref = useRef<Group>(null);
     useImperativeHandle(player_ref, () => internal_ref.current!);
 
-    const {url, meta, meta_generation} = useTabSession();
+    const {url, meta} = useTabSession();
     const setRecentWorlds = useStorage("local", "recent_worlds", [] as string[])[1];
 
     useEffect(() => {
@@ -170,50 +170,16 @@ const SceneContents = ({
     const {world_env, setWorldEnv} = useWorldEnvironment();
     const {sky, fog} = world_env;
 
-    const {on_action} = useWebSDKMessaging();
+    const world_ready = useWorldLoadingStateStore((store) => store.world_ready);
+    const timed_out = useWorldLoadingStateStore((store) => store.timed_out);
+    const set_timed_out = useWorldLoadingStateStore((store) => store.set_timed_out);
+    const set_loading = useWorldLoadingStateStore((store) => store.set_loading);
 
-    const [world_ready, setWorldReady] = useState(false);
-    const [timed_out, setTimedOut] = useState(false);
-
-    // timeout downgrades presentation to defer without pretending the page said so
     const resolved_meta = timed_out ? "defer" : meta;
 
-    // null = no document signal yet, treat like defer
     const show_default_world = resolved_meta !== "supported";
     const spawning_enabled = resolved_meta !== "disable";
     const show_loader = resolved_meta === "supported" && !world_ready;
-
-    const clear_all_objects = useEngineObjectStore((store) => store.clear_all_objects);
-
-    useEffect(() => {
-        if (meta_generation === 0) {
-            return;
-        }
-
-        console.log("New document, meta:", meta);
-
-        // reset world
-        clear_all_objects();
-        setWorldEnv(meta === "supported" ? WORLD_ENV_DEFAULT : WORLD_ENV_GRAYSPACE);
-        setWorldReady(false);
-        setTimedOut(false);
-
-        if (internal_ref.current) {
-            internal_ref.current.position.set(0, 0, 0);
-            internal_ref.current.rotation.set(0, 0, 0);
-        }
-    }, [meta_generation, meta, clear_all_objects, setWorldEnv]);
-
-    useEffect(() => {
-        const unlisten_loading_finished = on_action("HVRSDK_LOADING_FINISHED", () => {
-            console.log("World signalled ready");
-            setWorldReady(true);
-        });
-
-        return () => {
-            unlisten_loading_finished();
-        };
-    }, [on_action]);
 
     useEffect(() => {
         if (!show_loader) {
@@ -222,16 +188,14 @@ const SceneContents = ({
 
         const timeout = setTimeout(() => {
             console.warn("World never signalled ready, falling back to defer");
-            setTimedOut(true);
+            set_timed_out(true);
             setWorldEnv(WORLD_ENV_GRAYSPACE);
         }, LOADER_TIMEOUT_MS);
 
         return () => {
             clearTimeout(timeout);
         };
-    }, [show_loader, setWorldEnv]);
-
-    const set_loading = useLoadingStore((store) => store.set_loading);
+    }, [show_loader, set_timed_out, setWorldEnv]);
 
     useEffect(() => {
         set_loading(show_loader);
@@ -286,6 +250,44 @@ const WorldPhysics = ({children}: {children: React.ReactNode}) => {
     );
 }
 
+const WorldSessionListener = () => {
+    const { on_action } = useWebSDKMessaging();
+    const { meta, meta_generation } = useTabSession();
+
+    const set_world_ready = useWorldLoadingStateStore((store) => store.set_world_ready);
+    const reset_for_new_document = useWorldLoadingStateStore((store) => store.reset_for_new_document);
+    const clear_all_objects = useEngineObjectStore((store) => store.clear_all_objects);
+
+    useEffect(() => {
+        const unlisten = on_action("HVRSDK_LOADING_FINISHED", (_message, reply) => {
+            console.log("World signalled ready");
+            set_world_ready(true);
+
+            reply({
+                for: "HVRSDK_LOADING_FINISHED",
+                success: true
+            });
+        });
+
+        return () => {
+            unlisten();
+        };
+    }, [on_action, set_world_ready]);
+
+    useEffect(() => {
+        if (meta_generation === 0) {
+            return;
+        }
+
+        console.log("New document, meta:", meta);
+
+        clear_all_objects();
+        reset_for_new_document();
+    }, [meta_generation, meta, clear_all_objects, reset_for_new_document]);
+
+    return null;
+};
+
 const EngineHostInternal = memo(
     ({ on_ready, mode }: { on_ready: () => void; mode: "vr" | "flat" }) => {
         // gracefully end session on unmount to avoid renderer crash
@@ -325,12 +327,13 @@ const EngineHostInternal = memo(
         );
 
         const player_ref = useRef<Group>(null);
-        const loading = useLoadingStore((store) => store.loading);
+        const loading = useWorldLoadingStateStore((store) => store.loading);
 
         return (
             <SessionModeProvider value={mode}>
                 <TabSessionProvider>
                     <WebSDKMessagingProvider>
+                        <WorldSessionListener />
                         <EngineObjectSync />
 
                         <div

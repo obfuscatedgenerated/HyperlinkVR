@@ -4,7 +4,7 @@ import {useEffect} from "react";
 import {compute_layer_mask, Layer} from "./layers";
 import {get_united_head_camera} from "../util/get_head_cameras";
 import {useAudioListener} from "../contexts/AudioListenerContext";
-import {useLoadingStore} from "../stores/LoadingStore";
+import {useWorldLoadingStateStore} from "../stores/WorldLoadingStateStore";
 
 
 const world_layer_mask = compute_layer_mask([
@@ -22,7 +22,7 @@ const loader_layer_mask = compute_layer_mask([
 export const CameraSetup = () => {
     const { gl, camera } = useThree();
     const listener = useAudioListener();
-    const loading = useLoadingStore((store) => store.loading);
+    const loading = useWorldLoadingStateStore((store) => store.loading);
 
     useEffect(() => {
         const head_camera = get_united_head_camera(gl, camera);
