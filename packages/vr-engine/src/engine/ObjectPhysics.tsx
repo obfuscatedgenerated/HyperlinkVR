@@ -5,7 +5,7 @@ import { BallCollider, CapsuleCollider, CuboidCollider, MeshCollider, RapierRigi
 import { useEffect, useMemo, useRef } from "react";
 import { Group, Quaternion, Vector3 } from "three";
 
-
+import { clone } from "three/examples/jsm/utils/SkeletonUtils"
 
 import { useObjectRefsOptional } from "../contexts/ObjectRefsContext";
 import {rotation_to_quaternion_array} from "./rotation";
@@ -51,10 +51,11 @@ export const URLMeshCollider = ({
     approximation: string;
 }) => {
     const { scene } = useGLTF(url);
+    const instance = useMemo(() => clone(scene), [scene]);
     return (
         // TODO: fix typing
         <MeshCollider type={approximation as any}>
-            <primitive object={scene} visible={false} />
+            <primitive object={instance} visible={false} />
         </MeshCollider>
     );
 };
