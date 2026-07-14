@@ -17,10 +17,9 @@ import { FlatCameraRig } from "./FlatCameraRig";
 import { WristWatch } from "./WristWatch";
 import { XRHandsPublisher } from "../input/impl/xr/hands";
 import { FlatHandsPublisher } from "../input/impl/flat/hands";
-import {ComfortVignette} from "./ComfortVignette";
+import {Vignette} from "./Vignette";
 import {PlayerKinematics} from "./PlayerKinematics";
 import {useWebSDKMessaging} from "../contexts";
-import {EULER_ORDER} from "../consts";
 
 const MouthTest = ({
     mouth_name,
@@ -195,7 +194,7 @@ export const Player = ({ ref = null, can_move = true }: { ref?: React.Ref<Group>
 
                 {session_mode === "vr" ? (
                     <>
-                        <ComfortVignette />
+                        <Vignette />
                         <XROrigin ref={origin_ref}>
                             <XRHandsPublisher />
                             <ExpressionTest />

@@ -1,12 +1,15 @@
-import {useLayoutEffect, useRef} from "react"
-import {useFrame} from "@react-three/fiber"
+import {useCallback, useLayoutEffect, useMemo, useRef} from "react"
+import {useFrame, useThree} from "@react-three/fiber"
 
 import {useSetting} from "@hyperlinkvr/react";
 import {usePlayerOrigin} from "../contexts";
 import {Color, MathUtils, Mesh, Quaternion, ShaderMaterial, Vector3} from "three";
 import {Layer} from "../render";
+import {RapierCollider, useRapier} from "@react-three/rapier";
+import {get_united_head_camera} from "../util/get_head_cameras";
+import {CAPSULE_RADIUS, get_capsule_world_position} from "./motion";
 
-const COLOR = 0x000000;
+const COLOR = 0x111111;
 
 const OPEN_RADIUS = 1.3;
 const MIN_RADIUS = 0.2;
@@ -21,16 +24,25 @@ const TELEPORT_PULSE_INTENSITY = 1.0; // change in distance above this in one fr
 const TELEPORT_PULSE_THRESHOLD = 0.5;
 const TELEPORT_PULSE_DECAY = 0.6;
 
+// blackout when head intersects solid walls/ceilings
+const BLACKOUT_FADE_START_DISTANCE = 0.18; // fade only once your face is nearly touching
+const BLACKOUT_FADE_FULL_DISTANCE = 0.05;  // fully black essentially at contact
+const BLACKOUT_PROBE_COUNT = 8;
+
+// fast to black, slow to clear
+const BLACKOUT_DARKEN_SMOOTHING = 12;
+const BLACKOUT_CLEAR_SMOOTHING = 4;
+
 const VERTEX_SHADER = `
 varying vec2 view_tan;
 void main() {
   vec2 ndc = position.xy * 2.0;
-
+ 
   view_tan = vec2(
     (ndc.x + projectionMatrix[2][0]) / projectionMatrix[0][0],
     (ndc.y + projectionMatrix[2][1]) / projectionMatrix[1][1]
   );
-
+ 
   gl_Position = vec4(ndc, 0.0, 1.0);
 }
 `
@@ -39,15 +51,19 @@ const FRAGMENT_SHADER = `
 uniform float intensity;
 uniform float clear_radius;
 uniform vec3 vignette_color;
+uniform float blackout;
 varying vec2 view_tan;
 void main() {
   float dist = length(view_tan);
   float alpha = smoothstep(clear_radius, clear_radius + 0.2, dist);
-  gl_FragColor = vec4(vignette_color, alpha * intensity);
+ 
+  // blackout covers the whole view, so it wins over the vignette's ring
+  gl_FragColor = vec4(vignette_color, max(alpha * intensity, blackout));
 }
 `
 
-export const ComfortVignette = ({
+// vignette is now for both locomotion comfort and blacking out when player head intersects walls
+export const Vignette = ({
     max_linear_speed = 3.0,
     max_angular_speed = 1.5,
 }) => {
@@ -71,6 +87,46 @@ export const ComfortVignette = ({
     const last_intensity = useRef(vignette_intensity);
     const preview_timer = useRef(0);
     const intensity_settled = useRef(false);
+
+    const {gl, camera} = useThree();
+    const {world, rapier, rigidBodyStates} = useRapier();
+
+    const head_world = useRef(new Vector3());
+    const capsule_world = useRef(new Vector3());
+    const blackout_amount = useRef(0);
+
+    // fixed horizontal directions, reused every frame
+    const probe_directions = useMemo(() => {
+        const directions: Vector3[] = [];
+
+        for (let index = 0; index < BLACKOUT_PROBE_COUNT; index++) {
+            const angle = (index / BLACKOUT_PROBE_COUNT) * Math.PI * 2;
+            directions.push(new Vector3(Math.cos(angle), 0, Math.sin(angle)));
+        }
+
+        return directions;
+    }, []);
+
+    // only static environment should blind the player
+    // a grabbed object held up to the face, or the player's own avatar parts, obviously shouldn't
+    const is_environment = useCallback(
+        (collider: RapierCollider): boolean => {
+            const body = collider.parent();
+            if (!body) return false;
+
+            if (!body.isFixed()) return false;
+
+            const name = rigidBodyStates.get(body.handle)?.object.name ?? "";
+
+            const is_player_part =
+                name.startsWith("avatar_head_rb") ||
+                name.startsWith("avatar_torso_rb") ||
+                name.startsWith("avatar_hand_rb");
+
+            return !is_player_part;
+        },
+        [rigidBodyStates]
+    );
 
     useFrame((_, delta) => {
         const material = material_ref.current;
@@ -116,6 +172,57 @@ export const ComfortVignette = ({
         last_position.current.copy(current_pos);
         last_quat.current.copy(current_qua);
 
+        // blackout handling
+        const head_camera = get_united_head_camera(gl, camera);
+        head_camera.getWorldPosition(head_world.current);
+
+        let nearest_surface = Infinity;
+
+        for (const direction of probe_directions) {
+            const ray = new rapier.Ray(head_world.current, direction);
+
+            const hit = world.castRay(
+                ray,
+                BLACKOUT_FADE_START_DISTANCE,
+                true,
+                undefined, // filterFlags
+                undefined, // filterGroups
+                undefined, // filterExcludeCollider
+                undefined, // filterExcludeRigidBody
+                is_environment
+            );
+
+            if (hit && hit.timeOfImpact < nearest_surface) {
+                nearest_surface = hit.timeOfImpact;
+            }
+        }
+
+        // the capsule already stops locomotion at walls so the only way the head ends up in geometry is the player physically walking their real body through it,
+        // which shows up as the head being somewhere the resolved capsule isn't
+        get_capsule_world_position(capsule_world.current);
+        const head_escaped = head_world.current.distanceTo(capsule_world.current) > CAPSULE_RADIUS;
+
+        const target_blackout = (!head_escaped || nearest_surface >= BLACKOUT_FADE_START_DISTANCE)
+            ? 0
+            : Math.min(
+                1,
+                (BLACKOUT_FADE_START_DISTANCE - nearest_surface) /
+                (BLACKOUT_FADE_START_DISTANCE - BLACKOUT_FADE_FULL_DISTANCE)
+            );
+
+        const blackout_smoothing = target_blackout > blackout_amount.current
+            ? BLACKOUT_DARKEN_SMOOTHING
+            : BLACKOUT_CLEAR_SMOOTHING;
+
+        blackout_amount.current = MathUtils.lerp(
+            blackout_amount.current,
+            target_blackout,
+            1 - Math.exp(-blackout_smoothing * delta)
+        );
+
+        material.uniforms.blackout.value = blackout_amount.current;
+
+        // show comfort vignette briefly when its setting changes
         const intensity_changed = Math.abs(last_intensity.current - vignette_intensity) > 0.5;
         if (intensity_changed) {
             last_intensity.current = vignette_intensity;
@@ -189,6 +296,7 @@ export const ComfortVignette = ({
                     intensity: { value: 0 },
                     clear_radius: { value: OPEN_RADIUS },
                     vignette_color: { value: new Color(COLOR) },
+                    blackout: { value: 0 },
                 }}
                 vertexShader={VERTEX_SHADER}
                 fragmentShader={FRAGMENT_SHADER}

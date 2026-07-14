@@ -9,7 +9,7 @@ import {useFlatFrameInput} from "../input/impl/flat/bindings";
 import {useSessionMode} from "../contexts/SessionModeContext";
 import {JUMP_SPEED} from "../input/values";
 import {useWorldEnvironment} from "../world/WorldEnvironmentContext";
-import {consume_player_movement} from "./motion";
+import {CAPSULE_RADIUS, consume_player_movement, set_capsule_world_position} from "./motion";
 
 const VRJumpButton = ({jump_pressed_ref}: {jump_pressed_ref: RefObject<boolean>}) => {
     const [locomotion_hand] = useSetting("vr_locomotion_hand");
@@ -45,7 +45,6 @@ const FlatJumpButton = ({jump_pressed_ref}: {jump_pressed_ref: RefObject<boolean
 
 const MIN_PLAYER_HEIGHT = 0.6;   // crouched / seated floor
 const MAX_PLAYER_HEIGHT = 2.2;   // sanity ceiling (bad tracking, standing on a chair)
-const CAPSULE_RADIUS = 0.3;
 const HEAD_CLEARANCE = 0.1;      // eyes aren't at the crown of your head
 
 const MAX_STEP_HEIGHT = 0.3;
@@ -183,6 +182,13 @@ export const PlayerKinematics = () => {
         origin.position.x += resolved.x;
         origin.position.y += resolved.y;
         origin.position.z += resolved.z;
+
+        const capsule_translation = capsule_body.translation();
+        set_capsule_world_position(
+            capsule_translation.x,
+            capsule_translation.y,
+            capsule_translation.z
+        );
     });
 
     const mode = useSessionMode();
