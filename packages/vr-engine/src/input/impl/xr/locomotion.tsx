@@ -1,11 +1,12 @@
 import {useXRControllerLocomotion, useXRInputSourceState, XRControllerState, XRSpace} from "@react-three/xr";
-import {RefObject, useMemo, useRef, useState} from "react";
+import {RefObject, useCallback, useMemo, useRef, useState} from "react";
 import {Group, Quaternion, Vector3} from "three";
 import {useSetting} from "@hyperlinkvr/react";
 import {usePlayerOrigin} from "../../../contexts";
 import {useRapier} from "@react-three/rapier";
 import {createPortal, useFrame, useThree} from "@react-three/fiber";
 import {SPRINT_SPEED, WALK_SPEED} from "../../values";
+import {request_player_movement} from "../../../player/motion";
 
 const TELEPORT_STICK_FORWARD_THRESHOLD = 0.7;
 const TELEPORT_STICK_RELEASE_THRESHOLD = 0.3;
@@ -86,7 +87,39 @@ export const XRLocomotion = ({ origin }: { origin: RefObject<Group | null> }) =>
         }
     });
 
-    useXRControllerLocomotion(origin,
+
+    const {camera} = useThree();
+
+    const cam_local_pos = useMemo(() => new Vector3(), []);
+    const rotated_cam_pos = useMemo(() => new Vector3(), []);
+    const y_axis = useMemo(() => new Vector3(0, 1, 0), []);
+
+    const rotate_around_head = useCallback((angle: number) => {
+        if (!origin.current) return;
+
+        cam_local_pos.copy(camera.position);
+        cam_local_pos.y = 0;
+
+        rotated_cam_pos.copy(cam_local_pos).applyAxisAngle(y_axis, angle);
+        origin.current.position.add(cam_local_pos).sub(rotated_cam_pos);
+        origin.current.rotation.y += angle;
+    }, [origin, camera, cam_local_pos, rotated_cam_pos, y_axis]);
+
+    const on_locomotion = useCallback((velocity: Vector3, rot_velocity_y: number, delta: number) => {
+        if (!origin.current) return;
+
+        const delta_x = velocity.x * delta;
+        const delta_z = velocity.z * delta;
+        request_player_movement(delta_x, delta_z);
+
+        // apply snap rotation to the origin group directly
+        // TODO: unite with smooth turn effect below
+        if (rot_velocity_y !== 0) {
+            rotate_around_head(rot_velocity_y * delta);
+        }
+    }, []);
+
+    useXRControllerLocomotion(on_locomotion,
         {
             // in teleport mode, explictly disable the translation, but keep rotation
             // teleportation is handled by TeleportSurface, not this component
@@ -101,12 +134,6 @@ export const XRLocomotion = ({ origin }: { origin: RefObject<Group | null> }) =>
     );
 
     // manual implementation of smooth turn
-    const {camera} = useThree();
-
-    const cam_local_pos = useMemo(() => new Vector3(), []);
-    const rotated_cam_pos = useMemo(() => new Vector3(), []);
-    const y_axis = useMemo(() => new Vector3(0, 1, 0), []);
-
     useFrame((_, delta) => {
         if (rotation !== "smooth" || !origin.current || !rotation_controller) return;
 
@@ -122,13 +149,7 @@ export const XRLocomotion = ({ origin }: { origin: RefObject<Group | null> }) =>
         const safe_delta = Math.min(delta, 0.05);
         const angle = turn_axis * smooth_speed_rad * safe_delta * -1;
 
-        cam_local_pos.copy(camera.position);
-        cam_local_pos.y = 0;
-
-        // pivot around camera position
-        rotated_cam_pos.copy(cam_local_pos).applyAxisAngle(y_axis, angle);
-        origin.current.position.add(cam_local_pos).sub(rotated_cam_pos);
-        origin.current.rotation.y += angle;
+        rotate_around_head(angle);
     });
 
     return null;
