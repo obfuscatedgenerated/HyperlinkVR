@@ -3,7 +3,7 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { BallCollider, CapsuleCollider, CuboidCollider, MeshCollider, RapierRigidBody, RigidBody, RigidBodyAutoCollider } from "@react-three/rapier";
 import { useEffect, useMemo, useRef } from "react";
-import {Group, MeshBasicMaterial, Quaternion, Vector3} from "three";
+import {Group, MeshBasicMaterial, Quaternion, Vector3, Mesh} from "three";
 
 import { clone } from "three/examples/jsm/utils/SkeletonUtils"
 
