@@ -9,6 +9,18 @@
         console.log("Connected!");
         
         const h = hyperlinkvr.builders;
+
+        new h.WorldEnvBuilder()
+                .set_sky(new h.WorldSkyBuilder()
+                        .set_sun_direction([-0.8, 0.3, 0.7])
+                        .set_sun_intensity(1.2)
+                        .set_sun_size(1)
+                        .set_sun_glow(8)
+                        .set_light_intensity(1.2)
+                        .set_sky_light_intensity(0.3)
+                        .build()
+                )
+                .apply()
         
         const interior = new h.CustomObjectBuilder()
             .set_mesh("https://hyperlink.surf/clubhouse/visual.glb")
