@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="hyperlinkvr" content="supported" />
+    
+    <script data-cfasync="false">
+      window.addEventListener("hyperlinkvr_ready", async () => {
+        await hyperlinkvr.connect();
+        console.log("Connected!");
+        
+        const h = hyperlinkvr.builders;
+        
+        const interior = new h.CustomObjectBuilder()
+            .set_mesh("https://hyperlink.surf/clubhouse/colliders.glb") // TODO: replace with visual mesh when made
+            .set_physics(new h.PhysicsSystemBuilder()
+                .set_rigid_body(new h.FixedRigidBodyBuilder()
+                    .set_collider(new h.CustomMeshColliderBuilder()
+                        .set_mesh("https://hyperlink.surf/clubhouse/colliders.glb")
+                        .build()
+                    )
+                    .build()
+                )
+            .build()
+        )
+        .build();
+
+        const created_interior = await new h.EngineObjectDispatchBuilder()
+            .set_object(interior)
+            .create();
+
+        await hyperlinkvr.players.get_current_player().teleport_to([0, 0, -10.5])
+
+        hyperlinkvr.finished_loading();
+      });
+    </script>
+
+    <link rel="icon" href="/hyperlinkvr_anim.svg" type="image/svg+xml">
+  </head>
+  <body>
+    🏠
+  </body>
+</html>
