@@ -8,12 +8,18 @@ import { ObjectPhysics } from "./ObjectPhysics";
 
 import { clone } from "three/examples/jsm/utils/SkeletonUtils";
 import {useMemo} from "react";
+import {useMaterialPatternDisruptor} from "../hooks/useMaterialPatternDisruption";
 
 const GLTFRenderer = ({url}: {url: string}) => {
-    const {scene} = useGLTF(url);
+    const {scene, materials} = useGLTF(url);
+
+    // apply material disrupt shader if material userData specifies it
+    // since the material and the props will always be the same (baked in), its fine to apply globally here
+    useMaterialPatternDisruptor(materials);
 
     // useGLTF caches the scene by url, so need to clone to render multiple instances of the same model
     const instance = useMemo(() => clone(scene), [scene]);
+
     return <primitive object={instance} />;
 }
 
