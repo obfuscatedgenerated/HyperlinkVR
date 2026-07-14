@@ -3,7 +3,7 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { BallCollider, CapsuleCollider, CuboidCollider, MeshCollider, RapierRigidBody, RigidBody, RigidBodyAutoCollider } from "@react-three/rapier";
 import { useEffect, useMemo, useRef } from "react";
-import { Group, Quaternion, Vector3 } from "three";
+import {Group, MeshBasicMaterial, Quaternion, Vector3} from "three";
 
 import { clone } from "three/examples/jsm/utils/SkeletonUtils"
 
@@ -43,6 +43,8 @@ export const PrimitiveCollider = ({ collider }: { collider: Collider }) => {
     }
 };
 
+const INVISIBLE_MATERIAL = new MeshBasicMaterial({ visible: false });
+
 export const URLMeshCollider = ({
     url,
     approximation
@@ -51,11 +53,23 @@ export const URLMeshCollider = ({
     approximation: string;
 }) => {
     const { scene } = useGLTF(url);
-    const instance = useMemo(() => clone(scene), [scene]);
+    const instance = useMemo(() => {
+        const cloned = clone(scene);
+
+        cloned.traverse((object) => {
+            const mesh = object as Mesh;
+            if (mesh.isMesh) {
+                mesh.material = INVISIBLE_MATERIAL;
+            }
+        });
+
+        return cloned;
+    }, [scene]);
+
     return (
         // TODO: fix typing
         <MeshCollider type={approximation as any}>
-            <primitive object={instance} visible={false} />
+            <primitive object={instance} />
         </MeshCollider>
     );
 };
