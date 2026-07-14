@@ -115,10 +115,12 @@ export const XRLocomotion = ({ origin }: { origin: RefObject<Group | null> }) =>
         // apply snap rotation to the origin group directly
         // TODO: unite with smooth turn effect below
         if (rot_velocity_y !== 0) {
-            rotate_around_head(rot_velocity_y * delta);
+            //rotate_around_head(rot_velocity_y);
+            origin.current.rotation.y += rot_velocity_y;
         }
     }, []);
 
+    // TODO: option for hand steered locomotion, rather than head steered like now
     useXRControllerLocomotion(on_locomotion,
         {
             // in teleport mode, explictly disable the translation, but keep rotation
