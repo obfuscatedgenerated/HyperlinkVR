@@ -1,0 +1,10 @@
+{
+    "$schema": "https://hyperlink.surf/schemas/AuthManifest_v1.json",
+    "version": 1,
+    "methods": [
+        "static"
+    ],
+    "host_name": "HyperlinkVR",
+    "open_for_registration": true,
+    "static_submit_hint": "If you're a key contributor, open a PR on the web repo"
+}

@@ -1,0 +1,23 @@
+{
+    "$schema": "https://hyperlink.surf/schemas/StaticIdentityRecord_v1.json",
+    "version": 1,
+    "identity": "ollie@hyperlink.surf",
+    "created_at": 1782827964967,
+    "status": "active",
+    "auth": {
+        "password_deriv": {
+            "algorithm": "argon2",
+            "custom": {
+                "salt": "ofQfgZWpHKt70/vv588TVQ==",
+                "iv": "+9WNwiZqs9few7yx"
+            }
+        },
+        "encrypted_private_key": "VHrPbDxPjrCLOCEpQT+vO8QtaqfydBHLUGKCLhlgXQUyXCRKHbSs5CKy+PDZVAAonbtwBVb3ErKoBoIR6QBzAihara9umqdRAP26/67lEASErUawK9Yrf7ahD4dTecF6bmIQr9oj3t8+EPT3H1RpMblMD5S5VGFNmxUmELxBOP4c8id6Bd94M25HXE2uqWWcXcXdz+lBT1GBP+yYA1sQQ8ccLuh0jxKu7ae2RPKcok9GzIDamgLtI5LjReKzmhA=",
+        "public_key": {
+            "kty": "OKP",
+            "crv": "Ed25519",
+            "x": "mSpYpb2e6ufVa4HJUUmecdPEwqn-Bg4zHn7_CNW6CG4",
+            "ext": true
+        }
+    }
+}
