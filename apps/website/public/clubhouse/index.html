@@ -14,8 +14,8 @@
             .set_mesh("https://hyperlink.surf/clubhouse/colliders.glb") // TODO: replace with visual mesh when made
             .set_physics(new h.PhysicsSystemBuilder()
                 .set_rigid_body(new h.FixedRigidBodyBuilder()
-                    .set_collider(new h.CustomMeshColliderBuilder()
-                        .set_mesh("https://hyperlink.surf/clubhouse/colliders.glb")
+                    .set_collider(new h.ColliderBuilder()
+                        .custom_mesh("https://hyperlink.surf/clubhouse/colliders.glb")
                         .build()
                     )
                     .build()
