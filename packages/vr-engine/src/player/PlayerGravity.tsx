@@ -44,6 +44,7 @@ const FlatJumpButton = ({jump_pressed_ref}: {jump_pressed_ref: RefObject<boolean
 
 // TODO: is it worth having a binding thingy for XR then reading in an abstract way? then again this seems to be the only place its needed for now
 
+// TODO: replace with proper kinematic controller so walls work, this was just temporary if anything
 export const PlayerGravity = () => {
     const origin_ref = usePlayerOrigin();
 
@@ -53,6 +54,7 @@ export const PlayerGravity = () => {
 
     const ray_origin = useRef(new Vector3());
     const ray_direction = useRef(new Vector3(0, -1, 0));
+    const head_world = useRef(new Vector3());
 
     const jump_pressed_ref = useRef(false);
 
@@ -81,11 +83,14 @@ export const PlayerGravity = () => {
 
         velocity_y.current += world_env.physics.gravity * delta;
 
+        // camera.position is local to the XROrigin in VR, so it must be resolved to world space
+        camera.getWorldPosition(head_world.current);
+
         // cast from the players current head x/z, but from knee height y
         ray_origin.current.set(
-            camera.position.x,
+            head_world.current.x,
             origin_ref.current.position.y + RAY_START_HEIGHT,
-            camera.position.z
+            head_world.current.z
         );
 
         const ray = new rapier.Ray(ray_origin.current, ray_direction.current);
