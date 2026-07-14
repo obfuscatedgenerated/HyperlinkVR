@@ -6,7 +6,7 @@ import { Physics } from "@react-three/rapier";
 import { createXRStore, XR } from "@react-three/xr";
 import {memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from "react";
 import { ErrorBoundary, getErrorMessage, type FallbackProps } from "react-error-boundary";
-import { Group, NeutralToneMapping, WebGLRenderer } from "three";
+import {ACESFilmicToneMapping, Group, NeutralToneMapping, WebGLRenderer} from "three";
 import { configureTextBuilder } from "troika-three-text";
 
 
@@ -43,6 +43,7 @@ import {
 import {useEngineObjectStore} from "../stores/EngineObjectStore";
 import {useWorldLoadingStateStore} from "../stores/WorldLoadingStateStore";
 import {FlatLoadingScreen, VRLoadingScreen} from "./LoadingScreen";
+import {SSAO} from "../render/SSAO";
 
 configureTextBuilder({
     useWorker: false
@@ -215,6 +216,8 @@ const SceneContents = ({
         set_loading(show_loader);
     }, [show_loader, set_loading]);
 
+    const [ssao_mode] = useSetting("ssao_mode");
+
     return (
         <>
             <FloorCollider />
@@ -247,6 +250,7 @@ const SceneContents = ({
             {show_loader && <VRLoadingScreen />}
 
             <TweenRunner />
+            <SSAO mode={ssao_mode} />
 
             {extra_in_origin || null}
         </>
@@ -324,8 +328,8 @@ const EngineHostInternal = memo(
 
         const handle_created = useCallback(
             ({ gl }: RootState) => {
-                gl.toneMapping = NeutralToneMapping;
-                gl.toneMappingExposure = 1.0;
+                gl.toneMapping = ACESFilmicToneMapping; // TODO: this used to be neutral, but really it'd be good if the SDK decides
+                gl.toneMappingExposure = 1.2;
 
                 gl.domElement.addEventListener(
                     "webglcontextlost",

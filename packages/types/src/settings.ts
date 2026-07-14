@@ -323,6 +323,26 @@ export const settings_def = build_settings({
         }
     },
 
+    ssao_mode: {
+        default_value: "balanced" as "off" | "performance" | "balanced" | "quality",
+        ui: {
+            common: {
+                label: "SSAO",
+                description: "Screen space ambient occlusion makes lighting more realistic by making corners and crevices darker",
+                widget: {
+                    type: "select",
+                    options: [
+                        {label: "Off", value: "off"},
+                        {label: "Performance", value: "performance"},
+                        {label: "Balanced", value: "balanced"},
+                        {label: "Quality", value: "quality"}
+                    ]
+                },
+                breadcrumbs: ["Graphics"]
+            }
+        }
+    },
+
     // TODO: widget cross conditions: only show angle if mode is snap, only show speed if mode is smooth
 
     debug_ray_hits: {
