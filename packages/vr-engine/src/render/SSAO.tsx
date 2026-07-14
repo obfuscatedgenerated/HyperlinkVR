@@ -1,5 +1,5 @@
-import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import {useFrame} from "@react-three/fiber";
+import {useEffect, useMemo, useRef} from "react";
 import {
     DataTexture,
     DepthTexture,
@@ -25,7 +25,7 @@ import {
     WebGLRenderTarget
 } from "three";
 
-import { Layer } from "./layers";
+import {compute_layer_mask, Layer} from "./layers";
 
 const fullscreen_vertex = /* glsl */ `
 varying vec2 v_uv;
@@ -380,6 +380,11 @@ export const SSAO = (props: SSAOProps) => {
     const scratch_hidden: Object3D[] = useMemo(() => [], []);
     const flat_viewport = useMemo(() => new Vector4(), []);
     const drawing_buffer_size = useMemo(() => new Vector2(), []);
+    const prepass_cameras = useMemo(() => [] as PerspectiveCamera[], []);
+    const prepass_mask = useMemo(() => compute_layer_mask([
+        Layer.Default,
+        Layer.PlayerModel_TorsoAndHands
+    ]), []);
 
     useEffect(() => {
         return () => {
@@ -417,6 +422,8 @@ export const SSAO = (props: SSAOProps) => {
         let fb_height = 0;
 
         if (gl.xr.isPresenting) {
+            camera.updateWorldMatrix(true, false);
+            gl.xr.updateCamera(camera as PerspectiveCamera);
             const xr_camera = gl.xr.getCamera();
             for (const sub_camera of xr_camera.cameras) {
                 const eye_camera = sub_camera as PerspectiveCamera & { viewport: Vector4 };
@@ -475,7 +482,23 @@ export const SSAO = (props: SSAOProps) => {
         // ---- pass 1: depth prepass, one render per eye viewport ----
         frame_scene.overrideMaterial = depth_material;
 
-        for (const view of scratch_views) {
+        for (let view_index = 0; view_index < scratch_views.length; view_index++) {
+            const view = scratch_views[view_index];
+
+            while (prepass_cameras.length <= view_index) {
+                const scratch_camera = new PerspectiveCamera();
+                scratch_camera.matrixAutoUpdate = false;
+                scratch_camera.matrixWorldAutoUpdate = false;
+                prepass_cameras.push(scratch_camera);
+            }
+            const prepass_camera = prepass_cameras[view_index];
+
+            prepass_camera.projectionMatrix.copy(view.camera.projectionMatrix);
+            prepass_camera.projectionMatrixInverse.copy(view.camera.projectionMatrixInverse);
+            prepass_camera.matrixWorld.copy(view.camera.matrixWorld);
+            prepass_camera.matrixWorldInverse.copy(view.camera.matrixWorld).invert();
+            prepass_camera.layers.mask = prepass_mask;
+
             const vx = Math.floor(view.viewport.x * resolution_scale);
             const vy = Math.floor(view.viewport.y * resolution_scale);
             const vw = Math.floor(view.viewport.z * resolution_scale);
@@ -486,7 +509,7 @@ export const SSAO = (props: SSAOProps) => {
             targets.depth_target.scissorTest = true;
 
             gl.setRenderTarget(targets.depth_target);
-            gl.render(frame_scene, view.camera);
+            gl.render(frame_scene, prepass_camera);
         }
 
         frame_scene.overrideMaterial = prev_override;
