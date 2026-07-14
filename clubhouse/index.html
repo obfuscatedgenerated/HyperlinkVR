@@ -28,7 +28,8 @@
             .set_object(interior)
             .create();
 
-        await hyperlinkvr.players.get_current_player().teleport_to([0, 0, -10.5])
+        // TODO: why does awaiting this hang at init?
+        hyperlinkvr.players.get_current_player().teleport_to([0, 0, 10.5], 0)
 
         hyperlinkvr.finished_loading();
       });
