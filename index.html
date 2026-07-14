@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HyperlinkVR</title>
+    <link rel="icon" href="/hyperlinkvr_anim.svg" type="image/svg+xml">
+    <style>
+        :root {
+            --bg-color: #0a0a0a;
+            --text-color: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 7vw, 10rem);
+            text-align: center;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            padding: 0 20px;
+        }
+
+        .hyper {
+            background: linear-gradient(var(--gradient-angle, 90deg), #ffffff 0%, #444444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>watch this <span class="hyper">hyper</span>space.</h1>
+
+    <script>
+       const hyperText = document.querySelector(".hyper");
+
+        let targetX = window.innerWidth / 2;
+        let targetY = window.innerHeight / 2;
+
+        let currentX = targetX;
+        let currentY = targetY;
+
+        const easing = 0.06;
+
+        document.addEventListener("mousemove", (e) => {
+            targetX = e.clientX;
+            targetY = e.clientY;
+        });
+
+        const animate = () => {
+            currentX += (targetX - currentX) * easing;
+            currentY += (targetY - currentY) * easing;
+
+            const rect = hyperText.getBoundingClientRect();
+            const textCenterX = rect.left + rect.width / 2;
+            const textCenterY = rect.top + rect.height / 2;
+            
+            const deltaX = currentX - textCenterX;
+            const deltaY = currentY - textCenterY;
+            
+            let angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI) + 90;
+            hyperText.style.setProperty('--gradient-angle', `${angle}deg`);
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
