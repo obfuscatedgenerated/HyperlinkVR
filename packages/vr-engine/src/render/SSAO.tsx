@@ -2,12 +2,12 @@ import {useFrame} from "@react-three/fiber";
 import {useEffect, useMemo, useRef} from "react";
 import {
     DataTexture,
-    DepthTexture,
+    DepthTexture, DoubleSide,
     FloatType,
-    LinearFilter,
+    LinearFilter, Material,
     Matrix4,
     Mesh,
-    MeshBasicMaterial,
+    MeshBasicMaterial, MeshPhysicalMaterial,
     MultiplyBlending,
     NearestFilter,
     Object3D,
@@ -271,13 +271,24 @@ export const SSAO = (props: SSAOProps) => {
         props = { enabled: true, ...ssao_presets[props.mode] };
     }
 
-    const { enabled, samples, radius, intensity, bias, resolution_scale } = props;
+    return <SSAOImpl {...props} />;
+}
 
+const is_see_through = (material: Material): boolean => {
+    if (material.transparent) {
+        return true;
+    }
+
+    const physical = material as MeshPhysicalMaterial;
+    return typeof physical.transmission === "number" && physical.transmission > 0;
+};
+
+const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale }: SSAOPropsSpecified) => {
     const noise_texture = useMemo(() => build_noise_texture(), []);
 
     // depth prepass: geometry only, no fragment colour output
     const depth_material = useMemo(
-        () => new MeshBasicMaterial({ colorWrite: false }),
+        () => new MeshBasicMaterial({ colorWrite: false, side: DoubleSide }),
         []
     );
 
@@ -476,6 +487,17 @@ export const SSAO = (props: SSAOProps) => {
             if (object.visible && object.userData._exclude_from_ao) {
                 object.visible = false;
                 scratch_hidden.push(object);
+                return;
+            }
+
+            // dont ao transparent/transmissive objects
+            const mesh = object as Mesh;
+            if (mesh.isMesh && mesh.material && !mesh.userData._force_ao_opaque) {
+                const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+                if (materials.every(is_see_through)) {
+                    object.visible = false;
+                    scratch_hidden.push(object);
+                }
             }
         });
 
