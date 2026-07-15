@@ -53,6 +53,9 @@ const SNAP_TO_GROUND_DISTANCE = 0.3;
 const MAX_SLOPE_CLIMB_ANGLE = (50 * Math.PI) / 180;
 const MIN_SLOPE_SLIDE_ANGLE = (35 * Math.PI) / 180;
 
+const TERMINAL_VELOCITY = -25;
+const KILL_LEVEL_Y = -50;
+
 export const PlayerKinematics = () => {
     const origin_ref = usePlayerOrigin();
     const { world, rapier, rigidBodyStates } = useRapier();
@@ -64,6 +67,8 @@ export const PlayerKinematics = () => {
     const head_world = useRef(new Vector3());
     const desired = useRef(new Vector3());
     const requested = useRef(new Vector3());
+
+    const last_grounded_pos = useRef(new Vector3(0, 0, 0));
 
     const { world_env } = useWorldEnvironment();
 
@@ -118,7 +123,10 @@ export const PlayerKinematics = () => {
         };
     }, [world, controller, capsule_body, capsule_collider]);
 
-    useFrame((_, delta) => {
+    useFrame((_, raw_delta) => {
+        // clamp delta so lag spikes dont explode gravity
+        const delta = Math.min(raw_delta, 1 / 30);
+
         const origin = origin_ref.current;
         if (!origin) return;
 
@@ -152,6 +160,7 @@ export const PlayerKinematics = () => {
         );
 
         velocity_y.current += world_env.physics.gravity * delta;
+        velocity_y.current = Math.max(velocity_y.current, TERMINAL_VELOCITY);
 
         if (jump_pressed_ref.current && controller.computedGrounded()) {
             velocity_y.current = JUMP_SPEED;
@@ -177,11 +186,18 @@ export const PlayerKinematics = () => {
 
         if (controller.computedGrounded()) {
             velocity_y.current = 0;
+            last_grounded_pos.current.copy(origin.position);
         }
 
         origin.position.x += resolved.x;
         origin.position.y += resolved.y;
         origin.position.z += resolved.z;
+
+        if (origin.position.y < KILL_LEVEL_Y) {
+            velocity_y.current = 0;
+            origin.position.copy(last_grounded_pos.current);
+            // TODO: fade out and in
+        }
 
         const capsule_translation = capsule_body.translation();
         set_capsule_world_position(
