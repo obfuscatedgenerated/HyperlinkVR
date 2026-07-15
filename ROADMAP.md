@@ -26,7 +26,8 @@
   - [ ] Fly
   - [ ] Crouch for flat
 - [ ] Option for SDK rigid body to forbid teleport onto
-- [ ] Light prefabs: point, spot, directional
+- [x] Light interactions: point, spot, directional
+  - [ ] Support tweening of light properties 
 - [x] Positional audio interaction/prefab (with option for 2D audio for consistency even though they could do it via their own DOM if they wished)
 - [x] A way to control playback. Perhaps interactions need to be able to expose a custom API on the SDK ret_val
   - [x] Implement interaction command message and API binding

@@ -274,13 +274,60 @@ export const GlobalAudioInteractionSchema = bindable({
 export type GlobalAudioInteraction = z.infer<typeof GlobalAudioInteractionSchema>;
 export type GlobalAudioInteractionInput = z.input<typeof GlobalAudioInteractionSchema>
 
+export const HexNumericalColorSchema = z.number().int().min(0).max(0xffffff);
+export type HexNumericalColor = z.infer<typeof HexNumericalColorSchema>;
+
+export const HexStringColorSchema = z.string().regex(/^#([0-9a-fA-F]{6})$/);
+export type HexStringColor = z.infer<typeof HexStringColorSchema>;
+
+export const HexColorSchema = z.union([HexNumericalColorSchema, HexStringColorSchema]);
+export type HexColor = z.infer<typeof HexColorSchema>;
+
+export const PointLightInteractionSchema = bindable({
+    type: z.literal("point-light"),
+    color: HexColorSchema.default(0xffffff),
+    intensity: z.number().nonnegative().default(1),
+    distance: z.number().nonnegative().default(0),
+    decay: z.number().nonnegative().default(2),
+    offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+});
+export type PointLightInteraction = z.infer<typeof PointLightInteractionSchema>;
+export type PointLightInteractionInput = z.input<typeof PointLightInteractionSchema>;
+
+export const SpotLightInteractionSchema = bindable({
+    type: z.literal("spot-light"),
+    color: HexColorSchema.default(0xffffff),
+    intensity: z.number().nonnegative().default(1),
+    distance: z.number().nonnegative().default(0),
+    decay: z.number().nonnegative().default(2),
+    angle: z.number().min(0).max(Math.PI / 2).default(Math.PI / 3),
+    penumbra: z.number().min(0).max(1).default(0),
+    offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+    rotation: RotationSchema.default([0, 0, 0]),
+});
+export type SpotLightInteraction = z.infer<typeof SpotLightInteractionSchema>;
+export type SpotLightInteractionInput = z.input<typeof SpotLightInteractionSchema>;
+
+export const DirectionalLightInteractionSchema = bindable({
+    type: z.literal("directional-light"),
+    color: HexColorSchema.default(0xffffff),
+    intensity: z.number().nonnegative().default(1),
+    offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+    rotation: RotationSchema.default([0, 0, 0]),
+});
+export type DirectionalLightInteraction = z.infer<typeof DirectionalLightInteractionSchema>;
+export type DirectionalLightInteractionInput = z.input<typeof DirectionalLightInteractionSchema>;
+
 export const InteractionSchema = z.discriminatedUnion("type", [
     GrabbableInteractionSchema,
     ControllerButtonInteractionSchema,
     TriggerVolumeInteractionSchema,
     FollowPlayerInteractionSchema,
     PositionalAudioInteractionSchema,
-    GlobalAudioInteractionSchema
+    GlobalAudioInteractionSchema,
+    PointLightInteractionSchema,
+    SpotLightInteractionSchema,
+    DirectionalLightInteractionSchema
 ]);
 export type Interaction = z.infer<typeof InteractionSchema>;
 export type InteractionInput = z.input<typeof InteractionSchema>;
@@ -321,14 +368,11 @@ export type CustomObjectInput = z.input<typeof CustomObjectSchema>;
 
 // TODO: built in primitive meshes, either by a path or explicit in schema. would be useless without material override tho
 
-export const HexNumericalColorSchema = z.number().int().min(0).max(0xffffff);
-export type HexNumericalColor = z.infer<typeof HexNumericalColorSchema>;
-
 export const ButtonPrefabSchema = bindable({
     type: z.literal("prefab"),
     name: z.literal("button"),
     label: z.string(),
-    color: HexNumericalColorSchema.default(0x00ff00),
+    color: HexColorSchema.default(0x00ff00),
     report_press: z.boolean().default(true),
     report_release: z.boolean().default(true)
 });

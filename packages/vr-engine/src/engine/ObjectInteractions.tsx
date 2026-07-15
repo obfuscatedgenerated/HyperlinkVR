@@ -1,6 +1,7 @@
 import type {
-    FollowPlayerInteraction, GlobalAudioInteraction, GrabbableInteraction, Interaction,
-    PositionalAudioInteraction, TriggerVolumeInteraction
+    DirectionalLightInteraction,
+    FollowPlayerInteraction, GlobalAudioInteraction, GrabbableInteraction, Interaction, PointLightInteraction,
+    PositionalAudioInteraction, SpotLightInteraction, TriggerVolumeInteraction
 } from "@hyperlinkvr/vr-engine-schemas";
 import {useEffect, useMemo, useRef} from "react";
 
@@ -12,9 +13,10 @@ import { useInteractionBinding } from "../hooks/useInteractionBinding";
 import { Grabbable } from "../interaction";
 import { FollowPlayer } from "../interaction/FollowPlayer";
 import { resolve_body_part, TriggerVolume } from "../interaction/TriggerVolume";
-import {Audio, AudioLoader, Group} from "three";
+import {Audio, AudioLoader, DirectionalLight, Euler, Group, PointLight, SpotLight} from "three";
 import {PositionalAudio} from "@react-three/drei";
 import type { PositionalAudio as PositionalAudioType } from "three";
+import {rotation_to_euler} from "./rotation";
 
 
 interface InteractionWrapperProps<I extends Interaction = Interaction> {
@@ -260,13 +262,218 @@ const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<Glo
     return children;
 }
 
+const PointLightWrapper = ({interaction, children}: InteractionWrapperProps<PointLightInteraction>) => {
+    const {on_command} = useInteractionBinding(interaction.binding);
+
+    // doesn't auto sync to props, so need to manually update value via ref when command is received
+    const light_ref = useRef<PointLight>(null);
+
+    useEffect(() => {
+        const handle_command = async (command: string, args?: any) => {
+            const light = light_ref.current;
+            if (!light) {
+                return {success: false, error: "Light not ready"};
+            }
+
+            switch (command) {
+                case "set_color":
+                    light.color.setHex(args.color);
+                    interaction.color = args.color;
+                    break;
+                case "set_intensity":
+                    light.intensity = args.intensity;
+                    interaction.intensity = args.intensity;
+                    break;
+                case "set_offset":
+                    light.position.set(args.offset[0], args.offset[1], args.offset[2]);
+                    interaction.offset = args.offset;
+                    break;
+                case "set_distance":
+                    light.distance = args.distance;
+                    interaction.distance = args.distance;
+                    break;
+                case "set_decay":
+                    light.decay = args.decay;
+                    interaction.decay = args.decay;
+                    break;
+                // TODO: tween commands
+                default:
+                    return {success: false, error: `Unknown command ${command}`};
+            }
+            return {success: true};
+        }
+
+        const unlisten = on_command(handle_command);
+        return () => unlisten();
+    }, [on_command, interaction]);
+
+    return (
+        <>
+            <pointLight
+                ref={light_ref}
+                color={interaction.color}
+                intensity={interaction.intensity}
+                distance={interaction.distance}
+                decay={interaction.decay}
+                position={interaction.offset}
+            />
+            {children}
+        </>
+    );
+}
+
+const DirectionalLightWrapper = ({interaction, children}: InteractionWrapperProps<DirectionalLightInteraction>) => {
+    const {on_command} = useInteractionBinding(interaction.binding);
+
+    // doesn't auto sync to props, so need to manually update value via ref when command is received
+    const light_ref = useRef<DirectionalLight>(null);
+
+    useEffect(() => {
+        const handle_command = async (command: string, args?: any) => {
+            const light = light_ref.current;
+            if (!light) {
+                return {success: false, error: "Light not ready"};
+            }
+
+            switch (command) {
+                case "set_color":
+                    light.color.setHex(args.color);
+                    interaction.color = args.color;
+                    break;
+                case "set_intensity":
+                    light.intensity = args.intensity;
+                    interaction.intensity = args.intensity;
+                    break;
+                case "set_offset":
+                    light.position.set(args.offset[0], args.offset[1], args.offset[2]);
+                    interaction.offset = args.offset;
+                    break;
+                case "set_rotation":
+                    rotation_to_euler(args.rotation, light.rotation);
+                    interaction.rotation = args.rotation;
+                    break;
+                    // TODO: tween commands
+                default:
+                    return {success: false, error: `Unknown command ${command}`};
+            }
+            return {success: true};
+        }
+
+        const unlisten = on_command(handle_command);
+        return () => unlisten();
+    }, [on_command, interaction]);
+
+    const euler_rotation = useMemo(() => {
+        const euler = new Euler();
+        rotation_to_euler(interaction.rotation, euler);
+        return euler;
+    }, [interaction.rotation]);
+
+    return (
+        <>
+            <directionalLight
+                ref={light_ref}
+                color={interaction.color}
+                intensity={interaction.intensity}
+                position={interaction.offset}
+                rotation={euler_rotation}
+            />
+            {children}
+        </>
+    );
+}
+
+const SpotLightWrapper = ({interaction, children}: InteractionWrapperProps<SpotLightInteraction>) => {
+    const {on_command} = useInteractionBinding(interaction.binding);
+
+    // doesn't auto sync to props, so need to manually update value via ref when command is received
+    const light_ref = useRef<SpotLight>(null);
+
+    useEffect(() => {
+        const handle_command = async (command: string, args?: any) => {
+            const light = light_ref.current;
+            if (!light) {
+                return {success: false, error: "Light not ready"};
+            }
+
+            switch (command) {
+                case "set_color":
+                    light.color.setHex(args.color);
+                    interaction.color = args.color;
+                    break;
+                case "set_intensity":
+                    light.intensity = args.intensity;
+                    interaction.intensity = args.intensity;
+                    break;
+                case "set_offset":
+                    light.position.set(args.offset[0], args.offset[1], args.offset[2]);
+                    interaction.offset = args.offset;
+                    break;
+                case "set_rotation":
+                    rotation_to_euler(args.rotation, light.rotation);
+                    interaction.rotation = args.rotation;
+                    break;
+                case "set_angle":
+                    light.angle = args.angle;
+                    interaction.angle = args.angle;
+                    break;
+                case "set_penumbra":
+                    light.penumbra = args.penumbra;
+                    interaction.penumbra = args.penumbra;
+                    break;
+                case "set_distance":
+                    light.distance = args.distance;
+                    interaction.distance = args.distance;
+                    break;
+                case "set_decay":
+                    light.decay = args.decay;
+                    interaction.decay = args.decay;
+                    break;
+                // TODO: tween commands
+                default:
+                    return {success: false, error: `Unknown command ${command}`};
+            }
+            return {success: true};
+        }
+
+        const unlisten = on_command(handle_command);
+        return () => unlisten();
+    }, [on_command, interaction]);
+
+    const euler_rotation = useMemo(() => {
+        const euler = new Euler();
+        rotation_to_euler(interaction.rotation, euler);
+        return euler;
+    }, [interaction.rotation]);
+
+    return (
+        <>
+            <spotLight
+                ref={light_ref}
+                color={interaction.color}
+                intensity={interaction.intensity}
+                position={interaction.offset}
+                rotation={euler_rotation}
+                angle={interaction.angle}
+                penumbra={interaction.penumbra}
+                distance={interaction.distance}
+                decay={interaction.decay}
+            />
+            {children}
+        </>
+    );
+}
+
 const INTERACTION_MAP: Record<Interaction["type"], React.ComponentType<InteractionWrapperProps<any>> | null> = {
     "grabbable": GrabbableWrapper,
     "follow-player": FollowPlayerWrapper,
     "trigger-volume": TriggerVolumeWrapper,
     "controller-button": null,
     "positional-audio": PositionalAudioWrapper,
-    "global-audio": GlobalAudioWrapper
+    "global-audio": GlobalAudioWrapper,
+    "point-light": PointLightWrapper,
+    "directional-light": DirectionalLightWrapper,
+    "spot-light": SpotLightWrapper,
 } as const;
 
 // first is outermost, last is innermost
@@ -278,7 +485,10 @@ const WRAPPER_STRICT_ORDER: Interaction["type"][] = [
     "controller-button",
     "trigger-volume",
     "positional-audio",
-    "global-audio"
+    "global-audio",
+    "point-light",
+    "directional-light",
+    "spot-light",
 ];
 
 export const ObjectInteractions = ({interactions, children}: {interactions: Interaction[], children: React.ReactNode}) => {

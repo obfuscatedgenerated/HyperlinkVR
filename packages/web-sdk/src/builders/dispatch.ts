@@ -20,7 +20,7 @@ import {BaseBuilder} from "./base";
 import {subscribe_report} from "../event_bus";
 import {send_via_rtc} from "../messenger";
 import type {NamedReply} from "@hyperlinkvr/types";
-import {INTERACTION_API_MAKERS} from "./interactions";
+import {_INTERACTION_API_MAKERS} from "./interactions";
 
 export interface EngineObjectCreationResult {
     object: CreatedEngineObject;
@@ -341,8 +341,8 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
                 const name = "binding" in interaction && interaction.binding?.name ? interaction.binding.name : null;
 
                 if (name) {
-                    if (interaction.type in INTERACTION_API_MAKERS) {
-                        const make_api = INTERACTION_API_MAKERS[interaction.type];
+                    if (interaction.type in _INTERACTION_API_MAKERS) {
+                        const make_api = _INTERACTION_API_MAKERS[interaction.type];
                         unbound_interaction_apis[name] = (binding_id) => (object_id) => make_api(object_id, binding_id);
                     }
 

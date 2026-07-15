@@ -13,6 +13,14 @@ export const rotation_to_quaternion = (rotation: Rotation, out: Quaternion): Qua
     return out.setFromEuler(scratch_euler);
 };
 
+export const rotation_to_euler = (rotation: Rotation, out: Euler): Euler => {
+    if (rotation.length === 4) {
+        out.setFromQuaternion(new Quaternion(rotation[0], rotation[1], rotation[2], rotation[3]), EULER_ORDER);
+        return out;
+    }
+    return out.set(rotation[0], rotation[1], rotation[2], EULER_ORDER);
+};
+
 const scratch_quat = new Quaternion();
 export const rotation_to_quaternion_array = (rotation: Rotation): [number, number, number, number] => {
     rotation_to_quaternion(rotation, scratch_quat);

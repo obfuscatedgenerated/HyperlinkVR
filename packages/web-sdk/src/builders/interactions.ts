@@ -4,17 +4,26 @@ import {
     ControllerButtonInteraction,
     ControllerButtonInteractionInput,
     ControllerButtonInteractionSchema,
-    ControllerButtonWhenListen,
+    ControllerButtonWhenListen, DirectionalLightInteraction, DirectionalLightInteractionInput,
+    DirectionalLightInteractionSchema,
     FollowPlayerInteractionInput,
-    FollowPlayerInteractionSchema, GlobalAudioInteraction, GlobalAudioInteractionInput, GlobalAudioInteractionSchema,
+    FollowPlayerInteractionSchema,
+    GlobalAudioInteraction,
+    GlobalAudioInteractionInput,
+    GlobalAudioInteractionSchema,
     GrabbableInteraction,
     GrabbableInteractionInput,
     GrabbableInteractionSchema,
     GrabCollider,
-    GrabOffsetInput, PositionalAudioInteraction, PositionalAudioInteractionInput, PositionalAudioInteractionSchema,
+    GrabOffsetInput, PointLightInteraction,
+    PointLightInteractionInput, PointLightInteractionSchema,
+    PositionalAudioInteraction,
+    PositionalAudioInteractionInput,
+    PositionalAudioInteractionSchema, Rotation,
+    SpotLightInteraction, SpotLightInteractionInput, SpotLightInteractionSchema,
     TriggerVolumeInteraction,
     TriggerVolumeInteractionInput,
-    TriggerVolumeInteractionSchema
+    TriggerVolumeInteractionSchema, TweenEasing
 } from "@hyperlinkvr/vr-engine-schemas";
 import {send_via_rtc} from "../messenger";
 
@@ -324,8 +333,212 @@ export class GlobalAudioInteractionBuilder extends BaseBuilder<GlobalAudioIntera
     }
 }
 
-export const INTERACTION_API_MAKERS = {
+const base_light_api = (object_id: string, interaction_id: string) => {
+    return {
+        set_color: async (color: number | string) => {
+            return await interaction_command(object_id, interaction_id, "set_color", {color});
+        },
+        set_intensity: async (intensity: number) => {
+            return await interaction_command(object_id, interaction_id, "set_intensity", {intensity});
+        },
+        set_offset: async (offset: [number, number, number]) => {
+            return await interaction_command(object_id, interaction_id, "set_offset", {offset});
+        },
+        tween_color: async (color: number | string, duration: number, easing: TweenEasing) => {
+            return await interaction_command(object_id, interaction_id, "tween_color", {color, duration, easing});
+        },
+        tween_intensity: async (intensity: number, duration: number, easing: TweenEasing) => {
+            return await interaction_command(object_id, interaction_id, "tween_intensity", {intensity, duration, easing});
+        },
+        tween_offset: async (offset: [number, number, number], duration: number, easing: TweenEasing) => {
+            return await interaction_command(object_id, interaction_id, "tween_offset", {offset, duration, easing});
+        },
+    }
+}
+
+export class PointLightInteractionBuilder extends BaseBuilder<PointLightInteractionInput> {
+    constructor() {
+        super({type: "point-light"} as PointLightInteractionInput);
+    }
+
+    set_color(color: number | string) {
+        this._internal.color = color;
+        return this;
+    }
+
+    set_intensity(intensity: number) {
+        this._internal.intensity = intensity;
+        return this;
+    }
+
+    set_distance(distance: number) {
+        this._internal.distance = distance;
+        return this;
+    }
+
+    set_decay(decay: number) {
+        this._internal.decay = decay;
+        return this;
+    }
+
+    set_offset(offset: [number, number, number]) {
+        this._internal.offset = offset;
+        return this;
+    }
+
+    build(): PointLightInteraction {
+        return PointLightInteractionSchema.parse(this._internal);
+    }
+
+
+    static _make_api(object_id: string, interaction_id: string) {
+        return {
+            ...base_light_api(object_id, interaction_id),
+            set_distance: async (distance: number) => {
+                return await interaction_command(object_id, interaction_id, "set_distance", {distance});
+            },
+            set_decay: async (decay: number) => {
+                return await interaction_command(object_id, interaction_id, "set_decay", {decay});
+            },
+            tween_distance: async (distance: number, duration: number, easing: TweenEasing) => {
+                return await interaction_command(object_id, interaction_id, "tween_distance", {distance, duration, easing});
+            },
+            tween_decay: async (decay: number, duration: number, easing: TweenEasing) => {
+                return await interaction_command(object_id, interaction_id, "tween_decay", {decay, duration, easing});
+            }
+        }
+    }
+}
+
+export class DirectionalLightInteractionBuilder extends BaseBuilder<DirectionalLightInteractionInput> {
+    constructor() {
+        super({type: "directional-light"} as DirectionalLightInteractionInput);
+    }
+
+    set_color(color: number | string) {
+        this._internal.color = color;
+        return this;
+    }
+
+
+    set_intensity(intensity: number) {
+        this._internal.intensity = intensity;
+        return this;
+    }
+
+    set_offset(offset: [number, number, number]) {
+        this._internal.offset = offset;
+        return this;
+    }
+
+    set_rotation(rotation: Rotation) {
+        this._internal.rotation = rotation;
+        return this;
+    }
+
+    build(): DirectionalLightInteraction {
+        return DirectionalLightInteractionSchema.parse(this._internal);
+    }
+
+
+    static _make_api(object_id: string, interaction_id: string) {
+        return {
+            ...base_light_api(object_id, interaction_id),
+            set_rotation: async (rotation: Rotation) => {
+                return await interaction_command(object_id, interaction_id, "set_rotation", {rotation});
+            },
+            tween_rotation: async (rotation: Rotation, duration: number, easing: TweenEasing) => {
+                return await interaction_command(object_id, interaction_id, "tween_rotation", {rotation, duration, easing});
+            }
+        }
+    }
+}
+
+export class SpotLightInteractionBuilder extends BaseBuilder<SpotLightInteractionInput> {
+    constructor() {
+        super({type: "spot-light"} as SpotLightInteractionInput);
+    }
+
+    set_color(color: number | string) {
+        this._internal.color = color;
+        return this;
+    }
+
+    set_intensity(intensity: number) {
+        this._internal.intensity = intensity;
+        return this;
+    }
+
+    set_distance(distance: number) {
+        this._internal.distance = distance;
+        return this;
+    }
+
+    set_decay(decay: number) {
+        this._internal.decay = decay;
+        return this;
+    }
+
+    set_angle(angle: number) {
+        this._internal.angle = angle;
+        return this;
+    }
+
+    set_penumbra(penumbra: number) {
+        this._internal.penumbra = penumbra;
+        return this;
+    }
+
+    set_offset(offset: [number, number, number]) {
+        this._internal.offset = offset;
+        return this;
+    }
+
+    set_rotation(rotation: Rotation) {
+        this._internal.rotation = rotation;
+        return this;
+    }
+
+    build(): SpotLightInteraction {
+        return SpotLightInteractionSchema.parse(this._internal);
+    }
+
+    static _make_api(object_id: string, interaction_id: string) {
+        return {
+            ...(DirectionalLightInteractionBuilder._make_api(object_id, interaction_id)),
+            set_distance: async (distance: number) => {
+                return await interaction_command(object_id, interaction_id, "set_distance", {distance});
+            },
+            set_decay: async (decay: number) => {
+                return await interaction_command(object_id, interaction_id, "set_decay", {decay});
+            },
+            set_angle: async (angle: number) => {
+                return await interaction_command(object_id, interaction_id, "set_angle", {angle});
+            },
+            set_penumbra: async (penumbra: number) => {
+                return await interaction_command(object_id, interaction_id, "set_penumbra", {penumbra});
+            },
+            tween_distance: async (distance: number, duration: number, easing: TweenEasing) => {
+                return await interaction_command(object_id, interaction_id, "tween_distance", {distance, duration, easing});
+            },
+            tween_decay: async (decay: number, duration: number, easing: TweenEasing) => {
+                return await interaction_command(object_id, interaction_id, "tween_decay", {decay, duration, easing});
+            },
+            tween_angle: async (angle: number, duration: number, easing: TweenEasing) => {
+                return await interaction_command(object_id, interaction_id, "tween_angle", {angle, duration, easing});
+            },
+            tween_penumbra: async (penumbra: number, duration: number, easing: TweenEasing) => {
+                return await interaction_command(object_id, interaction_id, "tween_penumbra", {penumbra, duration, easing});
+            }
+        }
+    }
+}
+
+export const _INTERACTION_API_MAKERS = {
     "follow-player": FollowPlayerInteractionBuilder._make_api,
     "positional-audio": PositionalAudioInteractionBuilder._make_api,
-    "global-audio": GlobalAudioInteractionBuilder._make_api
+    "global-audio": GlobalAudioInteractionBuilder._make_api,
+    "point-light": PointLightInteractionBuilder._make_api,
+    "directional-light": DirectionalLightInteractionBuilder._make_api,
+    "spot-light": SpotLightInteractionBuilder._make_api
 } as Record<string, InteractionMakeAPIFunc>;
