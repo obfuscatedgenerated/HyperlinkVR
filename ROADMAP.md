@@ -74,6 +74,7 @@
 - [ ] Do we add first party health system? Or have them build it themself?
 - [x] Reset scene state on world change (perhaps with loading screen if assets to be preloaded)
 - [ ] Interactions/monitors for guns with either arcing, projectile, or hitscan (raycast)
+- [ ] Flat FOV setting
 
 ### Phase 3
 - [ ] VR keyboard for DOM and watch input

@@ -10,6 +10,8 @@ const BASE_YAW_RADIANS = 0.022 * (Math.PI / 180);
 
 const PITCH_LIMIT = Math.PI / 2 - 0.01;
 
+const TURN_FRAME_LIMIT = Math.PI / 3;
+
 export const FlatCameraRig = ({ origin }: { origin: React.RefObject<Group | null>; }) => {
     const { camera } = useThree();
     const input = useFlatFrameInput();
@@ -25,12 +27,22 @@ export const FlatCameraRig = ({ origin }: { origin: React.RefObject<Group | null
 
         const mult = BASE_YAW_RADIANS * sensitivity;
 
+        let yaw_delta = input.look.x * mult;
+        if (Math.abs(yaw_delta) > TURN_FRAME_LIMIT) {
+            yaw_delta = Math.sign(yaw_delta) * TURN_FRAME_LIMIT;
+        }
+
+        let pitch_delta = input.look.y * mult;
+        if (Math.abs(pitch_delta) > TURN_FRAME_LIMIT) {
+            pitch_delta = Math.sign(pitch_delta) * TURN_FRAME_LIMIT;
+        }
+
         // apply accumulated x delta to the origin's yaw
-        origin.current.rotation.y -= input.look.x * mult;
+        origin.current.rotation.y -= yaw_delta * mult;
         input.look.x = 0;
 
         // apply accumulated y delta to the camera's pitch
-        pitch.current -= input.look.y * mult;
+        pitch.current -= pitch_delta * mult;
         pitch.current = Math.max(
             -PITCH_LIMIT,
             Math.min(PITCH_LIMIT, pitch.current)
