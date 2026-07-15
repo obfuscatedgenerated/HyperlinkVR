@@ -72,7 +72,8 @@
 - [ ] Layers debugger devtool
 - [ ] Camera debugger devtool
 - [ ] Do we add first party health system? Or have them build it themself?
-- [ ] Reset scene state on world change (perhaps with loading screen if assets to be preloaded)
+- [x] Reset scene state on world change (perhaps with loading screen if assets to be preloaded)
+- [ ] Interactions/monitors for guns with either arcing, projectile, or hitscan (raycast)
 
 ### Phase 3
 - [ ] VR keyboard for DOM and watch input
