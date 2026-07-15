@@ -6,6 +6,7 @@ import {EngineObjectDispatchSchema, EngineObjectModificationSchema} from "@hyper
 import {get_object_refs} from "./object_ref_registry";
 import {apply_modification, sample_live_transform} from "./object_modification";
 import {cancel_active_tween, set_active_tween} from "./tween_registry";
+import {clear_object_ready, wait_for_object_ready} from "./object_ready_registry";
 
 
 export const EngineObjectSync = () => {
@@ -25,13 +26,17 @@ export const EngineObjectSync = () => {
 
             const id = crypto.randomUUID();
             const created_object = { id, ...data };
-            console.log("(+) Created engine object", created_object);
+            console.log("(+) Creating engine object", created_object);
             add_object(created_object);
             console.log("New object count: ", Object.keys(useEngineObjectStore.getState().objects).length)
 
-            reply({
-                for: "HVRSDK_CREATE_ENGINE_OBJECT",
-                object: created_object
+            wait_for_object_ready(id).then(() => {
+                console.log("(*) Engine object ready", id);
+
+                reply({
+                    for: "HVRSDK_CREATE_ENGINE_OBJECT",
+                    object: created_object
+                });
             });
         });
 
@@ -40,6 +45,7 @@ export const EngineObjectSync = () => {
 
             console.log("(-) Destroyed engine object", message.object_id);
             remove_object(message.object_id);
+            clear_object_ready(message.object_id);
             console.log("New object count: ", Object.keys(useEngineObjectStore.getState().objects).length)
 
             reply({

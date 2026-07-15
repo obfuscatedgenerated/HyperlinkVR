@@ -8,6 +8,7 @@ import { CustomObjectRenderer } from "./CustomObjectRenderer";
 import { PrefabRenderer } from "./PrefabRenderer";
 import {rotation_to_quaternion} from "./rotation";
 import {Group} from "three";
+import {ObjectReadyMarker} from "./object_ready_registry";
 
 export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) => {
     const { type, ...obj_rest } = data.object;
@@ -65,6 +66,7 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
                     transform={data.transform}
                     {...obj_rest}
                 />
+                <ObjectReadyMarker object_id={data.id} />
             </group>
         </ObjectRefsProvider>
     );

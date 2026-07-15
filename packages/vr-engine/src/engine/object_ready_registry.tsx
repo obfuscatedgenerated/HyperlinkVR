@@ -1,0 +1,51 @@
+import {useEffect} from "react";
+
+const ready_ids = new Set<string>();
+const waiters = new Map<string, Set<() => void>>();
+
+export const mark_object_ready = (object_id: string) => {
+    ready_ids.add(object_id);
+    const notifiers = waiters.get(object_id);
+    if (notifiers) {
+        notifiers.forEach((notify) => notify());
+        waiters.delete(object_id);
+    }
+};
+
+export const clear_object_ready = (object_id: string) => {
+    ready_ids.delete(object_id);
+    waiters.delete(object_id);
+};
+
+// resolves on timeout too, so a broken mesh url doesn't block the entire world from loading
+export const wait_for_object_ready = (object_id: string, timeout_ms = 15000) => {
+    if (ready_ids.has(object_id)) {
+        return Promise.resolve();
+    }
+
+    return new Promise<void>((resolve) => {
+        const notify = () => {
+            clearTimeout(timeout_handle);
+            resolve();
+        };
+
+        const timeout_handle = setTimeout(() => {
+            waiters.get(object_id)?.delete(notify);
+            console.warn(`Timed out waiting for object ${object_id} to become ready`);
+            resolve();
+        }, timeout_ms);
+
+        const notifiers = waiters.get(object_id) ?? new Set();
+        notifiers.add(notify);
+        waiters.set(object_id, notifiers);
+    });
+};
+
+export const ObjectReadyMarker = ({ object_id }: { object_id: string }) => {
+    useEffect(() => {
+        const raf_handle = requestAnimationFrame(() => mark_object_ready(object_id));
+        return () => cancelAnimationFrame(raf_handle);
+    }, [object_id]);
+
+    return null;
+};

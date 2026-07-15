@@ -80,6 +80,7 @@ export const Dropdown = ({
                 </Container>
 
                 {is_open && (
+                    // TODO: use portal or be on top layer
                     // first container catches clicks outside the dropdown to close it, second container is the actual dropdown menu
                     <>
                         <Container
