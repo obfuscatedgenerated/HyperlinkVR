@@ -38,11 +38,11 @@ export const FlatCameraRig = ({ origin }: { origin: React.RefObject<Group | null
         }
 
         // apply accumulated x delta to the origin's yaw
-        origin.current.rotation.y -= yaw_delta * mult;
+        origin.current.rotation.y -= yaw_delta;
         input.look.x = 0;
 
         // apply accumulated y delta to the camera's pitch
-        pitch.current -= pitch_delta * mult;
+        pitch.current -= pitch_delta;
         pitch.current = Math.max(
             -PITCH_LIMIT,
             Math.min(PITCH_LIMIT, pitch.current)
