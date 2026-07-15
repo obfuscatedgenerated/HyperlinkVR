@@ -251,6 +251,7 @@ const SceneContents = ({
 
             <TweenRunner />
             <SSAO mode={ssao_mode} />
+            {/*TODO: should ssao even be in use in vr? if not, then may as well use react-three postprocessing (which doesn't work in vr but prob more battle tested than out own ao sahder) */}
 
             {extra_in_origin || null}
         </>
