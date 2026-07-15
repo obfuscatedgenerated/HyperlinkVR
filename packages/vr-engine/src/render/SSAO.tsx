@@ -1,6 +1,7 @@
 import {useFrame} from "@react-three/fiber";
 import {useEffect, useMemo, useRef} from "react";
 import {
+    Color,
     DataTexture,
     DepthTexture, DoubleSide,
     FloatType,
@@ -107,7 +108,7 @@ void main() {
 
 // 4x4 box blur to hide the 4x4 noise pattern. Runs over the whole atlas at
 // once; the seam between eyes is at most a couple of texels and never visible.
-const blur_fragment = /* glsl */ `
+const blur_fragment = `
 uniform sampler2D t_ao;
 uniform vec2 u_texel;
 
@@ -126,13 +127,20 @@ void main() {
 // Composite quad rendered inside the actual scene. gl_FragCoord is in
 // framebuffer pixels, so dividing by the full framebuffer size lands each eye
 // on its own half of the AO atlas with zero per-eye uniforms.
-const composite_fragment = /* glsl */ `
+//
+// t_mask is the transparency coverage buffer: wherever a see-through surface
+// is visible in front of the opaque depth, AO fades to 1 so occlusion from
+// geometry BEHIND the surface never gets multiplied on top of it.
+const composite_fragment = `
 uniform sampler2D t_ao;
+uniform sampler2D t_mask;
 uniform vec2 u_resolution;
 
 void main() {
-    float ao = texture2D(t_ao, gl_FragCoord.xy / u_resolution).r;
-    gl_FragColor = vec4(vec3(ao), 1.0);
+    vec2 uv = gl_FragCoord.xy / u_resolution;
+    float ao = texture2D(t_ao, uv).r;
+    float mask = texture2D(t_mask, uv).r;
+    gl_FragColor = vec4(vec3(mix(ao, 1.0, mask)), 1.0);
 }`;
 
 const build_kernel = (sample_count: number): Vector3[] => {
@@ -339,6 +347,11 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
         []
     );
 
+    const mask_material = useMemo(
+        () => new MeshBasicMaterial({ color: 0xffffff, depthWrite: false, side: DoubleSide }),
+        []
+    );
+
     // fullscreen quad scene used to run the AO and blur passes
     const pass_scene = useMemo(() => new Scene(), []);
     const pass_camera = useMemo(() => new OrthographicCamera(-1, 1, 1, -1, 0, 1), []);
@@ -361,7 +374,8 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
             new ShaderMaterial({
                 uniforms: {
                     t_ao: { value: null },
-                    u_resolution: { value: new Vector2(1, 1) }
+                    u_resolution: { value: new Vector2(1, 1) },
+                    t_mask: { value: null }
                 },
                 vertexShader: fullscreen_vertex,
                 fragmentShader: composite_fragment,
@@ -387,8 +401,13 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
     }, [composite_material]);
 
     const targets_ref = useRef<AOTargets | null>(null);
+
     const scratch_views: ViewInfo[] = useMemo(() => [], []);
-    const scratch_hidden: Object3D[] = useMemo(() => [], []);
+    const scratch_excluded: Object3D[] = useMemo(() => [], []);
+    const scratch_see_through: Mesh[] = useMemo(() => [], []);
+    const scratch_opaque: Mesh[] = useMemo(() => [], []);
+    const scratch_clear_color = useMemo(() => new Color(), []);
+
     const flat_viewport = useMemo(() => new Vector4(), []);
     const drawing_buffer_size = useMemo(() => new Vector2(), []);
     const prepass_cameras = useMemo(() => [] as PerspectiveCamera[], []);
@@ -405,6 +424,7 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
             }
             noise_texture.dispose();
             depth_material.dispose();
+            mask_material.dispose();
             ao_material.dispose();
             blur_material.dispose();
             composite_material.dispose();
@@ -478,30 +498,52 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
         const prev_xr_enabled = gl.xr.enabled;
         const prev_override = frame_scene.overrideMaterial;
 
+        const prev_auto_clear = gl.autoClear;
+        const prev_clear_alpha = gl.getClearAlpha();
+        gl.getClearColor(scratch_clear_color);
+
         gl.xr.enabled = false;
+        gl.setClearColor(0x000000, 0);
 
         // hide the composite quad and anything opted out of AO during the prepass
         composite_mesh.visible = false;
-        scratch_hidden.length = 0;
+        scratch_excluded.length = 0;
+        scratch_see_through.length = 0;
+        scratch_opaque.length = 0;
+
         frame_scene.traverse((object) => {
-            if (object.visible && object.userData._exclude_from_ao) {
-                object.visible = false;
-                scratch_hidden.push(object);
+            if (!object.visible) {
                 return;
             }
 
-            // dont ao transparent/transmissive objects
+            if (object.userData._exclude_from_ao) {
+                object.visible = false;
+                scratch_excluded.push(object);
+                return;
+            }
+
             const mesh = object as Mesh;
-            if (mesh.isMesh && mesh.material && !mesh.userData._force_ao_opaque) {
-                const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-                if (materials.every(is_see_through)) {
-                    object.visible = false;
-                    scratch_hidden.push(object);
-                }
+            if (!mesh.isMesh || !mesh.material) {
+                return;
+            }
+
+            // opt-in for thick transmissives that should cast AO anyway
+            if (mesh.userData._force_ao_opaque) {
+                scratch_opaque.push(mesh);
+                return;
+            }
+
+            const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+            if (materials.every(is_see_through)) {
+                // see-through surfaces never occlude; they go in the mask pass
+                mesh.visible = false;
+                scratch_see_through.push(mesh);
+            } else {
+                scratch_opaque.push(mesh);
             }
         });
 
-        // ---- pass 1: depth prepass, one render per eye viewport ----
+        // ---- pass 1: opaque depth prepass, one render per eye viewport ----
         frame_scene.overrideMaterial = depth_material;
 
         for (let view_index = 0; view_index < scratch_views.length; view_index++) {
@@ -534,9 +576,42 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
             gl.render(frame_scene, prepass_camera);
         }
 
+        // ---- pass 1.5: see-through coverage mask ----
+        // only see-through meshes visible; rendered depth-tested against the
+        // opaque depth into the same target's colour buffer. autoClear off so
+        // pass 1's depth (and black colour) survives.
+        for (const mesh of scratch_see_through) {
+            mesh.visible = true;
+        }
+        for (const mesh of scratch_opaque) {
+            mesh.visible = false;
+        }
+
+        frame_scene.overrideMaterial = mask_material;
+        gl.autoClear = false;
+
+        for (let view_index = 0; view_index < scratch_views.length; view_index++) {
+            const view = scratch_views[view_index];
+            const vx = Math.floor(view.viewport.x * resolution_scale);
+            const vy = Math.floor(view.viewport.y * resolution_scale);
+            const vw = Math.floor(view.viewport.z * resolution_scale);
+            const vh = Math.floor(view.viewport.w * resolution_scale);
+
+            targets.depth_target.viewport.set(vx, vy, vw, vh);
+            targets.depth_target.scissor.set(vx, vy, vw, vh);
+            targets.depth_target.scissorTest = true;
+
+            gl.setRenderTarget(targets.depth_target);
+            gl.render(frame_scene, prepass_cameras[view_index]);
+        }
+
+        gl.autoClear = prev_auto_clear;
         frame_scene.overrideMaterial = prev_override;
 
-        for (const object of scratch_hidden) {
+        for (const mesh of scratch_opaque) {
+            mesh.visible = true;
+        }
+        for (const object of scratch_excluded) {
             object.visible = true;
         }
 
@@ -586,8 +661,10 @@ const SSAOImpl = ({ enabled, samples, radius, intensity, bias, resolution_scale 
         // ---- restore state; main render happens after this callback ----
         gl.setRenderTarget(prev_target);
         gl.xr.enabled = prev_xr_enabled;
+        gl.setClearColor(scratch_clear_color, prev_clear_alpha);
 
         composite_material.uniforms.t_ao.value = targets.blur_target.texture;
+        composite_material.uniforms.t_mask.value = targets.depth_target.texture;
         composite_material.uniforms.u_resolution.value.set(fb_width, fb_height);
         composite_mesh.visible = true;
     });
