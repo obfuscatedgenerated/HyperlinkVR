@@ -343,6 +343,20 @@ export const settings_def = build_settings({
         }
     },
 
+    show_fps: {
+        default_value: false,
+        local_only: true,
+        ui: {
+            common: {
+                label: "Show FPS",
+                widget: {
+                    type: "switch"
+                },
+                breadcrumbs: ["Graphics"]
+            }
+        }
+    },
+
     // TODO: widget cross conditions: only show angle if mode is snap, only show speed if mode is smooth
 
     debug_ray_hits: {

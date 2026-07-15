@@ -1,5 +1,5 @@
 import {TabSessionProvider, useMessageEngine, useSetting, useStorage, useTabSession} from "@hyperlinkvr/react";
-import { Text } from "@react-three/drei";
+import {Stats, Text} from "@react-three/drei";
 import { Canvas, RootState } from "@react-three/fiber";
 import type { DefaultGLProps } from "@react-three/fiber/dist/declarations/src/core/renderer";
 import { Physics } from "@react-three/rapier";
@@ -348,6 +348,8 @@ const EngineHostInternal = memo(
         const player_ref = useRef<Group>(null);
         const loading = useWorldLoadingStateStore((store) => store.loading);
 
+        const [show_fps] = useSetting("show_fps");
+
         return (
             <SessionModeProvider value={mode}>
                 <TabSessionProvider>
@@ -370,6 +372,8 @@ const EngineHostInternal = memo(
                                         gl={make_xr_compatible_renderer}
                                         onCreated={handle_created}
                                     >
+                                        {show_fps && <Stats />}
+
                                         <AudioListenerProvider>
                                             <HandsProvider>
                                                 <SDKWorldEnvironmentProvider>
