@@ -48,6 +48,24 @@
                     .create()
         );
 
+        const ball = new h.StandardPrefabBuilder("basketball").build()
+
+        promises.push(
+            new h.EngineObjectDispatchBuilder()
+                    .set_object(ball)
+                    .set_position(0, 1.5, -10)
+                    .create()
+        );
+
+        const hoop = new h.StandardPrefabBuilder("basketball_hoop").build()
+
+        promises.push(
+            new h.EngineObjectDispatchBuilder()
+                    .set_object(hoop)
+                    .set_position(1.25,3.505,-11.87) // regulation height!
+                    .create()
+        );
+
         promises.push(hyperlinkvr.players.get_current_player().teleport_to([0, 0, 10.5], 0));
 
         await Promise.all(promises);
