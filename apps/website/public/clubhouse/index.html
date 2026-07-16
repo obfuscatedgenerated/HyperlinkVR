@@ -4,9 +4,7 @@
     <meta name="hyperlinkvr" content="supported" />
     
     <script data-cfasync="false">
-      (async () => {
-        await hyperlinkvr.wait_for_ready();
-
+      hyperlinkvr.on_ready(async () => {
         await hyperlinkvr.connect();
         console.log("Connected!");
         
@@ -72,7 +70,7 @@
 
         await Promise.all(promises);
         hyperlinkvr.finished_loading();
-      })();
+      });
     </script>
 
     <link rel="icon" href="/hyperlinkvr_anim.svg" type="image/svg+xml">

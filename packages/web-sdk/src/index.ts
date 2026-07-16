@@ -32,6 +32,30 @@ export const bind_messages = () => {
     });
 }
 
+export const wait_for_ready = (): Promise<void> => {
+    if ((window as { hyperlinkvr_ready?: boolean }).hyperlinkvr_ready) {
+        return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+        window.addEventListener("hyperlinkvr_ready", () => resolve(), { once: true });
+    });
+};
+
+// recommended approach!
+export const on_ready = (callback: () => void): (() => void) => {
+    const handler = () => callback();
+    window.addEventListener("hyperlinkvr_ready", handler);
+
+    // if the ready edge already passed before this subscription, fire once now
+    // future readies (e.g. a relaunched host) still come through the listener
+    if ((window as { hyperlinkvr_ready?: boolean }).hyperlinkvr_ready) {
+        callback();
+    }
+
+    return () => window.removeEventListener("hyperlinkvr_ready", handler);
+};
+
 export const finished_loading = async () => {
     console.log("Notifying host that loading is finished");
     const res = await send_via_rtc({
@@ -42,5 +66,3 @@ export const finished_loading = async () => {
         throw new Error("Failed to notify host that loading is finished");
     }
 }
-
-// TODO: replace dom event with a wait_for_ready that immeidately returns if already ready?
