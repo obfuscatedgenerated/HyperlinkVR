@@ -27,7 +27,7 @@ const WebSDKMessagingContext = createContext<WebSDKMessagingContextType | null>(
 export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode}) => {
     const messenger = useMessageEngine();
 
-    const {id, url} = useTabSession();
+    const {id} = useTabSession();
 
     const peer_connection_ref = useRef<RTCPeerConnection | null>(null);
     const data_channel_ref = useRef<RTCDataChannel | null>(null);
@@ -37,19 +37,28 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
     const storage = useStorageEngines();
 
     const action_map_ref = useRef<Map<WebSDKActionName, Set<(message: NamedAction<any>, reply: (message: NamedReply<any>) => void) => void>>>(new Map());
+    const pending_actions_ref = useRef<Map<WebSDKActionName, any[]>>(new Map());
 
     const handle_data_channel_message = useCallback((event: MessageEvent) => {
         const data = JSON.parse(event.data) as any;
-        if ("action" in data) {
-            const handlers = action_map_ref.current.get(data.action);
-            if (handlers) {
-                handlers.forEach((handler) => {
-                    handler(data, (reply_message: NamedReply<any>) => {
-                        data_channel_ref.current?.send(JSON.stringify({ ...reply_message, correlation_id: data.correlation_id }));
-                    });
-                });
-            }
+        if (!("action" in data)) {
+            return;
         }
+
+        const handlers = action_map_ref.current.get(data.action);
+        if (handlers && handlers.size > 0) {
+            handlers.forEach((handler) => {
+                handler(data, (reply_message: NamedReply<any>) => {
+                    data_channel_ref.current?.send(JSON.stringify({ ...reply_message, correlation_id: data.correlation_id }));
+                });
+            });
+            return;
+        }
+
+        console.warn("No handler registered yet for action, buffering:", data.action);
+        const pending = pending_actions_ref.current.get(data.action) || [];
+        pending.push(data);
+        pending_actions_ref.current.set(data.action, pending);
     }, []);
 
     // TODO: this code kinda sucks, same for how the background handles it. but it works :)
@@ -196,6 +205,17 @@ export const WebSDKMessagingProvider = ({children}: {children: React.ReactNode})
             const handlers = action_map_ref.current.get(action_filter) || new Set();
             handlers.add(handler);
             action_map_ref.current.set(action_filter, handlers);
+
+            // drain any pending actions for this filter (as it is now ready to recieve!)
+            const pending = pending_actions_ref.current.get(action_filter);
+            if (pending && pending.length > 0) {
+                pending_actions_ref.current.delete(action_filter);
+                for (const data of pending) {
+                    handler(data, (reply_message: NamedReply<any>) => {
+                        data_channel_ref.current?.send(JSON.stringify({ ...reply_message, correlation_id: data.correlation_id }));
+                    });
+                }
+            }
 
             return () => {
                 const handlers = action_map_ref.current.get(action_filter);
