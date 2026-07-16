@@ -20,7 +20,7 @@ export const Basketball = () => {
                mass: 0.6,
                restitution: 0.8,
                restitution_combine_rule: "max",
-               friction: 0.5,
+               friction: 0.75,
            }
        }}>
            <Grabbable>

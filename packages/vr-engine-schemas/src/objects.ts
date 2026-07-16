@@ -392,7 +392,7 @@ export type CustomObjectInput = z.input<typeof CustomObjectSchema>;
 // TODO: built in primitive meshes, either by a path or explicit in schema. would be useless without material override tho
 
 // prefabs without special behaviour, we just need to tell zod the name
-const StandardPrefabName = z.enum(["basketball"]);
+const StandardPrefabName = z.enum(["basketball", "basketball_hoop"]);
 export type StandardPrefabName = z.infer<typeof StandardPrefabName>;
 
 export const StandardPrefabSchema = z.object({
