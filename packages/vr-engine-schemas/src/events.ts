@@ -48,6 +48,11 @@ export interface AxesMonitorPayload {
     values: { x: number; y: number; z: number };
 }
 
+export interface BasketballHoopPrefabPayload {
+    type: "scored"
+    object_id?: string;
+}
+
 export type ReportEventPayload = TriggerVolumeInteractionPayload | ControllerButtonInteractionPayload | GrabInteractionPayload | AxesMonitorPayload;
 
 export type ReportEvent =
@@ -57,4 +62,5 @@ export type ReportEvent =
     | ReportEventEnvelope<"pos-monitor", AxesMonitorPayload>
     | ReportEventEnvelope<"rot-monitor", AxesMonitorPayload>
     | ReportEventEnvelope<"lin-vel-monitor", AxesMonitorPayload>
-    | ReportEventEnvelope<"ang-vel-monitor", AxesMonitorPayload>;
+    | ReportEventEnvelope<"ang-vel-monitor", AxesMonitorPayload>
+    | ReportEventEnvelope<"basketball-hoop-prefab", BasketballHoopPrefabPayload>

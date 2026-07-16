@@ -9,7 +9,7 @@ import {useEffect, useMemo, useRef} from "react";
 
 import { useObjectRefs } from "../contexts/ObjectRefsContext";
 import { useAudioListener } from "../contexts/AudioListenerContext";
-import { useInteractionBinding } from "../hooks/useInteractionBinding";
+import { useObjectBinding } from "../hooks/useObjectBinding";
 import { Grabbable } from "../interaction";
 import { FollowPlayer } from "../interaction/FollowPlayer";
 import {resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
@@ -25,7 +25,7 @@ interface InteractionWrapperProps<I extends Interaction = Interaction> {
 }
 
 const GrabbableWrapper = ({interaction, children}: InteractionWrapperProps<GrabbableInteraction>) => {
-    const {emit_report} = useInteractionBinding(interaction.binding);
+    const {emit_report} = useObjectBinding(interaction.binding);
 
     // TODO: add remaining props to grabbable
     // TODO: should we pass through the root ref? or let the wrapper impls manage their own?
@@ -56,7 +56,7 @@ const GrabbableWrapper = ({interaction, children}: InteractionWrapperProps<Grabb
 }
 
 const TriggerVolumeWrapper = ({interaction, children}: InteractionWrapperProps<TriggerVolumeInteraction>) => {
-    const {emit_report} = useInteractionBinding(interaction.binding);
+    const {emit_report} = useObjectBinding(interaction.binding);
     const anchor_ref = useRef<Group>(null);
 
     return (
@@ -88,7 +88,7 @@ const TriggerVolumeWrapper = ({interaction, children}: InteractionWrapperProps<T
 }
 
 const FollowPlayerWrapper = ({interaction, children}: InteractionWrapperProps<FollowPlayerInteraction>) => {
-    const {on_command} = useInteractionBinding(interaction.binding);
+    const {on_command} = useObjectBinding(interaction.binding);
 
     useEffect(() => {
         const handle_command = async (command: string, args?: any) => {
@@ -117,7 +117,7 @@ const FollowPlayerWrapper = ({interaction, children}: InteractionWrapperProps<Fo
 }
 
 const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps<PositionalAudioInteraction>) => {
-    const {on_command} = useInteractionBinding(interaction.binding);
+    const {on_command} = useObjectBinding(interaction.binding);
     const audio_ref = useRef<PositionalAudioType>(null);
 
     useEffect(() => {
@@ -190,7 +190,7 @@ const PositionalAudioWrapper = ({interaction, children}: InteractionWrapperProps
 }
 
 const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<GlobalAudioInteraction>) => {
-    const {on_command} = useInteractionBinding(interaction.binding);
+    const {on_command} = useObjectBinding(interaction.binding);
 
     const audio_listener = useAudioListener();
     const audio = useMemo(() => new Audio(audio_listener), [audio_listener]);
@@ -263,7 +263,7 @@ const GlobalAudioWrapper = ({interaction, children}: InteractionWrapperProps<Glo
 }
 
 const PointLightWrapper = ({interaction, children}: InteractionWrapperProps<PointLightInteraction>) => {
-    const {on_command} = useInteractionBinding(interaction.binding);
+    const {on_command} = useObjectBinding(interaction.binding);
 
     // doesn't auto sync to props, so need to manually update value via ref when command is received
     const light_ref = useRef<PointLight>(null);
@@ -323,7 +323,7 @@ const PointLightWrapper = ({interaction, children}: InteractionWrapperProps<Poin
 }
 
 const DirectionalLightWrapper = ({interaction, children}: InteractionWrapperProps<DirectionalLightInteraction>) => {
-    const {on_command} = useInteractionBinding(interaction.binding);
+    const {on_command} = useObjectBinding(interaction.binding);
 
     // doesn't auto sync to props, so need to manually update value via ref when command is received
     const light_ref = useRef<DirectionalLight>(null);
@@ -384,7 +384,7 @@ const DirectionalLightWrapper = ({interaction, children}: InteractionWrapperProp
 }
 
 const SpotLightWrapper = ({interaction, children}: InteractionWrapperProps<SpotLightInteraction>) => {
-    const {on_command} = useInteractionBinding(interaction.binding);
+    const {on_command} = useObjectBinding(interaction.binding);
 
     // doesn't auto sync to props, so need to manually update value via ref when command is received
     const light_ref = useRef<SpotLight>(null);

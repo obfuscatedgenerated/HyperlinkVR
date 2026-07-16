@@ -1,5 +1,7 @@
 import {BaseBuilder} from "./base";
 import {
+    BasketballHoopPrefab,
+    BasketballHoopPrefabInput, BasketballHoopPrefabSchema,
     ButtonPrefab,
     ButtonPrefabInput,
     ButtonPrefabSchema,
@@ -41,6 +43,26 @@ export class ButtonPrefabBuilder extends BaseBuilder<ButtonPrefabInput> {
 
     build(): ButtonPrefab {
         return ButtonPrefabSchema.parse(this._internal);
+    }
+}
+
+export class BasketballHoopPrefabBuilder extends BaseBuilder<BasketballHoopPrefabInput> {
+    constructor() {
+        super({type: "prefab", name: "basketball_hoop"} as BasketballHoopPrefabInput);
+    }
+
+    named(name: string) {
+        this._internal.binding = {...this._internal.binding, name};
+        return this;
+    }
+
+    set_enable_sfx(enable: boolean) {
+        this._internal.enable_sfx = enable;
+        return this;
+    }
+
+    build(): BasketballHoopPrefab {
+        return BasketballHoopPrefabSchema.parse(this._internal);
     }
 }
 

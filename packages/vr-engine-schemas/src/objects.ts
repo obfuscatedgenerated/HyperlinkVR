@@ -420,7 +420,7 @@ export type CustomObjectInput = z.input<typeof CustomObjectSchema>;
 // TODO: built in primitive meshes, either by a path or explicit in schema. would be useless without material override tho
 
 // prefabs without special behaviour, we just need to tell zod the name
-const StandardPrefabName = z.enum(["basketball", "basketball_hoop"]);
+const StandardPrefabName = z.enum(["basketball"]);
 export type StandardPrefabName = z.infer<typeof StandardPrefabName>;
 
 export const StandardPrefabSchema = z.object({
@@ -441,7 +441,15 @@ export const ButtonPrefabSchema = bindable({
 export type ButtonPrefab = z.infer<typeof ButtonPrefabSchema>;
 export type ButtonPrefabInput = z.input<typeof ButtonPrefabSchema>;
 
-export const PrefabSchema = z.discriminatedUnion("name", [StandardPrefabSchema, ButtonPrefabSchema]);
+export const BasketballHoopPrefabSchema = bindable({
+    type: z.literal("prefab"),
+    name: z.literal("basketball_hoop"),
+    enable_sfx: z.boolean().default(true),
+});
+export type BasketballHoopPrefab = z.infer<typeof BasketballHoopPrefabSchema>;
+export type BasketballHoopPrefabInput = z.input<typeof BasketballHoopPrefabSchema>;
+
+export const PrefabSchema = z.discriminatedUnion("name", [StandardPrefabSchema, ButtonPrefabSchema, BasketballHoopPrefabSchema]);
 export type Prefab = z.infer<typeof PrefabSchema>;
 export type PrefabInput = z.input<typeof PrefabSchema>;
 

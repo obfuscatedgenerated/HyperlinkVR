@@ -6,7 +6,7 @@ import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 
 type ReportBody = Pick<ReportEvent, "kind" | "payload">;
 
-export const useInteractionBinding = (binding: BindingConfig | undefined) => {
+export const useObjectBinding = (binding: BindingConfig | undefined) => {
     const { emit_event, connected, on_action } = useWebSDKMessaging();
     const { id: object_id } = useObjectRefs();
 

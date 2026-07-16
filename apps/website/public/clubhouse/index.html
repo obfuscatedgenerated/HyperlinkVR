@@ -57,12 +57,15 @@
                     .create()
         );
 
-        const hoop = new h.StandardPrefabBuilder("basketball_hoop").build()
+        const hoop = new h.BasketballHoopPrefabBuilder().named("hoop").build()
 
         promises.push(
             new h.EngineObjectDispatchBuilder()
                     .set_object(hoop)
                     .set_position(1.25,3.505,-11.87) // regulation height!
+                    .on("hoop", () => {
+                      document.getElementById("score").innerText = parseInt(document.getElementById("score").innerText) + 1;
+                    })
                     .create()
         );
 
@@ -77,5 +80,7 @@
   </head>
   <body>
     🏠
+
+    Times scored on the basketball hoop: <span id="score">0</span>
   </body>
 </html>

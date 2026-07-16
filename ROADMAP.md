@@ -62,7 +62,7 @@
   - [ ] show prompt to confirm going to another world (could allow skipping prompt on same origin)
   - [ ] storing user_data on player for custom tag
 - [ ] Change if flat and teleport allowed via meta
-- [ ] Disable hand colliders for grabbed objects
+- [x] Disable hand colliders for grabbed objects
 - [ ] Grabbable option for hand positioning or hiding (guns, gauntlets, gloves, etc)
 - [ ] Scene/collection dispatch
 - [ ] Prefab for links that use player sending (a door? a portal? a big link logo?). If clearly displays text then could bypass prompt
