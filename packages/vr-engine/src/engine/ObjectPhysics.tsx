@@ -2,7 +2,7 @@ import {Collider, PhysicsSystem, RigidBody as RigidBodyConfig, Transform} from "
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { BallCollider, CapsuleCollider, CuboidCollider, MeshCollider, RapierRigidBody, RigidBody, RigidBodyAutoCollider } from "@react-three/rapier";
-import { useEffect, useMemo, useRef } from "react";
+import {ComponentProps, useEffect, useMemo, useRef} from "react";
 import {Group, MeshBasicMaterial, Quaternion, Vector3, Mesh} from "three";
 
 import { clone } from "three/examples/jsm/utils/SkeletonUtils"
@@ -111,16 +111,6 @@ export const useKinematicVelocity = (
     }, [ref, rb]);
 };
 
-export const useExplicitMass = (
-    ref: React.RefObject<RapierRigidBody | null>,
-    rb: RigidBodyConfig
-) => {
-    useEffect(() => {
-        if (rb.type !== "dynamic" || !ref.current) return;
-        ref.current.setAdditionalMass(rb.mass, true);
-    }, [ref, rb]);
-};
-
 export const useCollider = (collider: Collider): {auto_strategy: RigidBodyAutoCollider | false, ColliderComponent: React.ComponentType<any> | null} => {
     const auto_strategy = collider.type === "auto" ? (collider.approximation as any) : false;
 
@@ -138,6 +128,52 @@ export const useCollider = (collider: Collider): {auto_strategy: RigidBodyAutoCo
     }, [collider]);
 
     return { auto_strategy, ColliderComponent };
+}
+
+const get_body_props = (rb: RigidBodyConfig): Partial<ComponentProps<typeof RigidBody>> => {
+    const restituton_rules = {
+        "average": 0,
+        "min": 1,
+        "multiply": 2,
+        "max": 3
+    }
+
+    const base_props: Partial<ComponentProps<typeof RigidBody>> = {
+        restitution: rb.restitution,
+        restitutionCombineRule: rb.restitution_combine_rule ? restituton_rules[rb.restitution_combine_rule] : undefined,
+        friction: rb.friction,
+        linearDamping: rb.linear_damping,
+        angularDamping: rb.angular_damping,
+    };
+
+    const strip_undefined = (obj: any) => {
+        return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v !== undefined));
+    }
+
+    if (rb.type === "dynamic") {
+        const locked_axes = rb.locked_axes || { rotation: { x: false, y: false, z: false }, translation: { x: false, y: false, z: false } };
+
+        return strip_undefined({
+            ...base_props,
+            linearVelocity: rb.velocity,
+            angularVelocity: rb.angular_velocity,
+            mass: rb.mass,
+            gravityScale: rb.gravity_scale,
+            ccd: rb.ccd,
+            enabledRotations: [!locked_axes.rotation.x, !locked_axes.rotation.y, !locked_axes.rotation.z],
+            enabledTranslations: [!locked_axes.translation.x, !locked_axes.translation.y, !locked_axes.translation.z],
+        });
+    } else if (rb.type === "kinematic-vel") {
+        return strip_undefined({
+            ...base_props,
+            linearVelocity: rb.velocity,
+            angularVelocity: rb.angular_velocity,
+        });
+    } else if (rb.type === "kinematic-pos" || rb.type === "fixed") {
+        return strip_undefined(base_props);
+    }
+
+    return {};
 }
 
 export const ObjectPhysics = ({
@@ -175,7 +211,6 @@ export const ObjectPhysics = ({
 
     useKinematicPosition(rb_ref, rb, kinematic_pos_tracking_ref || container_ref);
     useKinematicVelocity(rb_ref, rb);
-    useExplicitMass(rb_ref, rb);
     // usePhysicsReporting(rbRef, physics, monitors, id); // TODO: implement
 
     return (
@@ -187,8 +222,7 @@ export const ObjectPhysics = ({
                 position={transform?.position}
                 quaternion={transform ? rotation_to_quaternion_array(transform.rotation) : undefined}
                 colliders={auto_strategy}
-                linearVelocity={(rb.type === "dynamic" ? rb.velocity : undefined) || [0, 0, 0]}
-                // TODO: angular velocity, friction, damping, other props to be added to config
+                {...get_body_props(rb)}
                 //onCollisionEnter={physics.report_collisions ? (e) => reportCollision(id, e) : undefined} // TODO: implement
             >
                 {ColliderComponent && <ColliderComponent />}

@@ -453,3 +453,5 @@ export const Grabbable = (props: GrabbableProps) => {
         </group>
     );
 }
+
+// TODO: hands being handled incorrectly, always snaps to right in vr!

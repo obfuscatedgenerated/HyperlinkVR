@@ -14,7 +14,7 @@ import {
     ReportEvent,
     TransformInput,
     TweenEasingInput,
-    TweenSchema
+    TweenSchema, Vector3, Vector3Schema, Vector4, Vector4Schema
 } from "@hyperlinkvr/vr-engine-schemas";
 import {BaseBuilder} from "./base";
 import {subscribe_report} from "../event_bus";
@@ -41,7 +41,7 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
         super({id} as EngineObjectModificationInput);
     }
 
-    set_position(x: number, y: number, z: number) {
+    set_position(x_or_vect: number | Vector3, y?: number, z?: number) {
         if (this.#burned) {
             throw new Error("This modification builder has already been applied.");
         }
@@ -49,11 +49,13 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
         if (!this._internal.transform) {
             this._internal.transform = {};
         }
-        this._internal.transform.position = [x, y, z];
+
+        const [x, y_val, z_val] = Array.isArray(x_or_vect) ? x_or_vect : [x_or_vect, y!, z!];
+        this._internal.transform.position = Vector3Schema.parse([x, y_val, z_val]);
         return this;
     }
 
-    set_euler_rotation(x: number, y: number, z: number) {
+    set_euler_rotation(x_or_vect: number | Vector3, y?: number, z?: number) {
         if (this.#burned) {
             throw new Error("This modification builder has already been applied.");
         }
@@ -61,11 +63,13 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
         if (!this._internal.transform) {
             this._internal.transform = {};
         }
-        this._internal.transform.rotation = [x, y, z];
+
+        const [x, y_val, z_val] = Array.isArray(x_or_vect) ? x_or_vect : [x_or_vect, y!, z!];
+        this._internal.transform.rotation = Vector3Schema.parse([x, y_val, z_val]);
         return this;
     }
 
-    set_quaternion_rotation(x: number, y: number, z: number, w: number) {
+    set_quaternion_rotation(x_or_vect: number | Vector4, y?: number, z?: number, w?: number) {
         if (this.#burned) {
             throw new Error("This modification builder has already been applied.");
         }
@@ -73,11 +77,13 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
         if (!this._internal.transform) {
             this._internal.transform = {};
         }
-        this._internal.transform.rotation = [x, y, z, w];
+
+        const [x, y_val, z_val, w_val] = Array.isArray(x_or_vect) ? x_or_vect : [x_or_vect, y!, z!, w!];
+        this._internal.transform.rotation = Vector4Schema.parse([x, y_val, z_val, w_val]);
         return this;
     }
 
-    set_scale(x: number, y: number, z: number) {
+    set_scale(x_or_vect: number | Vector3, y?: number, z?: number) {
         if (this.#burned) {
             throw new Error("This modification builder has already been applied.");
         }
@@ -85,7 +91,9 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
         if (!this._internal.transform) {
             this._internal.transform = {};
         }
-        this._internal.transform.scale = [x, y, z];
+
+        const [x, y_val, z_val] = Array.isArray(x_or_vect) ? x_or_vect : [x_or_vect, y!, z!];
+        this._internal.transform.scale = Vector3Schema.parse([x, y_val, z_val]);
         return this;
     }
 

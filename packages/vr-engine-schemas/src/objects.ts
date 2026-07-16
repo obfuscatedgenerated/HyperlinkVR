@@ -66,44 +66,67 @@ export const ColliderSchema = z.discriminatedUnion("type", [
 ]);
 export type Collider = z.infer<typeof ColliderSchema>;
 
-export const FixedRigidBodySchema = z.object({
-    type: z.literal("fixed"),
+export const Vector3Schema = z.tuple([z.number(), z.number(), z.number()]);
+export type Vector3 = z.infer<typeof Vector3Schema>;
+
+export const Vector4Schema = z.tuple([z.number(), z.number(), z.number(), z.number()]);
+export type Vector4 = z.infer<typeof Vector4Schema>;
+
+const AxisLockSchema = z.object({
+    x: z.boolean().default(false),
+    y: z.boolean().default(false),
+    z: z.boolean().default(false)
+});
+export type AxisLock = z.infer<typeof AxisLockSchema>;
+export type AxisLockInput = z.input<typeof AxisLockSchema>;
+
+const LockedAxesSchema = z.object({
+    rotation: AxisLockSchema,
+    translation: AxisLockSchema
+});
+export type LockedAxes = z.infer<typeof LockedAxesSchema>;
+export type LockedAxesInput = z.input<typeof LockedAxesSchema>;
+
+const BaseRigidBodySchema = z.object({
+    restitution: z.number().optional(),
+    restitution_combine_rule: z.enum(["average", "min", "max", "multiply"]).default("average").optional(),
+    friction: z.number().optional(),
+    linear_damping: z.number().optional(),
+    angular_damping: z.number().optional(),
     collider: ColliderSchema.optional()
+});
+
+export const FixedRigidBodySchema = BaseRigidBodySchema.extend({
+    type: z.literal("fixed")
 });
 export type FixedRigidBody = z.infer<typeof FixedRigidBodySchema>;
 export type FixedRigidBodyInput = z.input<typeof FixedRigidBodySchema>;
 
-export const DynamicRigidBodySchema = z.object({
+export const DynamicRigidBodySchema = BaseRigidBodySchema.extend({
     type: z.literal("dynamic"),
     mass: z.number().positive(),
-    velocity: z.tuple([z.number(), z.number(), z.number()]).optional(),
-    collider: ColliderSchema.optional()
+    gravity_scale: z.number().optional(),
+    ccd: z.boolean().optional(),
+    velocity: Vector3Schema.optional(),
+    angular_velocity: Vector3Schema.optional(),
+    locked_axes: LockedAxesSchema.optional()
 });
 export type DynamicRigidBody = z.infer<typeof DynamicRigidBodySchema>;
 export type DynamicRigidBodyInput = z.input<typeof DynamicRigidBodySchema>;
 
-export const KinematicPositionRigidBodySchema = z.object({
-    type: z.literal("kinematic-pos"),
-    collider: ColliderSchema.optional()
+export const KinematicPositionRigidBodySchema = BaseRigidBodySchema.extend({
+    type: z.literal("kinematic-pos")
 });
-export type KinematicPositionRigidBody = z.infer<
-    typeof KinematicPositionRigidBodySchema
->;
-export type KinematicPositionRigidBodyInput = z.input<
-    typeof KinematicPositionRigidBodySchema
->;
+export type KinematicPositionRigidBody = z.infer<typeof KinematicPositionRigidBodySchema>;
+export type KinematicPositionRigidBodyInput = z.input<typeof KinematicPositionRigidBodySchema>;
 
-export const KinematicVelocityRigidBodySchema = z.object({
+export const KinematicVelocityRigidBodySchema = BaseRigidBodySchema.extend({
     type: z.literal("kinematic-vel"),
-    velocity: z.tuple([z.number(), z.number(), z.number()]),
-    collider: ColliderSchema.optional()
+    velocity: Vector3Schema,
+    angular_velocity: Vector3Schema.optional()
 });
-export type KinematicVelocityRigidBody = z.infer<
-    typeof KinematicVelocityRigidBodySchema
->;
-export type KinematicVelocityRigidBodyInput = z.input<
-    typeof KinematicVelocityRigidBodySchema
->;
+export type KinematicVelocityRigidBody = z.infer<typeof KinematicVelocityRigidBodySchema>;
+export type KinematicVelocityRigidBodyInput = z.input<typeof KinematicVelocityRigidBodySchema>;
 
 export const RigidBodySchema = z.discriminatedUnion("type", [
     FixedRigidBodySchema,
@@ -368,6 +391,17 @@ export type CustomObjectInput = z.input<typeof CustomObjectSchema>;
 
 // TODO: built in primitive meshes, either by a path or explicit in schema. would be useless without material override tho
 
+// prefabs without special behaviour, we just need to tell zod the name
+const StandardPrefabName = z.enum(["basketball"]);
+export type StandardPrefabName = z.infer<typeof StandardPrefabName>;
+
+export const StandardPrefabSchema = z.object({
+    type: z.literal("prefab"),
+    name: StandardPrefabName
+});
+export type StandardPrefab = z.infer<typeof StandardPrefabSchema>;
+export type StandardPrefabInput = z.input<typeof StandardPrefabSchema>;
+
 export const ButtonPrefabSchema = bindable({
     type: z.literal("prefab"),
     name: z.literal("button"),
@@ -379,7 +413,7 @@ export const ButtonPrefabSchema = bindable({
 export type ButtonPrefab = z.infer<typeof ButtonPrefabSchema>;
 export type ButtonPrefabInput = z.input<typeof ButtonPrefabSchema>;
 
-export const PrefabSchema = z.discriminatedUnion("name", [ButtonPrefabSchema]);
+export const PrefabSchema = z.discriminatedUnion("name", [StandardPrefabSchema, ButtonPrefabSchema]);
 export type Prefab = z.infer<typeof PrefabSchema>;
 export type PrefabInput = z.input<typeof PrefabSchema>;
 

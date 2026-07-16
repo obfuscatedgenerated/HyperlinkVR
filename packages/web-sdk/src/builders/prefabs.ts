@@ -4,7 +4,9 @@ import {
     ButtonPrefabInput,
     ButtonPrefabSchema,
     HexNumericalColor,
-    HexNumericalColorSchema
+    HexNumericalColorSchema,
+    StandardPrefab, StandardPrefabInput, StandardPrefabName,
+    StandardPrefabSchema
 } from "@hyperlinkvr/vr-engine-schemas";
 
 export class ButtonPrefabBuilder extends BaseBuilder<ButtonPrefabInput> {
@@ -13,7 +15,7 @@ export class ButtonPrefabBuilder extends BaseBuilder<ButtonPrefabInput> {
     }
 
     named(name: string) {
-        this._internal.reporting = {...this._internal.reporting, name};
+        this._internal.binding = {...this._internal.binding, name};
         return this;
     }
 
@@ -39,5 +41,15 @@ export class ButtonPrefabBuilder extends BaseBuilder<ButtonPrefabInput> {
 
     build(): ButtonPrefab {
         return ButtonPrefabSchema.parse(this._internal);
+    }
+}
+
+export class StandardPrefabBuilder extends BaseBuilder<StandardPrefabInput> {
+    constructor(name: StandardPrefabName) {
+        super({type: "prefab", name} as StandardPrefabInput);
+    }
+
+    build(): StandardPrefab {
+        return StandardPrefabSchema.parse(this._internal);
     }
 }

@@ -84,7 +84,8 @@
 - [ ] DOMMirror input: right/middle click, hold-and-drag, thumbstick scroll, click ripple
 - [ ] DOMMirror prefab
 - [ ] Physics reporting: `usePhysicsReporting`, collision reports
-- [ ] Rigid body extras: angular velocity, friction, damping; ignore-player-collisions option
+- [x] Rigid body extras: angular velocity, friction, damping
+- [ ] Option for bodies to ignore player or object collisions
 - [ ] Extend prefab library in general (adding props, weapons, sports stuff, maybe even vehicles etc)
 - [ ] Flat controller support
 - [ ] Flat rebinding support

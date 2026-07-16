@@ -1,8 +1,10 @@
 import {BaseBuilder} from "./base";
 import {
+    AxisLockInput,
     Collider,
     ColliderSchema,
-    CustomMeshApproximation,
+    CustomMeshApproximation, DynamicRigidBodyInput, FixedRigidBodyInput, KinematicPositionRigidBodyInput,
+    KinematicVelocityRigidBodyInput, LockedAxesInput,
     MeshApproximation,
     PhysicsSystem,
     PhysicsSystemInput,
@@ -30,9 +32,9 @@ export class PhysicsSystemBuilder extends BaseBuilder<PhysicsSystemInput> {
     }
 }
 
-class RigidBodyBuilder extends BaseBuilder<RigidBodyInput> {
+class RigidBodyBuilder<RB extends RigidBodyInput> extends BaseBuilder<RB> {
     constructor(type: RigidBodyType) {
-        super({type} as RigidBodyInput);
+        super({type} as RB);
     }
 
     set_collider(collider: Collider) {
@@ -40,26 +42,28 @@ class RigidBodyBuilder extends BaseBuilder<RigidBodyInput> {
         return this;
     }
 
-    protected _try_set_mass(mass: number) {
-        if (this._internal.type !== "dynamic") {
-            throw new Error("Mass can only be set for dynamic rigid bodies.");
-        }
-
-        this._internal.mass = mass;
+    set_restitution(restitution: number) {
+        this._internal.restitution = restitution;
         return this;
     }
 
-    protected _try_set_velocity(velocity: [number, number, number]) {
-        if (
-            this._internal.type !== "dynamic" &&
-            this._internal.type !== "kinematic-vel"
-        ) {
-            throw new Error(
-                "Velocity can only be set for dynamic or kinematic-vel rigid bodies."
-            );
-        }
+    set_restitution_combine_rule(rule: "average" | "min" | "max" | "multiply") {
+        this._internal.restitution_combine_rule = rule;
+        return this;
+    }
 
-        this._internal.velocity = velocity;
+    set_friction(friction: number) {
+        this._internal.friction = friction;
+        return this;
+    }
+
+    set_linear_damping(linear_damping: number) {
+        this._internal.linear_damping = linear_damping;
+        return this;
+    }
+
+    set_angular_damping(angular_damping: number) {
+        this._internal.angular_damping = angular_damping;
         return this;
     }
 
@@ -68,37 +72,123 @@ class RigidBodyBuilder extends BaseBuilder<RigidBodyInput> {
     }
 }
 
-export class DynamicRigidBodyBuilder extends RigidBodyBuilder {
+export class DynamicRigidBodyBuilder extends RigidBodyBuilder<DynamicRigidBodyInput> {
     constructor() {
         super("dynamic");
     }
 
     set_mass(mass: number) {
-        return this._try_set_mass(mass);
+        this._internal.mass = mass;
+        return this;
     }
 
     set_velocity(velocity: [number, number, number]) {
-        return this._try_set_velocity(velocity);
+        this._internal.velocity = velocity;
+        return this;
+    }
+
+    set_angular_velocity(angular_velocity: [number, number, number]) {
+        this._internal.angular_velocity = angular_velocity;
+        return this;
+    }
+
+    set_gravity_scale(gravity_scale: number) {
+        this._internal.gravity_scale = gravity_scale;
+        return this;
+    }
+
+    set_ccd(ccd: boolean) {
+        this._internal.ccd = ccd;
+        return this;
+    }
+
+    set_locked_axes(locked_axes: LockedAxesInput) {
+        this._internal.locked_axes = locked_axes;
+        return this;
+    }
+
+    lock_axis(type: "translation" | "rotation", axis: "x" | "y" | "z") {
+        const current = this._internal.locked_axes ?? {translation: {}, rotation: {}};
+
+        this._internal.locked_axes = {
+            ...current,
+            [type]: {
+                ...current[type],
+                [axis]: true
+            }
+        };
+    }
+
+    lock_x_translation() {
+        this.lock_axis("translation", "x");
+        return this;
+    }
+
+    lock_y_translation() {
+        this.lock_axis("translation", "y");
+        return this;
+    }
+
+    lock_z_translation() {
+        this.lock_axis("translation", "z");
+        return this;
+    }
+
+    lock_x_rotation() {
+        this.lock_axis("rotation", "x");
+        return this;
+    }
+
+    lock_y_rotation() {
+        this.lock_axis("rotation", "y");
+        return this;
+    }
+
+    lock_z_rotation() {
+        this.lock_axis("rotation", "z");
+        return this;
+    }
+
+    set_locked_translation_axes(locked_translation_axes: AxisLockInput) {
+        this._internal.locked_axes = {
+            ...this._internal.locked_axes || {translation: {}, rotation: {}},
+            translation: locked_translation_axes
+        };
+        return this;
+    }
+
+    set_locked_rotation_axes(locked_rotation_axes: AxisLockInput) {
+        this._internal.locked_axes = {
+            ...this._internal.locked_axes || {translation: {}, rotation: {}},
+            rotation: locked_rotation_axes
+        };
+        return this;
     }
 }
 
-export class KinematicPosRigidBodyBuilder extends RigidBodyBuilder {
+export class KinematicPosRigidBodyBuilder extends RigidBodyBuilder<KinematicPositionRigidBodyInput> {
     constructor() {
         super("kinematic-pos");
     }
 }
 
-export class KinematicVelRigidBodyBuilder extends RigidBodyBuilder {
+export class KinematicVelRigidBodyBuilder extends RigidBodyBuilder<KinematicVelocityRigidBodyInput> {
     constructor() {
         super("kinematic-vel");
     }
 
     set_velocity(velocity: [number, number, number]) {
-        return this._try_set_velocity(velocity);
+        this._internal.velocity = velocity;
+        return this;
+    }
+
+    set_angular_velocity(angular_velocity: [number, number, number]) {
+        this._internal.angular_velocity = angular_velocity;
+        return this;
     }
 }
 
-export class FixedRigidBodyBuilder extends RigidBodyBuilder {
+export class FixedRigidBodyBuilder extends RigidBodyBuilder<FixedRigidBodyInput> {
     constructor() {
         super("fixed");
     }
