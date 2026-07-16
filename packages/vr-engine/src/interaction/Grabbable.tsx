@@ -1,9 +1,11 @@
 import type { GrabCollider } from "@hyperlinkvr/vr-engine-schemas";
 import { useFrame } from "@react-three/fiber";
+import type { RapierRigidBody } from "@react-three/rapier";
 import { ComponentProps, RefObject, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { BackSide, Box3, Group, Matrix4, Mesh, MeshBasicMaterial, Object3D, Quaternion, Raycaster, Sphere, Vector3 } from "three";
 
 import { useObjectRefsOptional } from "../contexts";
+import { PLAYER_FILTER_BIT, PLAYER_IGNORE_RELEASE_DELAY_S } from "../engine/collision_groups";
 import { Hand, useHands } from "../input/hands";
 
 enum RigidBodyType {
@@ -125,9 +127,9 @@ const bounding_sphere_tester = (target: Object3D): RegionTester | null => {
     const box = compute_local_bounds(target);
     if (!box) return null;
     const sphere = box.getBoundingSphere(new Sphere());
-    const c = sphere.center.clone();
-    const r = sphere.radius;
-    return (p) => Math.max(0, p.distanceTo(c) - r);
+    const center = sphere.center.clone();
+    const radius = sphere.radius;
+    return (p) => Math.max(0, p.distanceTo(center) - radius);
 };
 
 const build_region_tester = (collider: GrabCollider | undefined, target: Object3D): RegionTester | null => {
@@ -135,23 +137,23 @@ const build_region_tester = (collider: GrabCollider | undefined, target: Object3
 
     switch (collider.type) {
         case "box": {
-            const [sx, sy, sz] = collider.size; // full size
+            const [size_x, size_y, size_z] = collider.size; // full size
             const box = new Box3(
-                new Vector3(-sx / 2, -sy / 2, -sz / 2),
-                new Vector3(sx / 2, sy / 2, sz / 2)
+                new Vector3(-size_x / 2, -size_y / 2, -size_z / 2),
+                new Vector3(size_x / 2, size_y / 2, size_z / 2)
             );
             return (p) => box.distanceToPoint(p);
         }
         case "sphere": {
-            const r = collider.radius;
-            return (p) => Math.max(0, p.length() - r); // centered at origin
+            const radius = collider.radius;
+            return (p) => Math.max(0, p.length() - radius); // centered at origin
         }
         case "capsule": {
-            const r = collider.radius;
-            const segHalf = Math.max(0, collider.height / 2 - r); // full-height assumption
-            const a = new Vector3(0, -segHalf, 0);
-            const b = new Vector3(0, segHalf, 0);
-            return (p) => Math.max(0, distance_from_point_to_segment(p, a, b) - r);
+            const radius = collider.radius;
+            const segment_half = Math.max(0, collider.height / 2 - radius); // full-height assumption
+            const cap_a = new Vector3(0, -segment_half, 0);
+            const cap_b = new Vector3(0, segment_half, 0);
+            return (p) => Math.max(0, distance_from_point_to_segment(p, cap_a, cap_b) - radius);
         }
         case "auto-bounding-box": {
             return bounding_box_tester(target);
@@ -170,6 +172,7 @@ const _ro = new Vector3();
 const _rd = new Vector3();
 const _rq = new Quaternion();
 const FWD = new Vector3(0, 0, -1);
+const WORLD_UP = new Vector3(0, 1, 0);
 
 const ray_hits_within = (
     rayNode: Object3D | null,
@@ -192,6 +195,14 @@ export const useGrabbable = (
         nearby_trigger_distance = 1,
         reach = 0, // 0 = ray-grab disabled (VR default), flat sets this to a distance
         snap_to_hand = true,
+        snap_grab_offset,
+        // "grip": offset in raw WebXR grip-space axes (tilts with the wrist).
+        // "aim":  offset as [right, up, forward] built from the ray/pointer
+        //         direction and world-up, positioned at the grip. Intuitive,
+        //         wrist-independent. Only applies to snap/ray grabs.
+        snap_grab_offset_space = "aim",
+        ignore_player_while_held = true,
+        player_ignore_release_delay = PLAYER_IGNORE_RELEASE_DELAY_S,
         collider,
         on_grab_start,
         on_grab_end,
@@ -204,6 +215,10 @@ export const useGrabbable = (
         nearby_trigger_distance?: number;
         reach?: number;
         snap_to_hand?: boolean;
+        snap_grab_offset?: [number, number, number];
+        snap_grab_offset_space?: "grip" | "aim";
+        ignore_player_while_held?: boolean;
+        player_ignore_release_delay?: number;
         collider?: GrabCollider;
         on_grab_start?: (hand: Hand) => void;
         on_grab_end?: (hand: Hand) => void;
@@ -219,6 +234,8 @@ export const useGrabbable = (
     const grabbingHand = useRef<Hand | null>(null);
     const offsetMatrix = useRef(new Matrix4());
     const tempMatrix = useRef(new Matrix4());
+    const grabbedHandMatrix = useRef(new Matrix4()); // snapshot of the grabbing hand, isolated from the per-hand scratch matrix
+    const snapped_grab = useRef(false); // true when this grab used a carry slot (snap/ray) vs a captured relative pose
     const nearbyHands = useRef(new Set<Hand>());
 
     const prevGrabPos = useRef(new Vector3());
@@ -230,6 +247,17 @@ export const useGrabbable = (
     const _s = useRef(new Vector3());
     const _objPos = useRef(new Vector3());
     const _localHand = useRef(new Vector3());
+
+    // scratch for the "aim" offset frame
+    const grip_world_pos = useRef(new Vector3());
+    const grip_world_quat = useRef(new Quaternion());
+    const grip_scratch_scale = useRef(new Vector3());
+    const ray_world_quat = useRef(new Quaternion());
+    const aim_forward = useRef(new Vector3());
+    const aim_right = useRef(new Vector3());
+    const aim_up = useRef(new Vector3());
+    const aim_displacement = useRef(new Vector3());
+    const unit_scale = useRef(new Vector3(1, 1, 1));
 
     const region_tester = useRef<RegionTester | null>(null);
     const region_source = useRef<GrabCollider | undefined>(undefined);
@@ -245,6 +273,91 @@ export const useGrabbable = (
     };
 
     const is_trigger_held = useRef(false);
+
+    // ---- player-collision ignore (so a held object can't be batted by the
+    // ---- owner's own hands/head/torso), with a falling-edge restore delay ----
+    const player_ignored = useRef(false);
+    const saved_collision_groups = useRef<number[] | null>(null);
+    const restore_countdown = useRef<number | null>(null); // null = no pending restore
+
+    const apply_player_ignore = (body: RapierRigidBody | null) => {
+        if (!body || !ignore_player_while_held || player_ignored.current) return;
+        const collider_count = body.numColliders();
+        const saved: number[] = [];
+        for (let index = 0; index < collider_count; index++) {
+            const body_collider = body.collider(index);
+            const original = body_collider.collisionGroups();
+            saved.push(original);
+            body_collider.setCollisionGroups(original & ~PLAYER_FILTER_BIT);
+        }
+        saved_collision_groups.current = saved;
+        player_ignored.current = true;
+    };
+
+    const restore_player_collision = (body: RapierRigidBody | null) => {
+        if (!body || !player_ignored.current) return;
+        const saved = saved_collision_groups.current;
+        if (saved) {
+            const collider_count = body.numColliders();
+            for (let index = 0; index < collider_count && index < saved.length; index++) {
+                body.collider(index).setCollisionGroups(saved[index]);
+            }
+        }
+        saved_collision_groups.current = null;
+        player_ignored.current = false;
+    };
+
+    // builds the world matrix for a snapped grab whose offset is expressed in
+    // the aim frame: forward = pointer direction, up = world up, right = their
+    // cross. grab_offset reads as [right, up, forward]. writes into out_matrix.
+    const compose_aim_world_matrix = (
+        hand: Hand,
+        hand_world_matrix: Matrix4,
+        offset: [number, number, number],
+        out_matrix: Matrix4
+    ): Matrix4 => {
+        hand_world_matrix.decompose(
+            grip_world_pos.current,
+            grip_world_quat.current,
+            grip_scratch_scale.current
+        );
+
+        const rayNode = hand.ray.current;
+        if (rayNode) {
+            rayNode.updateWorldMatrix(true, false);
+            rayNode.getWorldQuaternion(ray_world_quat.current);
+            aim_forward.current.copy(FWD).applyQuaternion(ray_world_quat.current).normalize();
+        } else {
+            // no pointer: fall back to the grip's own forward
+            aim_forward.current.copy(FWD).applyQuaternion(grip_world_quat.current).normalize();
+        }
+
+        aim_right.current.crossVectors(aim_forward.current, WORLD_UP);
+        if (aim_right.current.lengthSq() < 1e-6) {
+            // pointing near straight up/down: derive right from the grip instead
+            aim_right.current.set(1, 0, 0).applyQuaternion(grip_world_quat.current);
+        }
+        aim_right.current.normalize();
+        aim_up.current.crossVectors(aim_right.current, aim_forward.current).normalize();
+        // re-orthonormalise right so the three axes are exactly perpendicular
+        aim_right.current.crossVectors(aim_forward.current, aim_up.current).normalize();
+
+        const [offset_right, offset_up, offset_forward] = offset;
+        aim_displacement.current
+            .set(0, 0, 0)
+            .addScaledVector(aim_right.current, offset_right)
+            .addScaledVector(aim_up.current, offset_up)
+            .addScaledVector(aim_forward.current, offset_forward);
+
+        grip_world_pos.current.add(aim_displacement.current);
+
+        // keep the object's orientation matched to the grip (irrelevant for balls)
+        return out_matrix.compose(
+            grip_world_pos.current,
+            grip_world_quat.current,
+            unit_scale.current
+        );
+    };
 
     useFrame((_state, delta) => {
         if (!target_ref.current) return;
@@ -292,8 +405,21 @@ export const useGrabbable = (
                 !grabbingHand.current &&
                 (proximity_ok || ray_ok)
             ) {
-                if (ray_ok || snap_to_hand) {
-                    offsetMatrix.current.identity(); // snap to carry slot (TODO: grab_offset)
+                const use_carry_slot = ray_ok || snap_to_hand;
+                snapped_grab.current = use_carry_slot;
+
+                if (use_carry_slot) {
+                    // grip-space offset is baked here; aim-space offset is
+                    // recomputed per frame in the move tail (needs live pointer)
+                    if (snap_grab_offset && snap_grab_offset_space === "grip") {
+                        offsetMatrix.current.makeTranslation(
+                            snap_grab_offset[0],
+                            snap_grab_offset[1],
+                            snap_grab_offset[2]
+                        );
+                    } else {
+                        offsetMatrix.current.identity();
+                    }
                 } else {
                     offsetMatrix.current.multiplyMatrices(
                         // keep captured relative pose (VR touch)
@@ -306,6 +432,11 @@ export const useGrabbable = (
                 prevGrabPos.current.copy(objPos);
                 grabVelocity.current.set(0, 0, 0);
                 body?.setBodyType(RigidBodyType.KinematicPositionBased, true);
+
+                // stop colliding with the player while held, and cancel any
+                // pending restore from a previous quick release
+                apply_player_ignore(body);
+                restore_countdown.current = null;
             } else if (!hand.grab.pressed && grabbingHand.current === hand) {
                 grabbingHand.current = null;
                 on_grab_end?.(hand);
@@ -320,10 +451,18 @@ export const useGrabbable = (
                         true
                     );
                 }
+
+                // keep ignoring the player briefly so the receding hand can't
+                // bat the object as it turns dynamic again
+                if (player_ignored.current) {
+                    restore_countdown.current = player_ignore_release_delay;
+                }
             }
 
             if (grabbingHand.current === hand) {
-                activeHandMatrix = handMatrix;
+                // copy into its own storage so later loop iterations overwriting
+                // tempMatrix (the per-hand scratch) can't corrupt the grabber
+                activeHandMatrix = grabbedHandMatrix.current.copy(handMatrix);
                 if (hand.trigger.just_pressed) {
                     is_trigger_held.current = true;
                     on_trigger_start?.(hand);
@@ -343,12 +482,28 @@ export const useGrabbable = (
             if (!currentlyNear.has(h)) on_nearby_end?.(h);
         nearbyHands.current = currentlyNear;
 
-        // ---- move / throw tail: UNCHANGED from yours, only grabbingSource → grabbingHand ----
+        // ---- move / throw tail ----
         if (grabbingHand.current && activeHandMatrix) {
-            const newWorldMatrix = tempMatrix.current.multiplyMatrices(
-                activeHandMatrix,
-                offsetMatrix.current
-            );
+            const use_aim_offset =
+                snapped_grab.current &&
+                snap_grab_offset_space === "aim" &&
+                !!snap_grab_offset;
+
+            let newWorldMatrix: Matrix4;
+            if (use_aim_offset) {
+                newWorldMatrix = compose_aim_world_matrix(
+                    grabbingHand.current,
+                    activeHandMatrix,
+                    snap_grab_offset!,
+                    tempMatrix.current
+                );
+            } else {
+                newWorldMatrix = tempMatrix.current.multiplyMatrices(
+                    activeHandMatrix,
+                    offsetMatrix.current
+                );
+            }
+
             newWorldMatrix.decompose(_p.current, _q.current, _s.current);
             grabVelocity.current
                 .copy(_p.current)
@@ -384,17 +539,28 @@ export const useGrabbable = (
                 target_ref.current.matrixAutoUpdate = true;
             }
         }
+
+        // ---- falling-edge restore of player collision ----
+        if (restore_countdown.current !== null && !grabbingHand.current) {
+            restore_countdown.current -= delta;
+            if (restore_countdown.current <= 0) {
+                restore_player_collision(body);
+                restore_countdown.current = null;
+            }
+        }
     });
 };
 
 // TODO: accept props to allow scaling, position/rotation lock etc
 // TODO: sticky (press another button to release) and non sticky (releases when grip lost) grabbables
-// TODO: should actually snap to the hand by default at least, with option to allow the sort of berhaviour we want from the camera (the only current grabbable)
 
 interface GrabbableProps extends ComponentProps<"group"> {
     target_ref?: RefObject<Object3D | null>;
     grab_distance?: number;
     nearby_trigger_distance?: number;
+    grab_offset?: [number, number, number];
+    grab_offset_space?: "grip" | "aim";
+    ignore_player_while_held?: boolean;
     // optional grab-region override from GrabbableInteraction.collider
     // undefined defaults to auto bounding box
     collider?: GrabCollider;
@@ -436,6 +602,9 @@ export const Grabbable = (props: GrabbableProps) => {
     useGrabbable(target_ref, {
         grab_distance: props.grab_distance,
         nearby_trigger_distance: props.nearby_trigger_distance || props.grab_distance,
+        snap_grab_offset: props.grab_offset || [0, 0, 0.15],
+        snap_grab_offset_space: props.grab_offset_space || "aim",
+        ignore_player_while_held: props.ignore_player_while_held,
         collider,
         on_grab_start: props.on_grab_start,
         on_grab_end: props.on_grab_end,
@@ -453,5 +622,3 @@ export const Grabbable = (props: GrabbableProps) => {
         </group>
     );
 }
-
-// TODO: hands being handled incorrectly, always snaps to right in vr!

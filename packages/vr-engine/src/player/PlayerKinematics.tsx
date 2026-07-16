@@ -10,6 +10,7 @@ import {useSessionMode} from "../contexts/SessionModeContext";
 import {JUMP_SPEED} from "../input/values";
 import {useWorldEnvironment} from "../world/WorldEnvironmentContext";
 import {CAPSULE_RADIUS, consume_player_movement, set_capsule_world_position} from "./motion";
+import {PLAYER_COLLISION_GROUPS} from "../engine/collision_groups";
 
 const VRJumpButton = ({jump_pressed_ref}: {jump_pressed_ref: RefObject<boolean>}) => {
     const [locomotion_hand] = useSetting("vr_locomotion_hand");
@@ -104,7 +105,7 @@ export const PlayerKinematics = () => {
         );
 
         const collider = world.createCollider(
-            rapier.ColliderDesc.capsule(1, CAPSULE_RADIUS),
+            rapier.ColliderDesc.capsule(1, CAPSULE_RADIUS).setCollisionGroups(PLAYER_COLLISION_GROUPS),
             body
         );
 
@@ -178,7 +179,7 @@ export const PlayerKinematics = () => {
             capsule_collider,
             desired.current,
             undefined,
-            undefined,
+            PLAYER_COLLISION_GROUPS,
             should_hit_environment
         );
 

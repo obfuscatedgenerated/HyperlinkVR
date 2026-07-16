@@ -181,13 +181,15 @@ export const ObjectPhysics = ({
     children = null,
     body_name,
     kinematic_pos_tracking_ref,
-    transform
+    transform,
+    collision_groups
 }: {
     physics: PhysicsSystem;
     children?: React.ReactNode;
     body_name?: string;
     kinematic_pos_tracking_ref?: React.RefObject<Group | null>;
     transform?: Transform
+    collision_groups?: number;
 }) => {
     const refs = useObjectRefsOptional();
 
@@ -209,6 +211,8 @@ export const ObjectPhysics = ({
 
     const { auto_strategy, ColliderComponent } = useCollider(collider);
 
+    const collision_group_props = collision_groups !== undefined ? { collisionGroups: collision_groups } : {};
+
     useKinematicPosition(rb_ref, rb, kinematic_pos_tracking_ref || container_ref);
     useKinematicVelocity(rb_ref, rb);
     // usePhysicsReporting(rbRef, physics, monitors, id); // TODO: implement
@@ -222,6 +226,7 @@ export const ObjectPhysics = ({
                 position={transform?.position}
                 quaternion={transform ? rotation_to_quaternion_array(transform.rotation) : undefined}
                 colliders={auto_strategy}
+                {...collision_group_props}
                 {...get_body_props(rb)}
                 //onCollisionEnter={physics.report_collisions ? (e) => reportCollision(id, e) : undefined} // TODO: implement
             >

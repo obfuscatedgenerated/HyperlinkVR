@@ -13,6 +13,7 @@ import { Hand, useHands } from "../input/hands";
 import { LayerGroup } from "../render/LayerGroup";
 import { Layer } from "../render/layers";
 import {XRTeleportControl} from "../input/impl/xr/locomotion";
+import {PLAYER_COLLISION_GROUPS} from "../engine/collision_groups";
 
 
 const left_hand = new URL("../../assets/player/hands/left.glb", import.meta.url).href;
@@ -344,6 +345,7 @@ export const XRAvatarHand = () => {
 
             <ObjectPhysics
                 body_name={`avatar_hand_rb-${handedness}`}
+                collision_groups={PLAYER_COLLISION_GROUPS}
                 physics={{
                     rigid_body: {
                         type: "kinematic-pos",
@@ -367,6 +369,7 @@ export const FlatAvatarHands = () => {
                 >
                     <ObjectPhysics
                         body_name={`avatar_hand_rb-${hand.handedness}`}
+                        collision_groups={PLAYER_COLLISION_GROUPS}
                         physics={{
                             rigid_body: {
                                 type: "kinematic-pos",

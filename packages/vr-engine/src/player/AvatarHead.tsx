@@ -11,6 +11,7 @@ import { LayerGroup } from "../render/LayerGroup";
 import { Layer } from "../render/layers";
 import { AvatarExpression } from "./AvatarExpression";
 import { AvatarHair } from "./AvatarHair";
+import {PLAYER_COLLISION_GROUPS} from "../engine/collision_groups";
 
 
 const head = new URL("../../assets/player/head/head.glb", import.meta.url).href;
@@ -37,6 +38,7 @@ export const AvatarHead = () => {
             <group ref={anchor_ref} />
             <ObjectPhysics
                 body_name="avatar_head_rb"
+                collision_groups={PLAYER_COLLISION_GROUPS}
                 physics={{
                     rigid_body: {
                         type: "kinematic-pos",
