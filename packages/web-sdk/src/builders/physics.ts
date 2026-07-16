@@ -12,7 +12,7 @@ import {
     RigidBody,
     RigidBodyInput,
     RigidBodySchema,
-    RigidBodyType
+    RigidBodyType, Rotation
 } from "@hyperlinkvr/vr-engine-schemas";
 
 export class PhysicsSystemBuilder extends BaseBuilder<PhysicsSystemInput> {
@@ -214,6 +214,11 @@ export class ColliderBuilder extends BaseBuilder<Collider> {
         return this;
     }
 
+    cylinder(radius: number, height: number) {
+        this._internal = {type: "cylinder", radius, height};
+        return this;
+    }
+
     custom_mesh(mesh_url: string, approximation?: CustomMeshApproximation) {
         this._internal = {type: "custom-mesh", mesh: mesh_url, approximation};
         return this;
@@ -221,6 +226,16 @@ export class ColliderBuilder extends BaseBuilder<Collider> {
 
     auto(approximation?: MeshApproximation) {
         this._internal = {type: "auto", approximation};
+        return this;
+    }
+
+    set_offset(offset: [number, number, number]) {
+        this._internal.offset = offset;
+        return this;
+    }
+
+    set_rotation(rotation: Rotation) {
+        this._internal.rotation = rotation;
         return this;
     }
 

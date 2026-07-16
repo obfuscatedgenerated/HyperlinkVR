@@ -1,5 +1,41 @@
 import { z } from "zod";
 
+export const Vector3Schema = z.tuple([z.number(), z.number(), z.number()]);
+export type Vector3 = z.infer<typeof Vector3Schema>;
+
+export const Vector4Schema = z.tuple([z.number(), z.number(), z.number(), z.number()]);
+export type Vector4 = z.infer<typeof Vector4Schema>;
+
+export const EulerRotationSchema = z.tuple([
+    z.number(),
+    z.number(),
+    z.number()
+]);
+export type EulerRotation = z.infer<typeof EulerRotationSchema>;
+
+export const QuaternionRotationSchema = z.tuple([
+    z.number(),
+    z.number(),
+    z.number(),
+    z.number()
+]);
+export type QuaternionRotation = z.infer<typeof QuaternionRotationSchema>;
+
+export const RotationSchema = z.union([
+    EulerRotationSchema,
+    QuaternionRotationSchema
+]);
+export type Rotation = z.infer<typeof RotationSchema>;
+
+export const TransformSchema = z.object({
+    position: Vector3Schema.default([0, 0, 0]),
+    rotation: RotationSchema.default([0, 0, 0]),
+    scale: Vector3Schema.default([1, 1, 1])
+});
+export type Transform = z.infer<typeof TransformSchema>;
+export type TransformInput = z.input<typeof TransformSchema>;
+
+
 export const BindingConfigSchema = z.object({
     id: z.string().optional(),   // routing id, minted at dispatch
     name: z.string().optional()  // author label, used to bind callbacks
@@ -10,31 +46,44 @@ const bindable = <T extends z.ZodRawShape>(shape: T) =>
 
 export type Bindable<T extends z.ZodRawShape = any> = z.infer<ReturnType<typeof bindable<T>>> & {binding?: BindingConfig};
 
-// TODO: collider offsets. and is collider combo possible?
+// TODO: collider combo?
 
-export const BoxColliderSchema = z.object({
+const BaseColliderSchema = z.object({
+    type: z.string(),
+    offset: Vector3Schema.optional(),
+    rotation: RotationSchema.optional()
+});
+
+export const BoxColliderSchema = BaseColliderSchema.extend({
     type: z.literal("box"),
     size: z.tuple([z.number(), z.number(), z.number()])
 });
 export type BoxCollider = z.infer<typeof BoxColliderSchema>;
 
-export const SphereColliderSchema = z.object({
+export const SphereColliderSchema = BaseColliderSchema.extend({
     type: z.literal("sphere"),
     radius: z.number().positive()
 });
 export type SphereCollider = z.infer<typeof SphereColliderSchema>;
 
-export const CapsuleColliderSchema = z.object({
+export const CapsuleColliderSchema = BaseColliderSchema.extend({
     type: z.literal("capsule"),
     radius: z.number().positive(),
     height: z.number().positive()
 });
 export type CapsuleCollider = z.infer<typeof CapsuleColliderSchema>;
 
+export const CylinderColliderSchema = BaseColliderSchema.extend({
+    type: z.literal("cylinder"),
+    radius: z.number().positive(),
+    height: z.number().positive()
+});
+export type CylinderCollider = z.infer<typeof CylinderColliderSchema>;
+
 export const CustomMeshApproximationSchema = z.enum(["hull", "trimesh"]).default("hull");
 export type CustomMeshApproximation = z.infer<typeof CustomMeshApproximationSchema>;
 
-export const CustomMeshColliderSchema = z.object({
+export const CustomMeshColliderSchema = BaseColliderSchema.extend({
     type: z.literal("custom-mesh"),
     mesh: z.url({
         protocol: /^https?$/,
@@ -49,7 +98,7 @@ export const MeshApproximationSchema = z
     .default("hull");
 export type MeshApproximation = z.infer<typeof MeshApproximationSchema>;
 
-export const AutoColliderSchema = z.object({
+export const AutoColliderSchema = BaseColliderSchema.extend({
     type: z.literal("auto"),
     approximation: MeshApproximationSchema.optional()
 });
@@ -61,16 +110,11 @@ export const ColliderSchema = z.discriminatedUnion("type", [
     BoxColliderSchema,
     SphereColliderSchema,
     CapsuleColliderSchema,
+    CylinderColliderSchema,
     CustomMeshColliderSchema,
     AutoColliderSchema
 ]);
 export type Collider = z.infer<typeof ColliderSchema>;
-
-export const Vector3Schema = z.tuple([z.number(), z.number(), z.number()]);
-export type Vector3 = z.infer<typeof Vector3Schema>;
-
-export const Vector4Schema = z.tuple([z.number(), z.number(), z.number(), z.number()]);
-export type Vector4 = z.infer<typeof Vector4Schema>;
 
 const AxisLockSchema = z.object({
     x: z.boolean().default(false),
@@ -148,35 +192,6 @@ export const PhysicsSystemSchema = z.object({
 export type PhysicsSystem = z.infer<typeof PhysicsSystemSchema>;
 export type PhysicsSystemInput = z.input<typeof PhysicsSystemSchema>;
 
-export const EulerRotationSchema = z.tuple([
-    z.number(),
-    z.number(),
-    z.number()
-]);
-export type EulerRotation = z.infer<typeof EulerRotationSchema>;
-
-export const QuaternionRotationSchema = z.tuple([
-    z.number(),
-    z.number(),
-    z.number(),
-    z.number()
-]);
-export type QuaternionRotation = z.infer<typeof QuaternionRotationSchema>;
-
-export const RotationSchema = z.union([
-    EulerRotationSchema,
-    QuaternionRotationSchema
-]);
-export type Rotation = z.infer<typeof RotationSchema>;
-
-export const TransformSchema = z.object({
-    position: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
-    rotation: RotationSchema.default([0, 0, 0]),
-    scale: z.tuple([z.number(), z.number(), z.number()]).default([1, 1, 1])
-});
-export type Transform = z.infer<typeof TransformSchema>;
-export type TransformInput = z.input<typeof TransformSchema>;
-
 export const GrabOffsetSchema = z.object({
     position: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
     rotation: RotationSchema.default([0, 0, 0])
@@ -246,6 +261,18 @@ export type ControllerButtonInteractionInput = z.input<
     typeof ControllerButtonInteractionSchema
 >;
 
+const TriggerVolumeObjectsDisableSchema = z.object({
+    include: z.literal(false)
+});
+const TriggerVolumeObjectsEnableSchema = z.object({
+    include: z.literal(true),
+    tag_filter: z.array(z.string()).optional()
+});
+const TriggerVolumeObjectsSchema = z.union([
+    TriggerVolumeObjectsDisableSchema,
+    TriggerVolumeObjectsEnableSchema
+]);
+
 export const TriggerVolumeInteractionSchema = bindable({
     type: z.literal("trigger-volume"),
     collider: ColliderSchema,
@@ -253,7 +280,8 @@ export const TriggerVolumeInteractionSchema = bindable({
     report_exit: z.boolean().default(true),
     ignore_hands: z.boolean().default(false),
     ignore_torso: z.boolean().default(false),
-    ignore_head: z.boolean().default(false)
+    ignore_head: z.boolean().default(false),
+    objects: TriggerVolumeObjectsSchema.default({ include: false })
 });
 export type TriggerVolumeInteraction = z.infer<
     typeof TriggerVolumeInteractionSchema
@@ -489,7 +517,8 @@ export const EngineObjectDispatchSchema = z.object({
         scale: [1, 1, 1]
     }),
     user_data: z.record(z.string(), z.any()).optional(),
-    monitors: z.array(MonitorSchema).optional()
+    monitors: z.array(MonitorSchema).optional(),
+    tags: z.array(z.string()).optional()
 });
 export type EngineObjectDispatch = z.infer<typeof EngineObjectDispatchSchema>;
 export type EngineObjectDispatchInput = z.input<typeof EngineObjectDispatchSchema>;
@@ -514,7 +543,8 @@ export const EngineObjectModificationSchema = z.object({
     id: z.string(),
     transform: PartialTransformSchema.optional(),
     user_data: z.record(z.string(), z.any()).optional(),
-    monitors: z.array(MonitorSchema).optional()
+    monitors: z.array(MonitorSchema).optional(),
+    tags: z.array(z.string()).optional()
 });
 export type EngineObjectModification = z.infer<typeof EngineObjectModificationSchema>;
 export type EngineObjectModificationInput = z.input<typeof EngineObjectModificationSchema>;

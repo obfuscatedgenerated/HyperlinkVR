@@ -139,7 +139,7 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
         this._internal.monitors.push({...monitor, binding: {name}});
     }
 
-    remove_monitors(name: string) {
+    remove_monitors_from_modification(name: string) {
         if (this.#burned) {
             throw new Error("This modification builder has already been applied.");
         }
@@ -157,6 +157,8 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
         }
     }
 
+    // TODO: way to remove monitors from source object, need to pull in its state
+
     add_monitors(monitors: { name: string, monitor: Monitor }[]) {
         if (this.#burned) {
             throw new Error("This modification builder has already been applied.");
@@ -168,6 +170,47 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
 
         this._internal.monitors.push(...monitors.map(({name, monitor}) => ({...monitor, reporting: {name}})));
     }
+
+    add_tag(tag: string) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.tags) {
+            this._internal.tags = [];
+        }
+        this._internal.tags.push(tag);
+        return this;
+    }
+
+    remove_tag_from_modification(tag: string) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        if (!this._internal.tags) {
+            return this;
+        }
+        this._internal.tags = this._internal.tags.filter(t => t !== tag);
+        return this;
+    }
+
+    // TODO: way to remove tags from source object, need to pull in its state
+
+    set_tags(tags: string[]) {
+        if (this.#burned) {
+            throw new Error("This modification builder has already been applied.");
+        }
+
+        this._internal.tags = tags;
+        return this;
+    }
+
+    modification_has_tag(tag: string): boolean {
+        return this._internal.tags?.includes(tag) ?? false;
+    }
+
+    // TODO: way to check if source object has tag, need to pull in its state
 
     build(): EngineObjectModification {
         return EngineObjectModificationSchema.parse(this._internal);
@@ -252,35 +295,43 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         return this;
     }
 
-    set_position(x: number, y: number, z: number) {
+    set_position(x_or_vect: number, y?: number, z?: number) {
         if (!this._internal.transform) {
             this._internal.transform = {};
         }
-        this._internal.transform.position = [x, y, z];
+
+        const [x, y_val, z_val] = Array.isArray(x_or_vect) ? x_or_vect : [x_or_vect, y!, z!];
+        this._internal.transform.position = Vector3Schema.parse([x, y_val, z_val]);
         return this;
     }
 
-    set_euler_rotation(x: number, y: number, z: number) {
+    set_euler_rotation(x_or_vect: number | Vector3, y?: number, z?: number) {
         if (!this._internal.transform) {
             this._internal.transform = {};
         }
-        this._internal.transform.rotation = [x, y, z];
+
+        const [x, y_val, z_val] = Array.isArray(x_or_vect) ? x_or_vect : [x_or_vect, y!, z!];
+        this._internal.transform.rotation = Vector3Schema.parse([x, y_val, z_val]);
         return this;
     }
 
-    set_quaternion_rotation(x: number, y: number, z: number, w: number) {
+    set_quaternion_rotation(x_or_vect: number | Vector4, y?: number, z?: number, w?: number) {
         if (!this._internal.transform) {
             this._internal.transform = {};
         }
-        this._internal.transform.rotation = [x, y, z, w];
+
+        const [x, y_val, z_val, w_val] = Array.isArray(x_or_vect) ? x_or_vect : [x_or_vect, y!, z!, w!];
+        this._internal.transform.rotation = Vector4Schema.parse([x, y_val, z_val, w_val]);
         return this;
     }
 
-    set_scale(x: number, y: number, z: number) {
+    set_scale(x_or_vect: number | Vector3, y?: number, z?: number) {
         if (!this._internal.transform) {
             this._internal.transform = {};
         }
-        this._internal.transform.scale = [x, y, z];
+
+        const [x, y_val, z_val] = Array.isArray(x_or_vect) ? x_or_vect : [x_or_vect, y!, z!];
+        this._internal.transform.scale = Vector3Schema.parse([x, y_val, z_val]);
         return this;
     }
 
@@ -321,6 +372,31 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
     set_monitors(monitors: { name: string, monitor: Monitor }[]) {
         this._internal.monitors = monitors.map(({name, monitor}) => ({...monitor, reporting: {name}}));
         return this;
+    }
+
+    add_tag(tag: string) {
+        if (!this._internal.tags) {
+            this._internal.tags = [];
+        }
+        this._internal.tags.push(tag);
+        return this;
+    }
+
+    remove_tag(tag: string) {
+        if (!this._internal.tags) {
+            return this;
+        }
+        this._internal.tags = this._internal.tags.filter(t => t !== tag);
+        return this;
+    }
+
+    set_tags(tags: string[]) {
+        this._internal.tags = tags;
+        return this;
+    }
+
+    has_tag(tag: string): boolean {
+        return this._internal.tags?.includes(tag) ?? false;
     }
 
     on(name: string, callback: (event: ReportEvent) => void) {

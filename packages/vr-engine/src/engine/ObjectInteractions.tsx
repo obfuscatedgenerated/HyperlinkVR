@@ -12,7 +12,7 @@ import { useAudioListener } from "../contexts/AudioListenerContext";
 import { useInteractionBinding } from "../hooks/useInteractionBinding";
 import { Grabbable } from "../interaction";
 import { FollowPlayer } from "../interaction/FollowPlayer";
-import { resolve_body_part, TriggerVolume } from "../interaction/TriggerVolume";
+import {resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
 import {Audio, AudioLoader, DirectionalLight, Euler, Group, PointLight, SpotLight} from "three";
 import {PositionalAudio} from "@react-three/drei";
 import type { PositionalAudio as PositionalAudioType } from "three";
@@ -67,17 +67,17 @@ const TriggerVolumeWrapper = ({interaction, children}: InteractionWrapperProps<T
                 collider={interaction.collider}
                 on_enter={interaction.report_enter
                     ? (payload) => {
-                        const part = resolve_body_part(payload);
-                        if (!part) return;
-                        emit_report({ kind: "trigger-volume", payload: { type: "enter", part } })
+                        const interacted = resolve_interacted(payload, interaction);
+                        if (!interacted) return;
+                        emit_report({ kind: "trigger-volume", payload: { type: "enter", interacted } });
                     }
                     : undefined
                 }
                 on_exit={interaction.report_exit
                     ? (payload) => {
-                        const part = resolve_body_part(payload);
-                        if (!part) return;
-                        emit_report({ kind: "trigger-volume", payload: { type: "exit", part } })
+                        const interacted = resolve_interacted(payload, interaction);
+                        if (!interacted) return;
+                        emit_report({ kind: "trigger-volume", payload: { type: "exit", interacted } });
                     }
                     : undefined
                 }

@@ -1,14 +1,17 @@
 import {Collider, PhysicsSystem, RigidBody as RigidBodyConfig, Transform} from "@hyperlinkvr/vr-engine-schemas";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { BallCollider, CapsuleCollider, CuboidCollider, MeshCollider, RapierRigidBody, RigidBody, RigidBodyAutoCollider } from "@react-three/rapier";
+import {
+    BallCollider, CapsuleCollider, CuboidCollider,
+    CylinderCollider, MeshCollider, RapierRigidBody, RigidBody, RigidBodyAutoCollider
+} from "@react-three/rapier";
 import {ComponentProps, useEffect, useMemo, useRef} from "react";
-import {Group, MeshBasicMaterial, Quaternion, Vector3, Mesh} from "three";
+import {Group, MeshBasicMaterial, Quaternion, Vector3, Mesh, EulerOrder, Euler} from "three";
 
 import { clone } from "three/examples/jsm/utils/SkeletonUtils"
 
 import { useObjectRefsOptional } from "../contexts/ObjectRefsContext";
-import {rotation_to_quaternion_array} from "./rotation";
+import {rotation_to_euler, rotation_to_quaternion_array} from "./rotation";
 
 
 const RB_TYPE = {
@@ -17,62 +20,6 @@ const RB_TYPE = {
     "kinematic-pos": "kinematicPosition",
     "kinematic-vel": "kinematicVelocity"
 } as const;
-
-export const PrimitiveCollider = ({ collider }: { collider: Collider }) => {
-    switch (collider.type) {
-        case "box":
-            return (
-                <CuboidCollider
-                    args={[
-                        collider.size[0] / 2,
-                        collider.size[1] / 2,
-                        collider.size[2] / 2
-                    ]}
-                />
-            );
-        case "sphere":
-            return <BallCollider args={[collider.radius]} />;
-        case "capsule":
-            return (
-                <CapsuleCollider
-                    args={[collider.height / 2, collider.radius]}
-                />
-            );
-        default:
-            return null;
-    }
-};
-
-const INVISIBLE_MATERIAL = new MeshBasicMaterial({ visible: false });
-
-export const URLMeshCollider = ({
-    url,
-    approximation
-}: {
-    url: string;
-    approximation: string;
-}) => {
-    const { scene } = useGLTF(url);
-    const instance = useMemo(() => {
-        const cloned = clone(scene);
-
-        cloned.traverse((object) => {
-            const mesh = object as Mesh;
-            if (mesh.isMesh) {
-                mesh.material = INVISIBLE_MATERIAL;
-            }
-        });
-
-        return cloned;
-    }, [scene]);
-
-    return (
-        // TODO: fix typing
-        <MeshCollider type={approximation as any}>
-            <primitive object={instance} />
-        </MeshCollider>
-    );
-};
 
 export const useKinematicPosition = (
     rb_ref: React.RefObject<RapierRigidBody | null>,
@@ -111,17 +58,79 @@ export const useKinematicVelocity = (
     }, [ref, rb]);
 };
 
-export const useCollider = (collider: Collider): {auto_strategy: RigidBodyAutoCollider | false, ColliderComponent: React.ComponentType<any> | null} => {
+interface ColliderProps {
+    position?: [number, number, number];
+    rotation?: [number, number, number] | [number, number, number, EulerOrder];
+}
+
+export const PrimitiveCollider = ({ collider, ...rest }: ColliderProps & { collider: Collider }) => {
+    switch (collider.type) {
+        case "box":
+            return (
+                <CuboidCollider
+                    args={[
+                        collider.size[0] / 2,
+                        collider.size[1] / 2,
+                        collider.size[2] / 2
+                    ]}
+                    {...rest}
+                />
+            );
+        case "sphere":
+            return <BallCollider args={[collider.radius]} {...rest} />;
+        case "capsule":
+            return <CapsuleCollider args={[collider.height / 2, collider.radius]} {...rest} />;
+        case "cylinder":
+            return <CylinderCollider args={[collider.height / 2, collider.radius]} {...rest} />;
+        default:
+            return null;
+    }
+};
+
+const INVISIBLE_MATERIAL = new MeshBasicMaterial({ visible: false });
+
+export const URLMeshCollider = ({
+    url,
+    approximation,
+    ...rest
+}: ColliderProps & {
+    url: string;
+    approximation: string;
+}) => {
+    const { scene } = useGLTF(url);
+    const instance = useMemo(() => {
+        const cloned = clone(scene);
+
+        cloned.traverse((object) => {
+            const mesh = object as Mesh;
+            if (mesh.isMesh) {
+                mesh.material = INVISIBLE_MATERIAL;
+            }
+        });
+
+        return cloned;
+    }, [scene]);
+
+    return (
+        // TODO: fix typing
+        <MeshCollider type={approximation as any} {...rest}>
+            <primitive object={instance} />
+        </MeshCollider>
+    );
+};
+
+export const useCollider = (collider: Collider): {auto_strategy: RigidBodyAutoCollider | false, ColliderComponent: React.ComponentType<ColliderProps> | null} => {
     const auto_strategy = collider.type === "auto" ? (collider.approximation as any) : false;
 
     const ColliderComponent = useMemo(() => {
         switch (collider.type) {
             case "custom-mesh":
-                return () => <URLMeshCollider url={collider.mesh} approximation={collider.approximation || "hull"} />;
+                return (props: ColliderProps) => <URLMeshCollider url={collider.mesh} approximation={collider.approximation || "hull"} {...props} />;
             case "box":
             case "sphere":
             case "capsule":
-                return () => <PrimitiveCollider collider={collider} />;
+            case "cylinder":
+                return (props: ColliderProps) => <PrimitiveCollider collider={collider} {...props} />;
             default:
                 return null;
         }
@@ -217,6 +226,14 @@ export const ObjectPhysics = ({
     useKinematicVelocity(rb_ref, rb);
     // usePhysicsReporting(rbRef, physics, monitors, id); // TODO: implement
 
+    const collider_rot_euler = useMemo(() => {
+        if (!collider.rotation) return [0, 0, 0] as [number, number, number];
+
+        const euler = new Euler();
+        rotation_to_euler(collider.rotation, euler);
+        return [euler.x, euler.y, euler.z, euler.order] as [number, number, number, EulerOrder];
+    }, [collider.rotation]);
+
     return (
         <group ref={container_ref}>
             <RigidBody
@@ -230,7 +247,7 @@ export const ObjectPhysics = ({
                 {...get_body_props(rb)}
                 //onCollisionEnter={physics.report_collisions ? (e) => reportCollision(id, e) : undefined} // TODO: implement
             >
-                {ColliderComponent && <ColliderComponent />}
+                {ColliderComponent && <ColliderComponent position={collider.offset} rotation={collider_rot_euler} />}
                 {children}
             </RigidBody>
         </group>

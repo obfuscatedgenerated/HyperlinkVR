@@ -6,10 +6,30 @@ export interface ReportEventEnvelope<TKind extends string, TPayload> {
     payload: TPayload;
 }
 
+interface InteractedHand {
+    part: "hand";
+    handedness: "left" | "right";
+}
+
+interface InteractedHeadOrTorso {
+    part: "head" | "torso";
+}
+
+type InteractedBodyPart = InteractedHand | InteractedHeadOrTorso;
+
+type InteractedPlayer = InteractedBodyPart & {
+    type: "player"
+}
+
+interface InteractedObject {
+    type: "object";
+    object_id: string;
+    tags: string[];
+}
+
 export interface TriggerVolumeInteractionPayload {
     type: "enter" | "exit";
-    part: "hand" | "torso" | "head";
-    handedness?: "left" | "right";
+    interacted: InteractedPlayer | InteractedObject;
 }
 // TODO: support other objects entering
 

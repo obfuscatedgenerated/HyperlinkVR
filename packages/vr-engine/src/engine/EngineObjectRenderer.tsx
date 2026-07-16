@@ -58,6 +58,7 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
                 ref={refs.current.root}
                 position={data.transform.position}
                 scale={data.transform.scale}
+                userData={{object_id: data.id, ...data.user_data}}
             >
                 <RendererComponent
                     root_ref={refs.current.root}

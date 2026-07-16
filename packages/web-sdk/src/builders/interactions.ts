@@ -176,6 +176,17 @@ export class TriggerVolumeInteractionBuilder extends BaseBuilder<TriggerVolumeIn
         return this;
     }
 
+    // no filter = all objects, filter = only objects with these tags
+    include_objects(tag_filter?: string[]) {
+        this._internal.objects = {include: true, tag_filter};
+        return this;
+    }
+
+    exclude_objects() {
+        this._internal.objects = {include: false};
+        return this;
+    }
+
     build(): TriggerVolumeInteraction {
         return TriggerVolumeInteractionSchema.parse(this._internal);
     }
