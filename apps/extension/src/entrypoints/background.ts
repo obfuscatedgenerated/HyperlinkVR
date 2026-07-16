@@ -57,6 +57,7 @@ export default defineBackground(() => {
         tab_id: number;
         window_id: number;
         ready_port: chrome.runtime.Port | null;
+        ready_notified: boolean;
     }
 
     // only one vr host is allowed at a time to prvent sync issues
@@ -164,27 +165,27 @@ export default defineBackground(() => {
     });
 
     // only notify if the meta is ready and the vr host has a ready port (and not sent already)
-    const tabs_ready_notified = new Set<number>();
     const try_notify_ready = (tab_id: number) => {
-        const host_ready =
-            !!active_session &&
-            active_session.tab_id === tab_id &&
-            active_session.ready_port !== null;
-
-        if (!host_ready || !tab_meta.has(tab_id)) {
+        if (
+            !active_session ||
+            active_session.tab_id !== tab_id ||
+            active_session.ready_port === null
+        ) {
             return;
         }
 
-        if (tabs_ready_notified.has(tab_id)) {
+        if (!tab_meta.has(tab_id) || active_session.ready_notified) {
             return;
         }
 
-        tabs_ready_notified.add(tab_id);
+        active_session.ready_notified = true;
 
         console.log("Notifying content script that HyperlinkVR is ready for tab", tab_id, tab_meta.get(tab_id));
         chrome.tabs.sendMessage(tab_id, { type: "HVRSDK_READY" }).catch(() => {
             // probably not ready yet, clear the flag so we can try again later
-            tabs_ready_notified.delete(tab_id);
+            if (active_session?.tab_id === tab_id) {
+                active_session.ready_notified = false;
+            }
         });
     };
 
@@ -330,15 +331,14 @@ export default defineBackground(() => {
 
             // is the VR host currently ready for this sender's tab? (pull, for late-loading content scripts)
             if (msg.action === "HVRSDK_QUERY_READY") {
-                const ready =
-                    !!active_session &&
+                if (
+                    active_session &&
                     active_session.tab_id === sender.tab?.id &&
-                    active_session.ready_port !== null;
-
-                if (ready) {
-                    chrome.tabs.sendMessage(sender.tab.id!, {
-                        type: "HVRSDK_READY"
-                    });
+                    active_session.ready_port !== null &&
+                    !active_session.ready_notified
+                ) {
+                    active_session.ready_notified = true;
+                    chrome.tabs.sendMessage(sender.tab.id!, { type: "HVRSDK_READY" });
                 }
 
                 dropped = false;
