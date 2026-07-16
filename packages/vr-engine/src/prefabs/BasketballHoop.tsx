@@ -65,6 +65,9 @@ export const BasketballHoop = ({enable_sfx, binding}: {enable_sfx?: boolean, bin
                         const audio = audio_ref.current;
                         if (!audio) return;
 
+                        // TODO: way to make dupe audio events overlap each other (expose to the sdk too)
+                        audio.stop();
+                        audio.offset = 0;
                         audio.play();
                     }
                 }}
