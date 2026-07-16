@@ -188,10 +188,10 @@ const ray_hits_within = (
 export const useGrabbable = (
     target_ref: RefObject<Object3D | null>,
     {
-        grab_distance = 0.4,
-        nearby_trigger_distance = 0.4,
+        grab_distance = 1,
+        nearby_trigger_distance = 1,
         reach = 0, // 0 = ray-grab disabled (VR default), flat sets this to a distance
-        snap_to_hand = false,
+        snap_to_hand = true,
         collider,
         on_grab_start,
         on_grab_end,
