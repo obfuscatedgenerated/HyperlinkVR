@@ -182,7 +182,10 @@ export default defineBackground(() => {
         tabs_ready_notified.add(tab_id);
 
         console.log("Notifying content script that HyperlinkVR is ready for tab", tab_id, tab_meta.get(tab_id));
-        chrome.tabs.sendMessage(tab_id, { type: "HVRSDK_READY" }).catch(() => {});
+        chrome.tabs.sendMessage(tab_id, { type: "HVRSDK_READY" }).catch(() => {
+            // probably not ready yet, clear the flag so we can try again later
+            tabs_ready_notified.delete(tab_id);
+        });
     };
 
     // hvr-ready:<tab_id>: opened by the VR host's WebSDKMessagingProvider for the duration of its RTC session to signal it is ready to receive connections
@@ -495,6 +498,10 @@ export default defineBackground(() => {
 
     // alert the vr host of changes in url
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+        if (changeInfo.status === "loading") {
+            tabs_ready_notified.delete(tabId);
+        }
+
         if (changeInfo.url) {
             post_to_tab_sessions(tabId, {
                 type: "HVR_URL_UPDATE",
@@ -512,6 +519,7 @@ export default defineBackground(() => {
         });
 
         tab_meta.delete(tabId);
+        tabs_ready_notified.delete(tabId);
 
         if (active_session?.tab_id === tabId) {
             active_session = null;
