@@ -8,6 +8,7 @@ import { useObjectRefsOptional } from "../contexts";
 import { PLAYER_FILTER_BIT, PLAYER_IGNORE_RELEASE_DELAY_S } from "../engine/collision_groups";
 import { Hand, useHands } from "../input/hands";
 import {FULL_THROW_CHARGE_S} from "../input/values";
+import {HintLayer, useSetHintState} from "../input/impl/flat/hints";
 
 enum RigidBodyType {
     Fixed = 1,
@@ -278,6 +279,40 @@ export const useGrabbable = (
     // hands that threw and must fully release grab before re-grabbing, otherwise a still-held RMB instantly re-grabs the object it just threw
     const throw_lockout = useRef(new Set<Hand>());
 
+    const {add_layer, remove_layer} = useSetHintState();
+
+    const publishes_nearby = useRef(false);
+    const published_hold_layers = useRef<HintLayer[]>([]);
+
+    const publish_held = useCallback(
+        (held: boolean) => {
+            if (held) {
+                const hold_layers: HintLayer[] = ["holding"];
+                if (flat_throwable) hold_layers.push("holding_throwable");
+                // TODO: nothing is useable yet, add "holding_useable" here when that exists
+                published_hold_layers.current = hold_layers;
+                for (const layer of hold_layers) add_layer(layer);
+            } else {
+                for (const layer of published_hold_layers.current) remove_layer(layer);
+                published_hold_layers.current = [];
+            }
+        },
+        [add_layer, remove_layer, flat_throwable]
+    );
+
+    useEffect(
+        () => () => {
+            // withdraw everything on unmount (object despawned while nearby/held)
+            if (publishes_nearby.current) {
+                publishes_nearby.current = false;
+                remove_layer("not_holding");
+            }
+            for (const layer of published_hold_layers.current) remove_layer(layer);
+            published_hold_layers.current = [];
+        },
+        [remove_layer]
+    );
+
     const region_tester = useRef<RegionTester | null>(null);
     const region_source = useRef<GrabCollider | undefined>(undefined);
     const ensure_region_tester = (target: Object3D): RegionTester | null => {
@@ -333,6 +368,7 @@ export const useGrabbable = (
     ) => {
         grabbingHand.current = null;
         on_grab_end?.(hand);
+        publish_held(false);
 
         if (hand.throw_intent) {
             hand.throw_intent.held_throwable.current = null;
@@ -477,6 +513,7 @@ export const useGrabbable = (
                 }
                 grabbingHand.current = hand;
                 on_grab_start?.(hand);
+                publish_held(true);
 
                 // tell the flat input system whether i want to be thrown
                 if (hand.throw_intent) {
@@ -550,6 +587,14 @@ export const useGrabbable = (
         for (const h of nearbyHands.current)
             if (!currentlyNear.has(h)) on_nearby_end?.(h);
         nearbyHands.current = currentlyNear;
+
+        if (currentlyNear.size > 0 && !publishes_nearby.current) {
+            publishes_nearby.current = true;
+            add_layer("not_holding");
+        } else if (currentlyNear.size === 0 && publishes_nearby.current) {
+            publishes_nearby.current = false;
+            remove_layer("not_holding");
+        }
 
         // ---- move / throw tail ----
         if (grabbingHand.current && activeHandMatrix) {

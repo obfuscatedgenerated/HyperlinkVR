@@ -7,6 +7,7 @@ import {
     useState,
     type ReactNode
 } from "react";
+import {useHintState, useSetHintState} from "./hints";
 
 // TODO: controller support
 // TODO: crouch
@@ -69,6 +70,8 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
         [watch_presented, cursor_free]
     );
 
+    const {add_layer, remove_layer} = useSetHintState();
+
     useEffect(() => {
         const canvas = gl.domElement;
 
@@ -115,9 +118,31 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
                 keys.delete(event.code);
             }
 
+            const sprint_input = keys.has("ShiftLeft") || keys.has("ShiftRight");
+            const about_to_sprint = sprint_input && !frame_input.sprint;
+            const about_to_stop_sprint = !sprint_input && frame_input.sprint;
+
+            if (about_to_sprint) {
+                remove_layer("not_sprinting", true);
+                add_layer("sprinting");
+            } else if (about_to_stop_sprint) {
+                remove_layer("sprinting", true);
+                add_layer("not_sprinting");
+            }
+
+            const throw_held_input = keys.has("KeyF");
+            const about_to_throw = throw_held_input && !frame_input.throw_held;
+            const about_to_stop_throw = !throw_held_input && frame_input.throw_held;
+
+            if (about_to_throw) {
+                add_layer("charging_throw");
+            } else if (about_to_stop_throw) {
+                remove_layer("charging_throw", true);
+            }
+
             frame_input.jump = keys.has("Space");
-            frame_input.sprint = keys.has("ShiftLeft") || keys.has("ShiftRight");
-            frame_input.throw_held = keys.has("KeyF");
+            frame_input.sprint = sprint_input;
+            frame_input.throw_held = throw_held_input;
 
             if (!watch_presented_local) {
                 recompute_move();
@@ -170,7 +195,7 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
             canvas.removeEventListener("contextmenu", no_context);
             keys.clear();
         };
-    }, [gl]);
+    }, [gl.domElement, add_layer, remove_layer]);
 
     return (
         <FlatInputStateContext.Provider value={ui_state}>{children}</FlatInputStateContext.Provider>

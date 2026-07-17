@@ -45,6 +45,7 @@ import {useWorldLoadingStateStore} from "../stores/WorldLoadingStateStore";
 import {FlatLoadingScreen, VRLoadingScreen} from "./LoadingScreen";
 import {SSAO} from "../render/SSAO";
 import {QuarksProvider} from "quarks.r3f";
+import {AutoHintGlyphs, HintDevicePublisher, HintStateProvider} from "../input/impl/flat/hints";
 
 configureTextBuilder({
     useWorker: false
@@ -356,80 +357,100 @@ const EngineHostInternal = memo(
             <SessionModeProvider value={mode}>
                 <TabSessionProvider>
                     <WebSDKMessagingProvider>
-                        <WorldSessionListener />
-                        <EngineObjectSync />
+                        <HintStateProvider>
+                            <WorldSessionListener />
+                            <EngineObjectSync />
 
-                        <div
-                            className={`w-full h-full relative ${mode === "vr" ? "max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)]" : ""}`}
-                            ref={canvas_container_ref}
-                        >
-                            {mode === "vr" && <LogoOverlay />}
-                            {mode === "flat" && <Crosshair />}
+                            <div
+                                className={`w-full h-full relative ${mode === "vr" ? "max-w-[calc(100vh*16/9)] max-h-[calc(100vw*9/16)]" : ""}`}
+                                ref={canvas_container_ref}
+                            >
+                                {mode === "vr" && <LogoOverlay />}
+                                {mode === "flat" && (
+                                    <>
+                                        <AutoHintGlyphs
+                                            side="left"
+                                            className="opacity-75 z-2 absolute bottom-4 left-4 text-white text-shadow-sm text-xs sm:text-sm md:text-base lg:text-lg flex gap-3 items-center"
+                                            action_className="flex gap-2 items-center"
+                                            glyph_className="flex gap-2 items-center"
+                                        />
+                                        <AutoHintGlyphs
+                                            side="right"
+                                            className="opacity-75 z-2 absolute bottom-4 right-4 text-white text-shadow-sm text-xs sm:text-sm md:text-base lg:text-lg flex gap-3 items-center"
+                                            action_className="flex gap-2 items-center"
+                                            glyph_className="flex gap-2 items-center"
+                                        />
 
-                            {loading && <FlatLoadingScreen />}
+                                        <Crosshair />
+                                    </>
+                                )}
 
-                            <AvatarProvider>
-                                <PlayerOriginProvider value={player_ref}>
-                                    <Canvas
-                                        gl={make_xr_compatible_renderer}
-                                        onCreated={handle_created}
-                                    >
-                                        {show_fps && <Stats />}
+                                {loading && <FlatLoadingScreen />}
 
-                                        <AudioListenerProvider>
-                                            <QuarksProvider>
-                                                <HandsProvider>
-                                                    <SDKWorldEnvironmentProvider>
-                                                        <WorldPhysics>
-                                                            <CameraSetup />
-                                                            <CanvasResizer
-                                                                containerRef={canvas_container_ref}
-                                                            />
+                                <AvatarProvider>
+                                    <PlayerOriginProvider value={player_ref}>
+                                        <Canvas
+                                            gl={make_xr_compatible_renderer}
+                                            onCreated={handle_created}
+                                        >
+                                            <HintDevicePublisher />
+                                            {show_fps && <Stats />}
 
-                                                            <SceneDebug />
+                                            <AudioListenerProvider>
+                                                <QuarksProvider>
+                                                    <HandsProvider>
+                                                        <SDKWorldEnvironmentProvider>
+                                                            <WorldPhysics>
+                                                                <CameraSetup />
+                                                                <CanvasResizer
+                                                                    containerRef={canvas_container_ref}
+                                                                />
 
-                                                            {mode === "vr" ? (
-                                                                <XR store={xr_store}>
+                                                                <SceneDebug />
+
+                                                                {mode === "vr" ? (
+                                                                    <XR store={xr_store}>
+                                                                        <ErrorBoundary
+                                                                            FallbackComponent={
+                                                                                VRErrorFallback
+                                                                            }
+                                                                            onReset={() =>
+                                                                                window.location.reload()
+                                                                            }>
+                                                                            <SceneContents
+                                                                                player_ref={player_ref}
+                                                                                extra_in_origin={
+                                                                                    <SpectatorCamera />
+                                                                                }
+                                                                            />
+                                                                        </ErrorBoundary>
+                                                                    </XR>
+                                                                ) : (
                                                                     <ErrorBoundary
                                                                         FallbackComponent={
-                                                                            VRErrorFallback
+                                                                            FlatErrorFallback
                                                                         }
                                                                         onReset={() =>
                                                                             window.location.reload()
-                                                                        }>
-                                                                        <SceneContents
-                                                                            player_ref={player_ref}
-                                                                            extra_in_origin={
-                                                                                <SpectatorCamera />
-                                                                            }
-                                                                        />
+                                                                        }
+                                                                    >
+                                                                        <FlatInputProvider>
+                                                                            <FlatClickRaycaster />
+                                                                            <FlatAvatarHands />
+                                                                            <SceneContents player_ref={player_ref} />
+                                                                        </FlatInputProvider>
                                                                     </ErrorBoundary>
-                                                                </XR>
-                                                            ) : (
-                                                                <ErrorBoundary
-                                                                    FallbackComponent={
-                                                                        FlatErrorFallback
-                                                                    }
-                                                                    onReset={() =>
-                                                                        window.location.reload()
-                                                                    }
-                                                                >
-                                                                    <FlatInputProvider>
-                                                                        <FlatClickRaycaster />
-                                                                        <FlatAvatarHands />
-                                                                        <SceneContents player_ref={player_ref} />
-                                                                    </FlatInputProvider>
-                                                                </ErrorBoundary>
-                                                            )}
-                                                        </WorldPhysics>
-                                                    </SDKWorldEnvironmentProvider>
-                                                </HandsProvider>
-                                            </QuarksProvider>
-                                        </AudioListenerProvider>
-                                    </Canvas>
-                                </PlayerOriginProvider>
-                            </AvatarProvider>
-                        </div>
+                                                                )}
+                                                            </WorldPhysics>
+                                                        </SDKWorldEnvironmentProvider>
+                                                    </HandsProvider>
+                                                </QuarksProvider>
+                                            </AudioListenerProvider>
+                                        </Canvas>
+                                    </PlayerOriginProvider>
+                                </AvatarProvider>
+                            </div>
+                        </HintStateProvider>
                     </WebSDKMessagingProvider>
                 </TabSessionProvider>
             </SessionModeProvider>
