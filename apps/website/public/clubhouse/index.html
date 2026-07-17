@@ -69,6 +69,15 @@
                     .create()
         );
 
+        const av_mirror = new h.StandardPrefabBuilder("avatar_mirror").build();
+        promises.push(
+            new h.EngineObjectDispatchBuilder()
+                    .set_object(av_mirror)
+                    .set_position(-5, 0, 11.95)
+                    .set_euler_rotation(0, Math.PI, 0)
+                    .create()
+        )
+
         promises.push(hyperlinkvr.players.get_current_player().teleport_to([0, 0, 10.5], 0));
 
         await Promise.all(promises);
