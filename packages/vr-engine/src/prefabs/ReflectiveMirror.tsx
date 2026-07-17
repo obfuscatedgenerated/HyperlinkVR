@@ -1,37 +1,32 @@
-import { useFrame } from "@react-three/fiber";
-import { ComponentProps, useEffect, useMemo } from "react";
-import { Camera, PlaneGeometry } from "three";
-import { Reflector } from "three/examples/jsm/objects/Reflector";
+import type {ReflectiveMirrorPrefab} from "@hyperlinkvr/vr-engine-schemas";
+
+import {useFrame} from "@react-three/fiber";
+import {ComponentProps, useEffect, useMemo} from "react";
+import {Camera, PlaneGeometry} from "three";
+import {Reflector} from "three/examples/jsm/objects/Reflector";
 
 
+import {compute_layer_mask, Layer} from "../render";
+import {get_head_cameras} from "../util/get_head_cameras";
 
-import { compute_layer_mask, Layer } from "../render";
-import { get_head_cameras } from "../util/get_head_cameras";
 
-
-const RENDER_RES_WIDTH = 2048;
-const RENDER_RES_HEIGHT = 2048;
-
-interface ReflectiveMirrorProps extends Omit<ComponentProps<"primitive">, "object"> {
-    width: number;
-    height: number;
-    tint_color?: number;
-}
+const DEFAULT_RESOLUTION = 2048;
 
 export const ReflectiveMirror = ({
     width,
     height,
-    tint_color = 0xb0b0b0,
+    tint = 0xb0b0b0,
+    resolution = DEFAULT_RESOLUTION,
     ...rest
-}: ReflectiveMirrorProps) => {
+}: Omit<ReflectiveMirrorPrefab, "type" | "name"> & Omit<ComponentProps<"primitive">, "object">) => {
     const reflector = useMemo(() => {
         const geo = new PlaneGeometry(width, height);
         return new Reflector(geo, {
-            textureWidth: RENDER_RES_WIDTH,
-            textureHeight: RENDER_RES_HEIGHT,
-            color: tint_color
+            textureWidth: resolution,
+            textureHeight: resolution,
+            color: tint
         });
-    }, [width, height, tint_color]);
+    }, [width, height, tint]);
 
     // dispose GPU resources when the reflector is replaced or unmounted
     useEffect(() => () => reflector.dispose(), [reflector]);
@@ -46,7 +41,7 @@ export const ReflectiveMirror = ({
         []
     );
 
-    useFrame(({ camera, gl, scene }) => {
+    useFrame(({camera, gl, scene}) => {
         // set both xr cameras to have the right layers masked (i.e. show head even though they cant see it through the headset)
         const cameras = get_head_cameras(gl, camera);
         for (const cam of cameras) {

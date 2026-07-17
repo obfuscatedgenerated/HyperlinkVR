@@ -22,7 +22,7 @@ import { FlatInputProvider } from "../input/impl/flat/bindings";
 import { Crosshair } from "../input/impl/flat/Crosshair";
 import { FlatClickRaycaster } from "../input/impl/flat/FlatClickRaycaster";
 import { SpectatorCamera } from "../misc";
-import { AvatarMirror } from "../misc/AvatarMirror";
+import { AvatarMirror } from "../prefabs/AvatarMirror";
 import { LogoOverlay } from "../misc/LogoOverlay";
 import { FlatAvatarHands, XRAvatarHand } from "../player/AvatarHand";
 import { Player } from "../player/Player";
@@ -241,7 +241,7 @@ const SceneContents = ({
                     <DOMMirror position={[0, 1.5, -4]} height={3} />
 
                     <AvatarMirror
-                        x_z_position={[2, 0]}
+                        x_z_offset={[2, 0]}
                         rotation={[0, -Math.PI / 2, 0]}
                     />
                 </>

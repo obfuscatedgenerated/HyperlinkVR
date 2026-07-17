@@ -7,7 +7,7 @@ import {
     useState,
     type ReactNode
 } from "react";
-import {useHintState, useSetHintState} from "./hints";
+import {useSetHintState} from "./hints";
 
 // TODO: controller support
 // TODO: crouch

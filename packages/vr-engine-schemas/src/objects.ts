@@ -565,7 +565,7 @@ export type CustomObjectInput = z.input<typeof CustomObjectSchema>;
 // TODO: built in primitive meshes, either by a path or explicit in schema. would be useless without material override tho
 
 // prefabs without special behaviour, we just need to tell zod the name
-const StandardPrefabName = z.enum(["basketball"]);
+const StandardPrefabName = z.enum(["basketball", "avatar_mirror"]);
 export type StandardPrefabName = z.infer<typeof StandardPrefabName>;
 
 export const StandardPrefabSchema = z.object({
@@ -595,7 +595,23 @@ export const BasketballHoopPrefabSchema = bindable({
 export type BasketballHoopPrefab = z.infer<typeof BasketballHoopPrefabSchema>;
 export type BasketballHoopPrefabInput = z.input<typeof BasketballHoopPrefabSchema>;
 
-export const PrefabSchema = z.discriminatedUnion("name", [StandardPrefabSchema, ButtonPrefabSchema, BasketballHoopPrefabSchema]);
+export const ReflectiveMirrorPrefabSchema = z.object({
+    type: z.literal("prefab"),
+    name: z.literal("reflective_mirror"),
+    width: z.number().positive(),
+    height: z.number().positive(),
+    resolution: z.number().int().positive().default(2048).optional(),
+    tint: HexColorSchema.default(0xb0b0b0).optional()
+});
+export type ReflectiveMirrorPrefab = z.infer<typeof ReflectiveMirrorPrefabSchema>;
+export type ReflectiveMirrorPrefabInput = z.input<typeof ReflectiveMirrorPrefabSchema>;
+
+export const PrefabSchema = z.discriminatedUnion("name", [
+    StandardPrefabSchema,
+    ButtonPrefabSchema,
+    BasketballHoopPrefabSchema,
+    ReflectiveMirrorPrefabSchema
+]);
 export type Prefab = z.infer<typeof PrefabSchema>;
 export type PrefabInput = z.input<typeof PrefabSchema>;
 

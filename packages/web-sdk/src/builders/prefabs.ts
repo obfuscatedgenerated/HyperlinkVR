@@ -6,10 +6,20 @@ import {
     ButtonPrefabInput,
     ButtonPrefabSchema,
     HexNumericalColor,
-    HexNumericalColorSchema,
+    HexNumericalColorSchema, ReflectiveMirrorPrefab, ReflectiveMirrorPrefabInput, ReflectiveMirrorPrefabSchema,
     StandardPrefab, StandardPrefabInput, StandardPrefabName,
     StandardPrefabSchema
 } from "@hyperlinkvr/vr-engine-schemas";
+
+export class StandardPrefabBuilder extends BaseBuilder<StandardPrefabInput> {
+    constructor(name: StandardPrefabName) {
+        super({type: "prefab", name} as StandardPrefabInput);
+    }
+
+    build(): StandardPrefab {
+        return StandardPrefabSchema.parse(this._internal);
+    }
+}
 
 export class ButtonPrefabBuilder extends BaseBuilder<ButtonPrefabInput> {
     constructor() {
@@ -71,12 +81,27 @@ export class BasketballHoopPrefabBuilder extends BaseBuilder<BasketballHoopPrefa
     }
 }
 
-export class StandardPrefabBuilder extends BaseBuilder<StandardPrefabInput> {
-    constructor(name: StandardPrefabName) {
-        super({type: "prefab", name} as StandardPrefabInput);
+export class ReflectiveMirrorPrefabBuilder extends BaseBuilder<ReflectiveMirrorPrefabInput> {
+    constructor() {
+        super({type: "prefab", name: "reflective_mirror"} as ReflectiveMirrorPrefabInput);
     }
 
-    build(): StandardPrefab {
-        return StandardPrefabSchema.parse(this._internal);
+    set_width(width: number) {
+        this._internal.width = width;
+        return this;
+    }
+
+    set_height(height: number) {
+        this._internal.height = height;
+        return this;
+    }
+
+    set_tint(color: HexNumericalColor) {
+        this._internal.tint = HexNumericalColorSchema.parse(color);
+        return this;
+    }
+
+    build(): ReflectiveMirrorPrefab {
+        return ReflectiveMirrorPrefabSchema.parse(this._internal);
     }
 }
