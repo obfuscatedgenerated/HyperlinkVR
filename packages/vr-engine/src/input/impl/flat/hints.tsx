@@ -18,8 +18,15 @@ export type HintAction = "move" | "jump" | "sprint" | "stop_sprinting" | "grab" 
 
 export type HintLayer = "default" | "verbose" | "not_sprinting" | "sprinting" | "not_holding" | "holding" | "holding_throwable" | "holding_useable" | "charging_throw";
 
+export type HintGlyphSpec =
+    | { kind: "pf"; glyph: string } // promptfont glyph, rendered via its css class
+    | { kind: "key"; text: string }; // literal text in a box (as it's more readable than a glyph)
+
+const pf = (glyph: string): HintGlyphSpec => ({ kind: "pf", glyph });
+const key = (text: string): HintGlyphSpec => ({ kind: "key", text });
+
 export interface InputHint {
-    glyphs: string[];
+    glyphs: HintGlyphSpec[];
     label: string;
 }
 
@@ -27,62 +34,62 @@ export interface InputHint {
 // TODO: I18N everywhere in this app!
 const HINTS: Record<HintDevice, Record<HintAction, InputHint>> = {
     kbm: {
-        move: { glyphs: ["keyboard-w", "keyboard-a", "keyboard-s", "keyboard-d"], label: "Move" },
-        jump: { glyphs: ["keyboard-space"], label: "Jump" },
-        sprint: { glyphs: ["button-hold-press", "keyboard-shift"], label: "Sprint" },
-        stop_sprinting: { glyphs: ["button-hold-release", "keyboard-shift"], label: "Walk" }, // TODO: diefferentiate between hold and toggle sprinting
-        grab: { glyphs: ["mouse-2"], label: "Grab" },
-        release: { glyphs: ["button-hold-release", "mouse-2"], label: "Release" },
-        throw_tap: { glyphs: ["keyboard-f"], label: "Throw (tap)" },
-        throw_charge: { glyphs: ["button-hold-press", "keyboard-f"], label: "Throw (charge)" },
-        charged_throw_execute: { glyphs: ["button-hold-release", "keyboard-f"], label: "Throw (release)" },
-        use: { glyphs: ["mouse-button-1"], label: "Use" },
-        watch: { glyphs: ["keyboard-tab"], label: "Watch" },
-        free_cursor: { glyphs: ["keyboard-alt"], label: "Free cursor" },
+        move: { glyphs: [key("W"), key("A"), key("S"), key("D")], label: "Move" },
+        jump: { glyphs: [key("Space")], label: "Jump" },
+        sprint: { glyphs: [pf("button-hold-press"), key("⇧ Shift")], label: "Sprint" },
+        stop_sprinting: { glyphs: [pf("button-hold-release"), key("⇧ Shift")], label: "Walk" }, // TODO: diefferentiate between hold and toggle sprinting
+        grab: { glyphs: [pf("mouse-2")], label: "Grab" },
+        release: { glyphs: [pf("button-hold-release"), pf("mouse-2")], label: "Release" },
+        throw_tap: { glyphs: [key("F")], label: "Throw (tap)" },
+        throw_charge: { glyphs: [pf("button-hold-press"), key("F")], label: "Throw (charge)" },
+        charged_throw_execute: { glyphs: [pf("button-hold-release"), key("F")], label: "Throw (release)" },
+        use: { glyphs: [pf("mouse-button-1")], label: "Use" },
+        watch: { glyphs: [key("⇥ Tab")], label: "Watch" },
+        free_cursor: { glyphs: [key("Alt")], label: "Free cursor" },
     },
 
     // TODO: actually implement these bindings
     xbox: {
-        move: { glyphs: ["stick-l"], label: "Move" },
-        jump: { glyphs: ["button-a"], label: "Jump" },
-        sprint: { glyphs: ["stick-l-press"], label: "Sprint" },
-        stop_sprinting: { glyphs: ["stick-l-press"], label: "Walk" },
-        grab: { glyphs: ["trigger-l"], label: "Grab" },
-        release: { glyphs: ["button-hold-release", "trigger-l"], label: "Release" },
-        throw_tap: { glyphs: ["button-y"], label: "Throw (tap)" },
-        throw_charge: { glyphs: ["button-hold-press", "button-y"], label: "Throw (charge)" },
-        charged_throw_execute: { glyphs: ["button-hold-release", "button-y"], label: "Throw (release)" },
-        use: { glyphs: ["trigger-r"], label: "Use" },
-        watch: { glyphs: ["xbox-menu"], label: "Watch" },
-        free_cursor: { glyphs: ["xbox-view"], label: "Free cursor" }
+        move: { glyphs: [pf("stick-l")], label: "Move" },
+        jump: { glyphs: [pf("button-a")], label: "Jump" },
+        sprint: { glyphs: [pf("stick-l-press")], label: "Sprint" },
+        stop_sprinting: { glyphs: [pf("stick-l-press")], label: "Walk" },
+        grab: { glyphs: [pf("trigger-l")], label: "Grab" },
+        release: { glyphs: [pf("button-hold-release"), pf("trigger-l")], label: "Release" },
+        throw_tap: { glyphs: [pf("button-y")], label: "Throw (tap)" },
+        throw_charge: { glyphs: [pf("button-hold-press"), pf("button-y")], label: "Throw (charge)" },
+        charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("button-y")], label: "Throw (release)" },
+        use: { glyphs: [pf("trigger-r")], label: "Use" },
+        watch: { glyphs: [pf("xbox-menu")], label: "Watch" },
+        free_cursor: { glyphs: [pf("xbox-view")], label: "Free cursor" }
     },
     playstation: {
-        move: { glyphs: ["stick-l"], label: "Move" },
-        jump: { glyphs: ["button-cross"], label: "Jump" },
-        sprint: { glyphs: ["stick-l-press"], label: "Sprint" },
-        stop_sprinting: { glyphs: ["stick-l-press"], label: "Walk" },
-        grab: { glyphs: ["trigger-l2"], label: "Grab" },
-        release: { glyphs: ["button-hold-release", "trigger-l2"], label: "Release" },
-        throw_tap: { glyphs: ["button-triangle"], label: "Throw (tap)" },
-        throw_charge: { glyphs: ["button-hold-press", "button-triangle"], label: "Throw (charge)" },
-        charged_throw_execute: { glyphs: ["button-hold-release", "button-triangle"], label: "Throw (release)" },
-        use: { glyphs: ["trigger-r2"], label: "Use" },
-        watch: { glyphs: ["sony-options"], label: "Watch" },
-        free_cursor: { glyphs: ["sony-share"], label: "Free cursor" }
+        move: { glyphs: [pf("stick-l")], label: "Move" },
+        jump: { glyphs: [pf("button-cross")], label: "Jump" },
+        sprint: { glyphs: [pf("stick-l-press")], label: "Sprint" },
+        stop_sprinting: { glyphs: [pf("stick-l-press")], label: "Walk" },
+        grab: { glyphs: [pf("trigger-l2")], label: "Grab" },
+        release: { glyphs: [pf("button-hold-release"), pf("trigger-l2")], label: "Release" },
+        throw_tap: { glyphs: [pf("button-triangle")], label: "Throw (tap)" },
+        throw_charge: { glyphs: [pf("button-hold-press"), pf("button-triangle")], label: "Throw (charge)" },
+        charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("button-triangle")], label: "Throw (release)" },
+        use: { glyphs: [pf("trigger-r2")], label: "Use" },
+        watch: { glyphs: [pf("sony-options")], label: "Watch" },
+        free_cursor: { glyphs: [pf("sony-share")], label: "Free cursor" }
     },
     switch: {
-        move: { glyphs: ["stick-l"], label: "Move" },
-        jump: { glyphs: ["button-b"], label: "Jump" }, // nintendo bottom face button
-        sprint: { glyphs: ["stick-l-press"], label: "Sprint" },
-        stop_sprinting: { glyphs: ["stick-l-press"], label: "Walk" },
-        grab: { glyphs: ["trigger-zl"], label: "Grab" },
-        release: { glyphs: ["button-hold-release", "trigger-zl"], label: "Release" },
-        throw_tap: { glyphs: ["button-x"], label: "Throw (tap)" },
-        throw_charge: { glyphs: ["button-hold-press", "button-x"], label: "Throw (charge)" },
-        charged_throw_execute: { glyphs: ["button-hold-release", "button-x"], label: "Throw (release)" },
-        use: { glyphs: ["trigger-zr"], label: "Use" },
-        watch: { glyphs: ["button-plus"], label: "Watch" },
-        free_cursor: { glyphs: ["button-minus"], label: "Free cursor" }
+        move: { glyphs: [pf("stick-l")], label: "Move" },
+        jump: { glyphs: [pf("button-b")], label: "Jump" }, // nintendo bottom face button
+        sprint: { glyphs: [pf("stick-l-press")], label: "Sprint" },
+        stop_sprinting: { glyphs: [pf("stick-l-press")], label: "Walk" },
+        grab: { glyphs: [pf("trigger-zl")], label: "Grab" },
+        release: { glyphs: [pf("button-hold-release"), pf("trigger-zl")], label: "Release" },
+        throw_tap: { glyphs: [pf("button-x")], label: "Throw (tap)" },
+        throw_charge: { glyphs: [pf("button-hold-press"), pf("button-x")], label: "Throw (charge)" },
+        charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("button-x")], label: "Throw (release)" },
+        use: { glyphs: [pf("trigger-zr")], label: "Use" },
+        watch: { glyphs: [pf("button-plus")], label: "Watch" },
+        free_cursor: { glyphs: [pf("button-minus")], label: "Free cursor" }
     }
 };
 
@@ -147,15 +154,19 @@ export const compute_hint_actions_from_layers = (layers: HintLayer[], side_filte
     });
 };
 
+const glyph_key = (spec: HintGlyphSpec): string => spec.kind === "pf" ? `pf:${spec.glyph}` : `key:${spec.text}`;
+
 export const HintGlyph = ({ action, merge_same_label = true, show_label = true, className = "", glyph_className = "" }: { action: HintAction; merge_same_label?: boolean, show_label?: boolean, className?: string, glyph_className?: string }) => {
     const {device} = useHintState();
     const hint = HINTS[device][action];
 
     return (
         <div aria-label={hint.label} className={className}>
-            {hint.glyphs.map((glyph) => (
-                <div key={glyph} className={glyph_className}>
-                    <span className={`pf pf-${glyph}`} aria-hidden="true" />
+            {hint.glyphs.map((spec) => (
+                <div key={glyph_key(spec)} className={glyph_className}>
+                    {spec.kind === "pf"
+                        ? <span className={`pf pf-${spec.glyph}`} aria-hidden="true" />
+                        : <kbd className="font-sans text-[0.5em] flex items-center justify-center border-1 border-white h-[2.6em] min-w-[2.6em] p-1 rounded-sm" aria-hidden="true">{spec.text}</kbd>}
                     {show_label && !merge_same_label && <span>{hint.label}</span>}
                 </div>
             ))}

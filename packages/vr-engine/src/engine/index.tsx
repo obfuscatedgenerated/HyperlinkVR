@@ -370,13 +370,13 @@ const EngineHostInternal = memo(
                                     <>
                                         <AutoHintGlyphs
                                             side="left"
-                                            className="opacity-75 z-2 absolute bottom-4 left-4 text-white text-shadow-sm text-xs sm:text-sm md:text-base lg:text-lg flex gap-3 items-center"
+                                            className="opacity-75 z-2 absolute bottom-4 left-4 text-white text-shadow-sm text-xs sm:text-sm md:text-base lg:text-lg flex gap-4 items-center"
                                             action_className="flex gap-2 items-center"
                                             glyph_className="flex gap-2 items-center"
                                         />
                                         <AutoHintGlyphs
                                             side="right"
-                                            className="opacity-75 z-2 absolute bottom-4 right-4 text-white text-shadow-sm text-xs sm:text-sm md:text-base lg:text-lg flex gap-3 items-center"
+                                            className="opacity-75 z-2 absolute bottom-4 right-4 text-white text-shadow-sm text-xs sm:text-sm md:text-base lg:text-lg flex gap-4 items-center"
                                             action_className="flex gap-2 items-center"
                                             glyph_className="flex gap-2 items-center"
                                         />
