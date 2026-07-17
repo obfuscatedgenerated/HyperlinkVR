@@ -75,6 +75,7 @@
 - [x] Reset scene state on world change (perhaps with loading screen if assets to be preloaded)
 - [ ] Interactions/monitors for guns with either arcing, projectile, or hitscan (raycast)
 - [ ] Flat FOV setting
+- [ ] Resolve relative paths from SDK in relation to the world URL, not the VR host
 
 ### Phase 3
 - [ ] VR keyboard for DOM and watch input
@@ -83,9 +84,12 @@
 - [ ] Define consistent error message interface for SDK and check for it in builders
 - [ ] DOMMirror input: right/middle click, hold-and-drag, thumbstick scroll, click ripple
 - [ ] DOMMirror prefab
-- [ ] Physics reporting: `usePhysicsReporting`, collision reports
+- [ ] Physics reporting:
+  - [x] collision reports
+  - [ ] `usePhysicsReporting` for motion (expensive, should discourage this and point towards monitors in docs)
 - [x] Rigid body extras: angular velocity, friction, damping
 - [ ] Option for bodies to ignore player or object collisions
+- [ ] Way to add prefabs using empties with custom props?
 - [ ] Extend prefab library in general (adding props, weapons, sports stuff, maybe even vehicles etc)
 - [ ] Flat controller support
 - [ ] Flat rebinding support

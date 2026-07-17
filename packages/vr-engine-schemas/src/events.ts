@@ -48,6 +48,23 @@ export interface AxesMonitorPayload {
     values: { x: number; y: number; z: number };
 }
 
+export interface PhysicsCollisionEnterPayload {
+    type: "enter";
+    other_object_id: string | null;
+    contact_point: { x: number; y: number; z: number };
+    contact_normal: { x: number; y: number; z: number };
+    relative_velocity: { x: number; y: number; z: number };
+    force: { x: number; y: number; z: number };
+    impulse: { x: number; y: number; z: number };
+}
+
+export interface PhysicsCollisionExitPayload {
+    type: "exit";
+    other_object_id: string;
+}
+
+export type PhysicsCollisionPayload = PhysicsCollisionEnterPayload | PhysicsCollisionExitPayload;
+
 export interface BasketballHoopPrefabPayload {
     type: "scored"
     object_id?: string;
@@ -63,4 +80,5 @@ export type ReportEvent =
     | ReportEventEnvelope<"rot-monitor", AxesMonitorPayload>
     | ReportEventEnvelope<"lin-vel-monitor", AxesMonitorPayload>
     | ReportEventEnvelope<"ang-vel-monitor", AxesMonitorPayload>
+    | ReportEventEnvelope<"physics-collision", PhysicsCollisionPayload>
     | ReportEventEnvelope<"basketball-hoop-prefab", BasketballHoopPrefabPayload>

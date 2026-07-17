@@ -2,16 +2,17 @@ import {Collider, PhysicsSystem, RigidBody as RigidBodyConfig, Transform} from "
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import {
-    BallCollider, CapsuleCollider, CuboidCollider,
-    CylinderCollider, MeshCollider, RapierRigidBody, RigidBody, RigidBodyAutoCollider
+    BallCollider, CapsuleCollider, CollisionEnterPayload, CollisionPayload, CuboidCollider,
+    CylinderCollider, MeshCollider, RapierRigidBody, RigidBody, RigidBodyAutoCollider, useRapier
 } from "@react-three/rapier";
-import {ComponentProps, useEffect, useMemo, useRef} from "react";
+import {ComponentProps, useCallback, useEffect, useMemo, useRef} from "react";
 import {Group, MeshBasicMaterial, Quaternion, Vector3, Mesh, EulerOrder, Euler} from "three";
 
 import { clone } from "three/examples/jsm/utils/SkeletonUtils"
 
 import { useObjectRefsOptional } from "../contexts/ObjectRefsContext";
 import {rotation_to_euler, rotation_to_quaternion_array} from "./rotation";
+import {useObjectBinding} from "../hooks/useObjectBinding";
 
 
 const RB_TYPE = {
@@ -139,6 +140,59 @@ export const useCollider = (collider: Collider): {auto_strategy: RigidBodyAutoCo
     return { auto_strategy, ColliderComponent };
 }
 
+export const get_collision_forces = ({ manifold, other, target }: CollisionEnterPayload, timestep: number) => {
+    const this_body = target.rigidBody;
+    const other_body = other.rigidBody;
+
+    let total_impulse = 0;
+    const contact_count = manifold.numContacts();
+    for (let index = 0; index < contact_count; index++) {
+        total_impulse += manifold.contactImpulse(index);
+    }
+
+    const normal = manifold.normal();
+
+    const impulse = {
+        x: normal.x * total_impulse,
+        y: normal.y * total_impulse,
+        z: normal.z * total_impulse,
+    }
+
+    const force_magnitude = total_impulse / timestep;
+    const force = {
+        x: normal.x * force_magnitude,
+        y: normal.y * force_magnitude,
+        z: normal.z * force_magnitude,
+    };
+
+    const solver_point = manifold.numSolverContacts() > 0 ? manifold.solverContactPoint(0) : null;
+    const contact_point = solver_point
+        ? { x: solver_point.x, y: solver_point.y, z: solver_point.z }
+        : { x: 0, y: 0, z: 0 };
+
+    const this_vel = this_body ? this_body.linvel() : { x: 0, y: 0, z: 0 };
+    const other_vel = other_body ? other_body.linvel() : { x: 0, y: 0, z: 0 };
+    const relative_vel = {
+        x: this_vel.x - other_vel.x,
+        y: this_vel.y - other_vel.y,
+        z: this_vel.z - other_vel.z,
+    };
+
+    // TODO: better way to get obj root
+    const other_object_id = other.rigidBodyObject?.parent?.parent?.userData?.object_id || null;
+
+    return {
+        type: "enter" as const,
+        other_object_id,
+        contact_point: contact_point,
+        contact_normal: { x: normal.x, y: normal.y, z: normal.z },
+        relative_velocity: relative_vel,
+        force,
+        impulse
+    };
+}
+
+
 const get_body_props = (rb: RigidBodyConfig): Partial<ComponentProps<typeof RigidBody>> => {
     const restituton_rules = {
         "average": 0,
@@ -191,7 +245,9 @@ export const ObjectPhysics = ({
     body_name,
     kinematic_pos_tracking_ref,
     transform,
-    collision_groups
+    collision_groups,
+    on_collision_enter,
+    on_collision_exit
 }: {
     physics: PhysicsSystem;
     children?: React.ReactNode;
@@ -199,6 +255,8 @@ export const ObjectPhysics = ({
     kinematic_pos_tracking_ref?: React.RefObject<Group | null>;
     transform?: Transform
     collision_groups?: number;
+    on_collision_enter?: (payload: CollisionEnterPayload) => void;
+    on_collision_exit?: (payload: CollisionPayload) => void;
 }) => {
     const refs = useObjectRefsOptional();
 
@@ -220,7 +278,11 @@ export const ObjectPhysics = ({
 
     const { auto_strategy, ColliderComponent } = useCollider(collider);
 
+    const { world } = useRapier();
+
     const collision_group_props = collision_groups !== undefined ? { collisionGroups: collision_groups } : {};
+
+    const {emit_report} = useObjectBinding(physics.binding);
 
     useKinematicPosition(rb_ref, rb, kinematic_pos_tracking_ref || container_ref);
     useKinematicVelocity(rb_ref, rb);
@@ -234,6 +296,47 @@ export const ObjectPhysics = ({
         return [euler.x, euler.y, euler.z, euler.order] as [number, number, number, EulerOrder];
     }, [collider.rotation]);
 
+    const report_collision_enter = useCallback(
+        (payload: CollisionEnterPayload) => {
+            if (!physics.report_collisions) {
+                on_collision_enter?.(payload);
+                return;
+            }
+
+            const event_payload = get_collision_forces(payload, world.timestep);
+            emit_report({
+                kind: "physics-collision",
+                payload: event_payload
+            });
+
+            on_collision_enter?.(payload);
+        },
+        [world, physics.report_collisions, emit_report, on_collision_enter]
+    );
+
+    const report_collision_exit = useCallback(
+        (payload: CollisionPayload) => {
+            if (!physics.report_collisions) {
+                on_collision_exit?.(payload);
+                return;
+            }
+
+            // TODO: better way to get obj root
+            const other_object_id = payload.other.rigidBodyObject?.parent?.parent?.userData?.object_id || null;
+
+            emit_report({
+                kind: "physics-collision",
+                payload: {
+                    type: "exit",
+                    other_object_id
+                }
+            });
+
+            on_collision_exit?.(payload);
+        },
+        [physics.report_collisions, emit_report, on_collision_exit]
+    );
+
     return (
         <group ref={container_ref}>
             <RigidBody
@@ -243,9 +346,12 @@ export const ObjectPhysics = ({
                 position={transform?.position}
                 quaternion={transform ? rotation_to_quaternion_array(transform.rotation) : undefined}
                 colliders={auto_strategy}
+
                 {...collision_group_props}
                 {...get_body_props(rb)}
-                //onCollisionEnter={physics.report_collisions ? (e) => reportCollision(id, e) : undefined} // TODO: implement
+
+                onCollisionEnter={report_collision_enter}
+                onCollisionExit={report_collision_exit}
             >
                 {ColliderComponent && <ColliderComponent position={collider.offset} rotation={collider_rot_euler} />}
                 {children}

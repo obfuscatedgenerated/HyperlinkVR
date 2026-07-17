@@ -1,20 +1,28 @@
 import type { BindingConfig, ReportEvent } from "@hyperlinkvr/vr-engine-schemas";
 import {useCallback, useEffect, useRef} from "react";
 
-import { useObjectRefs } from "../contexts/ObjectRefsContext";
+import {useObjectRefsOptional} from "../contexts/ObjectRefsContext";
 import { useWebSDKMessaging } from "../contexts/WebSDKMessagingContext";
 
 type ReportBody = Pick<ReportEvent, "kind" | "payload">;
 
 export const useObjectBinding = (binding: BindingConfig | undefined) => {
     const { emit_event, connected, on_action } = useWebSDKMessaging();
-    const { id: object_id } = useObjectRefs();
+
+    const obj_refs = useObjectRefsOptional();
+    const object_id = obj_refs?.id;
+
+    useEffect(() => {
+        if (!object_id) {
+            console.warn("useObjectBinding: object_id is undefined. Make sure this hook is used within an ObjectRefsProvider to enable bindings");
+        }
+    }, [object_id]);
 
     const source_id = binding?.id;
 
     const emit_report = useCallback(
         (body: ReportBody) => {
-            if (!source_id || !connected) {
+            if (!source_id || !connected || !object_id) {
                 return;
             }
 
@@ -48,7 +56,7 @@ export const useObjectBinding = (binding: BindingConfig | undefined) => {
     }, []);
 
     useEffect(() => {
-        if (!source_id) {
+        if (!source_id || !object_id || !on_action) {
             return;
         }
 

@@ -182,12 +182,11 @@ export type RigidBody = z.infer<typeof RigidBodySchema>;
 export type RigidBodyInput = z.input<typeof RigidBodySchema>;
 export type RigidBodyType = RigidBody["type"];
 
-export const PhysicsSystemSchema = z.object({
+export const PhysicsSystemSchema = bindable({
     rigid_body: RigidBodySchema.optional(),
     //joints: // to be added later
-    // report_collisions: z.boolean().default(false),
+    report_collisions: z.boolean().default(false).optional(),
     // report_motion: z.boolean().default(false)
-    // TODO: move the top to monitors? or just add ids in place. either way neither supported yet
 });
 export type PhysicsSystem = z.infer<typeof PhysicsSystemSchema>;
 export type PhysicsSystemInput = z.input<typeof PhysicsSystemSchema>;

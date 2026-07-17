@@ -25,7 +25,12 @@ export class PhysicsSystemBuilder extends BaseBuilder<PhysicsSystemInput> {
         return this;
     }
 
-    // when report_motion/collisions supported then add here
+    // when report_motion supported then add here
+
+    report_collisions(report = true) {
+        this._internal.report_collisions = report;
+        return this;
+    }
 
     build(): PhysicsSystem {
         return PhysicsSystemSchema.parse(this._internal);
