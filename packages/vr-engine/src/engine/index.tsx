@@ -44,6 +44,7 @@ import {useEngineObjectStore} from "../stores/EngineObjectStore";
 import {useWorldLoadingStateStore} from "../stores/WorldLoadingStateStore";
 import {FlatLoadingScreen, VRLoadingScreen} from "./LoadingScreen";
 import {SSAO} from "../render/SSAO";
+import {QuarksProvider} from "quarks.r3f";
 
 configureTextBuilder({
     useWorker: false
@@ -376,52 +377,54 @@ const EngineHostInternal = memo(
                                         {show_fps && <Stats />}
 
                                         <AudioListenerProvider>
-                                            <HandsProvider>
-                                                <SDKWorldEnvironmentProvider>
-                                                    <WorldPhysics>
-                                                        <CameraSetup />
-                                                        <CanvasResizer
-                                                            containerRef={canvas_container_ref}
-                                                        />
+                                            <QuarksProvider>
+                                                <HandsProvider>
+                                                    <SDKWorldEnvironmentProvider>
+                                                        <WorldPhysics>
+                                                            <CameraSetup />
+                                                            <CanvasResizer
+                                                                containerRef={canvas_container_ref}
+                                                            />
 
-                                                        <SceneDebug />
+                                                            <SceneDebug />
 
-                                                        {mode === "vr" ? (
-                                                            <XR store={xr_store}>
+                                                            {mode === "vr" ? (
+                                                                <XR store={xr_store}>
+                                                                    <ErrorBoundary
+                                                                        FallbackComponent={
+                                                                            VRErrorFallback
+                                                                        }
+                                                                        onReset={() =>
+                                                                            window.location.reload()
+                                                                        }>
+                                                                        <SceneContents
+                                                                            player_ref={player_ref}
+                                                                            extra_in_origin={
+                                                                                <SpectatorCamera />
+                                                                            }
+                                                                        />
+                                                                    </ErrorBoundary>
+                                                                </XR>
+                                                            ) : (
                                                                 <ErrorBoundary
                                                                     FallbackComponent={
-                                                                        VRErrorFallback
+                                                                        FlatErrorFallback
                                                                     }
                                                                     onReset={() =>
                                                                         window.location.reload()
-                                                                    }>
-                                                                    <SceneContents
-                                                                        player_ref={player_ref}
-                                                                        extra_in_origin={
-                                                                            <SpectatorCamera />
-                                                                        }
-                                                                    />
+                                                                    }
+                                                                >
+                                                                    <FlatInputProvider>
+                                                                        <FlatClickRaycaster />
+                                                                        <FlatAvatarHands />
+                                                                        <SceneContents player_ref={player_ref} />
+                                                                    </FlatInputProvider>
                                                                 </ErrorBoundary>
-                                                            </XR>
-                                                        ) : (
-                                                            <ErrorBoundary
-                                                                FallbackComponent={
-                                                                    FlatErrorFallback
-                                                                }
-                                                                onReset={() =>
-                                                                    window.location.reload()
-                                                                }
-                                                            >
-                                                                <FlatInputProvider>
-                                                                    <FlatClickRaycaster />
-                                                                    <FlatAvatarHands />
-                                                                    <SceneContents player_ref={player_ref} />
-                                                                </FlatInputProvider>
-                                                            </ErrorBoundary>
-                                                        )}
-                                                    </WorldPhysics>
-                                                </SDKWorldEnvironmentProvider>
-                                            </HandsProvider>
+                                                            )}
+                                                        </WorldPhysics>
+                                                    </SDKWorldEnvironmentProvider>
+                                                </HandsProvider>
+                                            </QuarksProvider>
                                         </AudioListenerProvider>
                                     </Canvas>
                                 </PlayerOriginProvider>

@@ -61,6 +61,11 @@ export class BasketballHoopPrefabBuilder extends BaseBuilder<BasketballHoopPrefa
         return this;
     }
 
+    set_enable_particles(enable: boolean) {
+        this._internal.enable_particles = enable;
+        return this;
+    }
+
     build(): BasketballHoopPrefab {
         return BasketballHoopPrefabSchema.parse(this._internal);
     }

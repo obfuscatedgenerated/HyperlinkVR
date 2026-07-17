@@ -4,7 +4,9 @@ import {
     ControllerButtonInteraction,
     ControllerButtonInteractionInput,
     ControllerButtonInteractionSchema,
-    ControllerButtonWhenListen, DirectionalLightInteraction, DirectionalLightInteractionInput,
+    ControllerButtonWhenListen,
+    DirectionalLightInteraction,
+    DirectionalLightInteractionInput,
     DirectionalLightInteractionSchema,
     FollowPlayerInteractionInput,
     FollowPlayerInteractionSchema,
@@ -15,15 +17,26 @@ import {
     GrabbableInteractionInput,
     GrabbableInteractionSchema,
     GrabCollider,
-    GrabOffsetInput, PointLightInteraction,
-    PointLightInteractionInput, PointLightInteractionSchema,
+    GrabOffsetInput, ParticleEmitterBehaviorInput, ParticleEmitterBehaviorSchema,
+    ParticleEmitterColorInput, ParticleEmitterColorSchema, ParticleEmitterInteraction,
+    ParticleEmitterInteractionInput, ParticleEmitterInteractionSchema,
+    ParticleEmitterRandomisableValueInput,
+    ParticleEmitterRandomisableValueSchema, ParticleEmitterShapeInput,
+    ParticleEmitterShapeSchema, ParticleEmitterVisualInput, ParticleEmitterVisualSchema,
+    PointLightInteraction,
+    PointLightInteractionInput,
+    PointLightInteractionSchema,
     PositionalAudioInteraction,
     PositionalAudioInteractionInput,
-    PositionalAudioInteractionSchema, Rotation,
-    SpotLightInteraction, SpotLightInteractionInput, SpotLightInteractionSchema,
+    PositionalAudioInteractionSchema,
+    Rotation, RotationSchema,
+    SpotLightInteraction,
+    SpotLightInteractionInput,
+    SpotLightInteractionSchema,
     TriggerVolumeInteraction,
     TriggerVolumeInteractionInput,
-    TriggerVolumeInteractionSchema, TweenEasing
+    TriggerVolumeInteractionSchema,
+    TweenEasing
 } from "@hyperlinkvr/vr-engine-schemas";
 import {send_via_rtc} from "../messenger";
 
@@ -563,11 +576,123 @@ export class SpotLightInteractionBuilder extends BaseBuilder<SpotLightInteractio
     }
 }
 
+export class ParticleEmitterInteractionBuilder extends BaseBuilder<ParticleEmitterInteractionInput> {
+    constructor() {
+        super({type: "particle-emitter"} as ParticleEmitterInteractionInput);
+    }
+
+    set_duration(seconds: number) {
+        this._internal.duration = seconds;
+        return this;
+    }
+
+    loop(loop = true) {
+        this._internal.loop = loop;
+        return this;
+    }
+
+    autoplay(autoplay = true) {
+        this._internal.autoplay = autoplay;
+        return this;
+    }
+
+    set_lifetime(lifetime: ParticleEmitterRandomisableValueInput) {
+        this._internal.lifetime = ParticleEmitterRandomisableValueSchema.parse(lifetime);
+        return this;
+    }
+
+    set_speed(speed: ParticleEmitterRandomisableValueInput) {
+        this._internal.speed = ParticleEmitterRandomisableValueSchema.parse(speed);
+        return this;
+    }
+
+    set_particle_size(size: ParticleEmitterRandomisableValueInput) {
+        this._internal.particle_size = ParticleEmitterRandomisableValueSchema.parse(size);
+        return this;
+    }
+
+    set_particle_rotation(rotation: ParticleEmitterRandomisableValueInput) {
+        this._internal.particle_rotation = ParticleEmitterRandomisableValueSchema.parse(rotation);
+        return this;
+    }
+
+    // single hex, array of equally weighted full alpha hexes, or array of {color, alpha?, weight?} objects
+    set_color(color: ParticleEmitterColorInput) {
+        this._internal.color = ParticleEmitterColorSchema.parse(color);
+        return this;
+    }
+
+    set_per_second(per_second: ParticleEmitterRandomisableValueInput) {
+        this._internal.per_second = ParticleEmitterRandomisableValueSchema.parse(per_second);
+        return this;
+    }
+
+    set_emitter_shape(shape: ParticleEmitterShapeInput) {
+        this._internal.emitter_shape = ParticleEmitterShapeSchema.parse(shape);
+        return this;
+    }
+
+    set_visual(visual: ParticleEmitterVisualInput) {
+        this._internal.visual = ParticleEmitterVisualSchema.parse(visual);
+        return this;
+    }
+
+    set_behaviors(behaviors: ParticleEmitterBehaviorInput[]) {
+        this._internal.behaviors = behaviors.map(behavior => ParticleEmitterBehaviorSchema.parse(behavior));
+        return this;
+    }
+
+    // TODO: should any of the above be converted to their own builders? probably will want behaviours to be sep builders when more addedf
+
+    follow_emitter(follow = true) {
+        this._internal.world_space = !follow;
+        return this;
+    }
+
+    set_offset(offset: [number, number, number]) {
+        this._internal.offset = offset;
+        return this;
+    }
+
+    set_rotation(rotation: Rotation) {
+        this._internal.rotation = RotationSchema.parse(rotation);
+        return this;
+    }
+
+    set_scale(scale: [number, number, number]) {
+        this._internal.scale = scale;
+        return this;
+    }
+
+    build(): ParticleEmitterInteraction {
+        return ParticleEmitterInteractionSchema.parse(this._internal);
+    }
+
+
+    static _make_api(object_id: string, interaction_id: string) {
+        return {
+            play: async () => {
+                return await interaction_command(object_id, interaction_id, "play");
+            },
+            pause: async () => {
+                return await interaction_command(object_id, interaction_id, "pause");
+            },
+            stop: async () => {
+                return await interaction_command(object_id, interaction_id, "stop");
+            },
+            restart: async () => {
+                return await interaction_command(object_id, interaction_id, "restart");
+            },
+        }
+    }
+}
+
 export const _INTERACTION_API_MAKERS = {
     "follow-player": FollowPlayerInteractionBuilder._make_api,
     "positional-audio": PositionalAudioInteractionBuilder._make_api,
     "global-audio": GlobalAudioInteractionBuilder._make_api,
     "point-light": PointLightInteractionBuilder._make_api,
     "directional-light": DirectionalLightInteractionBuilder._make_api,
-    "spot-light": SpotLightInteractionBuilder._make_api
+    "spot-light": SpotLightInteractionBuilder._make_api,
+    "particle-emitter": ParticleEmitterInteractionBuilder._make_api,
 } as Record<string, InteractionMakeAPIFunc>;

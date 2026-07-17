@@ -5,6 +5,8 @@ import {resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
 import {useRef} from "react";
 import {useObjectBinding} from "../hooks/useObjectBinding";
 import {BindingConfig, CylinderCollider} from "@hyperlinkvr/vr-engine-schemas";
+import {ParticleEmitter} from "../interaction/ParticleEmitter";
+import {ParticleSystemRef} from "quarks.r3f";
 
 const MESH_URL = new URL("../../assets/prefabs/basketball_hoop/basketball_hoop.glb", import.meta.url).href;
 const DING_DING_URL = new URL("../../assets/sfx/dingding.opus", import.meta.url).href;
@@ -25,9 +27,11 @@ const BOTTOM_COLLIDER = {
 
 const TOP_TO_BOTTOM_TIME = 5000;
 
-export const BasketballHoop = ({enable_sfx, binding}: {enable_sfx?: boolean, binding?: BindingConfig}) => {
+export const BasketballHoop = ({enable_sfx, enable_particles, binding}: {enable_sfx?: boolean, enable_particles?: boolean, binding?: BindingConfig}) => {
     const {scene} = useGLTF(MESH_URL);
+
     const audio_ref = useRef<PositionalAudioType>(null);
+    const particles_ref = useRef<ParticleSystemRef>(null);
 
     const {emit_report} = useObjectBinding(binding);
 
@@ -122,15 +126,22 @@ export const BasketballHoop = ({enable_sfx, binding}: {enable_sfx?: boolean, bin
                             }
                         });
 
-                        if (enable_sfx === false) return;
+                        if (enable_sfx !== false) {
+                            const audio = audio_ref.current;
+                            if (audio) {
+                                // TODO: way to make dupe audio events overlap each other (expose to the sdk too)
+                                audio.stop();
+                                audio.offset = 0;
+                                audio.play();
+                            }
+                        }
 
-                        const audio = audio_ref.current;
-                        if (!audio) return;
-
-                        // TODO: way to make dupe audio events overlap each other (expose to the sdk too)
-                        audio.stop();
-                        audio.offset = 0;
-                        audio.play();
+                        if (enable_particles !== false) {
+                            const particles = particles_ref.current;
+                            if (particles) {
+                                particles.restart();
+                            }
+                        }
                     }
                 }}
             />
@@ -141,6 +152,50 @@ export const BasketballHoop = ({enable_sfx, binding}: {enable_sfx?: boolean, bin
                 distance={5}
                 autoplay={false}
                 loop={false}
+            />
+
+            <ParticleEmitter
+                ref={particles_ref}
+                config={{
+                    loop: false,
+                    autoplay: false,
+
+                    duration: 0.5,
+                    lifetime: 2.5,
+                    speed: {min: 3, max: 5},
+                    per_second: 50,
+                    emitter_shape: {
+                        type: "cone",
+                        mode: "burst",
+                        radius: 0.05,
+                        angle: Math.PI / 10
+                    },
+
+                    visual: {
+                        type: "quad",
+                        width: 0.06,
+                        height: 0.12,
+                    },
+
+                    behaviors: [
+                        {
+                            type: "gravity",
+                        }
+                        // TODO: fade over life to fade out smoothly (once implemented)
+                    ],
+
+                    color: [
+                        {color: 0xff0000, alpha: 0.75},
+                        {color: 0xffff00, alpha: 0.75},
+                        {color: 0x00ff00, alpha: 0.75},
+                        {color: 0x0000ff, alpha: 0.75},
+                        {color: 0xff00ff, alpha: 0.75},
+                    ],
+
+                    world_space: true,
+                    offset: [0, -0.3, 0.375],
+                    rotation: [55, 0, 0]
+                }}
             />
         </>
     )

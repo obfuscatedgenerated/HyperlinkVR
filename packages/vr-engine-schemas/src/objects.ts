@@ -371,6 +371,148 @@ export const DirectionalLightInteractionSchema = bindable({
 export type DirectionalLightInteraction = z.infer<typeof DirectionalLightInteractionSchema>;
 export type DirectionalLightInteractionInput = z.input<typeof DirectionalLightInteractionSchema>;
 
+const BaseParticleEmitterShapeSchema = z.object({
+    type: z.string(),
+});
+
+export const ParticleEmitterShapeModeSchema = z.enum(["random", "loop", "ping-pong", "burst"]).default("random");
+export type ParticleEmitterShapeMode = z.infer<typeof ParticleEmitterShapeModeSchema>;
+
+export const ParticleEmitterShapePointSchema = BaseParticleEmitterShapeSchema.extend({
+    type: z.literal("point")
+});
+export type ParticleEmitterShapePoint = z.infer<typeof ParticleEmitterShapePointSchema>;
+export type ParticleEmitterShapePointInput = z.input<typeof ParticleEmitterShapePointSchema>;
+
+export const ParticleEmitterShapeSphereSchema = BaseParticleEmitterShapeSchema.extend({
+    type: z.literal("sphere"),
+    mode: ParticleEmitterShapeModeSchema.optional(),
+    radius: z.number().positive(),
+    thickness: z.number().nonnegative().optional()
+});
+export type ParticleEmitterShapeSphere = z.infer<typeof ParticleEmitterShapeSphereSchema>;
+export type ParticleEmitterShapeSphereInput = z.input<typeof ParticleEmitterShapeSphereSchema>;
+
+export const ParticleEmitterShapeConeSchema = BaseParticleEmitterShapeSchema.extend({
+    type: z.literal("cone"),
+    mode: ParticleEmitterShapeModeSchema.optional(),
+    radius: z.number().positive(),
+    angle: z.number().min(0).max(Math.PI / 2),
+    arc: z.number().min(0).max(Math.PI * 2).optional()
+});
+export type ParticleEmitterShapeCone = z.infer<typeof ParticleEmitterShapeConeSchema>;
+export type ParticleEmitterShapeConeInput = z.input<typeof ParticleEmitterShapeConeSchema>;
+
+// TODO: add remaining per-shape props
+export const ParticleEmitterShapeSchema = z.discriminatedUnion("type", [
+    ParticleEmitterShapePointSchema,
+    ParticleEmitterShapeSphereSchema,
+    ParticleEmitterShapeConeSchema
+    // TODO: rectangle, grid, hemisphere, donut, mesh. maybe could reuse collider system and just reinterpret?
+]);
+export type ParticleEmitterShape = z.infer<typeof ParticleEmitterShapeSchema>;
+export type ParticleEmitterShapeInput = z.input<typeof ParticleEmitterShapeSchema>;
+
+export const ParticleEmitterVisualImageSchema = z.object({
+    type: z.literal("image"),
+    url: z.url({
+        protocol: /^https?$/,
+        hostname: z.regexes.domain
+    }),
+    alpha: z.number().min(0).max(1).default(1).optional()
+});
+export type ParticleEmitterVisualImage = z.infer<typeof ParticleEmitterVisualImageSchema>;
+export type ParticleEmitterVisualImageInput = z.input<typeof ParticleEmitterVisualImageSchema>;
+
+export const ParticleEmitterVisualQuadSchema = z.object({
+    type: z.literal("quad"),
+    width: z.number().positive(),
+    height: z.number().positive(),
+    color: HexColorSchema.default(0xffffff).optional(),
+    alpha: z.number().min(0).max(1).default(1).optional()
+});
+export type ParticleEmitterVisualQuad = z.infer<typeof ParticleEmitterVisualQuadSchema>;
+export type ParticleEmitterVisualQuadInput = z.input<typeof ParticleEmitterVisualQuadSchema>;
+
+// TODO: more options, its any threejs material. need to use it more to figure out what though (stuff like shapes and animations)
+// TODO: emissive particles etc, maybe just have a central "material schema" and accept that, which can also be reused for material override later
+
+export const ParticleEmitterVisualSchema = z.discriminatedUnion("type", [
+    ParticleEmitterVisualImageSchema,
+    ParticleEmitterVisualQuadSchema
+]);
+export type ParticleEmitterVisual = z.infer<typeof ParticleEmitterVisualSchema>;
+export type ParticleEmitterVisualInput = z.input<typeof ParticleEmitterVisualSchema>;
+
+export const ParticleEmitterGravityBehaviorSchema = z.object({
+    type: z.literal("gravity"),
+    origin: z.tuple([z.number(), z.number(), z.number()]).optional(),
+    magnitude: z.number().default(9.81).optional(),
+});
+export type ParticleEmitterGravityBehavior = z.infer<typeof ParticleEmitterGravityBehaviorSchema>;
+export type ParticleEmitterGravityBehaviorInput = z.input<typeof ParticleEmitterGravityBehaviorSchema>;
+
+export const ParticleEmitterBehaviorSchema = z.discriminatedUnion("type", [
+    ParticleEmitterGravityBehaviorSchema
+]);
+export type ParticleEmitterBehavior = z.infer<typeof ParticleEmitterBehaviorSchema>;
+export type ParticleEmitterBehaviorInput = z.input<typeof ParticleEmitterBehaviorSchema>;
+
+// TODO: moore quarks behaviours (need schema for bezier curve and gradient for overlife behaviors)
+// export const ParticleEmitterBehaviorSizeOverLifeSchema = z.object({
+
+export const ParticleEmitterRandomisableValueSchema = z.union([
+    z.number().positive(),
+    z.object({
+        min: z.number().positive(),
+        max: z.number().positive()
+    })
+]);
+export type ParticleEmitterRandomisableValue = z.infer<typeof ParticleEmitterRandomisableValueSchema>;
+export type ParticleEmitterRandomisableValueInput = z.input<typeof ParticleEmitterRandomisableValueSchema>;
+
+export const ParticleEmitterColorSchema = z.union([
+    HexColorSchema,
+    z.array(HexColorSchema).min(2),
+    z.array(z.object({
+        color: HexColorSchema,
+        weight: z.number().positive().default(1).optional(),
+        alpha: z.number().min(0).max(1).default(1).optional()
+    }))
+]);
+export type ParticleEmitterColor = z.infer<typeof ParticleEmitterColorSchema>;
+export type ParticleEmitterColorInput = z.input<typeof ParticleEmitterColorSchema>;
+
+// TODO: option to provide prebuilt quarks json
+// TODO: support burst timings
+// TODO: support sprite sheet
+// TODO: support soft particles
+
+export const ParticleEmitterInteractionSchema = bindable({
+    type: z.literal("particle-emitter"),
+    duration: z.number().positive().optional(),
+    loop: z.boolean().default(false),
+    autoplay: z.boolean().default(false),
+    lifetime: ParticleEmitterRandomisableValueSchema.default(1),
+    speed: ParticleEmitterRandomisableValueSchema.default(1),
+    particle_size: ParticleEmitterRandomisableValueSchema.default(1).optional(),
+    particle_rotation: ParticleEmitterRandomisableValueSchema.default(0).optional(),
+    color: ParticleEmitterColorSchema.optional(),
+    per_second: ParticleEmitterRandomisableValueSchema.default(10),
+    emitter_shape: ParticleEmitterShapeSchema,
+    visual: ParticleEmitterVisualSchema,
+    // TODO: rendermode? or leave it up to the visuals
+    behaviors: z.array(ParticleEmitterBehaviorSchema).optional(),
+    // TODO: uvTileCount (whatever they are)
+    // TODO: add the undocumented properties on particlesystem component
+    world_space: z.boolean().default(true).optional(), // whether particles followe the emitter or remain in world space
+    offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]).optional(),
+    rotation: RotationSchema.default([0, 0, 0]).optional(),
+    scale: z.tuple([z.number(), z.number(), z.number()]).default([1, 1, 1]).optional()
+});
+export type ParticleEmitterInteraction = z.infer<typeof ParticleEmitterInteractionSchema>;
+export type ParticleEmitterInteractionInput = z.input<typeof ParticleEmitterInteractionSchema>;
+
 export const InteractionSchema = z.discriminatedUnion("type", [
     GrabbableInteractionSchema,
     ControllerButtonInteractionSchema,
@@ -380,7 +522,8 @@ export const InteractionSchema = z.discriminatedUnion("type", [
     GlobalAudioInteractionSchema,
     PointLightInteractionSchema,
     SpotLightInteractionSchema,
-    DirectionalLightInteractionSchema
+    DirectionalLightInteractionSchema,
+    ParticleEmitterInteractionSchema
 ]);
 export type Interaction = z.infer<typeof InteractionSchema>;
 export type InteractionInput = z.input<typeof InteractionSchema>;
@@ -447,6 +590,7 @@ export const BasketballHoopPrefabSchema = bindable({
     type: z.literal("prefab"),
     name: z.literal("basketball_hoop"),
     enable_sfx: z.boolean().default(true),
+    enable_particles: z.boolean().default(true),
 });
 export type BasketballHoopPrefab = z.infer<typeof BasketballHoopPrefabSchema>;
 export type BasketballHoopPrefabInput = z.input<typeof BasketballHoopPrefabSchema>;

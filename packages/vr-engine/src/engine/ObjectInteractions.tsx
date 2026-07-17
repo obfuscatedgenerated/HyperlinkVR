@@ -1,11 +1,10 @@
-import type {
+import {
     DirectionalLightInteraction,
-    FollowPlayerInteraction, GlobalAudioInteraction, GrabbableInteraction, Interaction, PointLightInteraction,
+    FollowPlayerInteraction, GlobalAudioInteraction, GrabbableInteraction, Interaction,
+    ParticleEmitterInteraction, PointLightInteraction,
     PositionalAudioInteraction, SpotLightInteraction, TriggerVolumeInteraction
 } from "@hyperlinkvr/vr-engine-schemas";
 import {useEffect, useMemo, useRef} from "react";
-
-
 
 import { useObjectRefs } from "../contexts/ObjectRefsContext";
 import { useAudioListener } from "../contexts/AudioListenerContext";
@@ -13,10 +12,20 @@ import { useObjectBinding } from "../hooks/useObjectBinding";
 import { Grabbable } from "../interaction";
 import { FollowPlayer } from "../interaction/FollowPlayer";
 import {detect_trigger_direction, resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
-import {Audio, AudioLoader, DirectionalLight, Euler, Group, PointLight, SpotLight} from "three";
+import {
+    Audio,
+    AudioLoader,
+    DirectionalLight,
+    Euler,
+    Group,
+    PointLight,
+    SpotLight,
+} from "three";
 import {PositionalAudio} from "@react-three/drei";
 import type { PositionalAudio as PositionalAudioType } from "three";
 import {rotation_to_euler} from "./rotation";
+import type {ParticleSystemRef} from "quarks.r3f";
+import {ParticleEmitter} from "../interaction/ParticleEmitter";
 
 
 interface InteractionWrapperProps<I extends Interaction = Interaction> {
@@ -478,6 +487,49 @@ const SpotLightWrapper = ({interaction, children}: InteractionWrapperProps<SpotL
     );
 }
 
+const ParticleEmitterWrapper = ({interaction, children}: InteractionWrapperProps<ParticleEmitterInteraction>) => {
+    const system_ref = useRef<ParticleSystemRef>(null);
+
+    const {on_command} = useObjectBinding(interaction.binding);
+
+    useEffect(() => {
+        const unlisten = on_command(async (command: string, args?: any) => {
+            const system = system_ref.current;
+            if (!system) {
+                return {success: false, error: "Particle system not ready"};
+            }
+
+            switch (command) {
+                case "play":
+                    system.play();
+                    break;
+                case "pause":
+                    system.pause();
+                    break;
+                    case "restart":
+                    system.restart();
+                    break;
+                case "stop":
+                    system.stop();
+                    break;
+                default:
+                    return {success: false, error: `Unknown command ${command}`};
+            }
+        });
+
+        return () => {
+            unlisten();
+        }
+    }, []);
+
+    return (
+        <>
+            <ParticleEmitter config={interaction} ref={system_ref} />
+            {children}
+        </>
+    )
+}
+
 const INTERACTION_MAP: Record<Interaction["type"], React.ComponentType<InteractionWrapperProps<any>> | null> = {
     "grabbable": GrabbableWrapper,
     "follow-player": FollowPlayerWrapper,
@@ -488,6 +540,7 @@ const INTERACTION_MAP: Record<Interaction["type"], React.ComponentType<Interacti
     "point-light": PointLightWrapper,
     "directional-light": DirectionalLightWrapper,
     "spot-light": SpotLightWrapper,
+    "particle-emitter": ParticleEmitterWrapper,
 } as const;
 
 // first is outermost, last is innermost
