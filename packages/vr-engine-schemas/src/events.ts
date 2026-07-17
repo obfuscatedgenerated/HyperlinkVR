@@ -27,11 +27,18 @@ interface InteractedObject {
     tags: string[];
 }
 
-export interface TriggerVolumeInteractionPayload {
-    type: "enter" | "exit";
+export interface TriggerVolumeInteractionEnterPayload {
+    type: "enter";
+    interacted: InteractedPlayer | InteractedObject;
+    positioning?: {direction: "top" | "bottom" | "side", local_offset: { x: number; y: number; z: number }};
+}
+
+export interface TriggerVolumeInteractionExitPayload {
+    type: "exit";
     interacted: InteractedPlayer | InteractedObject;
 }
-// TODO: support other objects entering
+
+export type TriggerVolumeInteractionPayload = TriggerVolumeInteractionEnterPayload | TriggerVolumeInteractionExitPayload;
 
 export interface ControllerButtonInteractionPayload {
     type: "press" | "release";

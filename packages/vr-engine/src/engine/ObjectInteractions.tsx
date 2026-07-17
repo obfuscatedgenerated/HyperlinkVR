@@ -12,7 +12,7 @@ import { useAudioListener } from "../contexts/AudioListenerContext";
 import { useObjectBinding } from "../hooks/useObjectBinding";
 import { Grabbable } from "../interaction";
 import { FollowPlayer } from "../interaction/FollowPlayer";
-import {resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
+import {detect_trigger_direction, resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
 import {Audio, AudioLoader, DirectionalLight, Euler, Group, PointLight, SpotLight} from "three";
 import {PositionalAudio} from "@react-three/drei";
 import type { PositionalAudio as PositionalAudioType } from "three";
@@ -69,7 +69,18 @@ const TriggerVolumeWrapper = ({interaction, children}: InteractionWrapperProps<T
                     ? (payload) => {
                         const interacted = resolve_interacted(payload, interaction);
                         if (!interacted) return;
-                        emit_report({ kind: "trigger-volume", payload: { type: "enter", interacted } });
+
+                        const positioning = detect_trigger_direction(payload, interaction.collider);
+
+                        const interacted_with_positioning = {
+                            ...interacted,
+                            positioning: positioning ? {
+                                direction: positioning.direction,
+                                local_offset: [positioning.local_offset.x, positioning.local_offset.y, positioning.local_offset.z]
+                            } : undefined
+                        };
+
+                        emit_report({ kind: "trigger-volume", payload: { type: "enter", interacted: interacted_with_positioning } });
                     }
                     : undefined
                 }

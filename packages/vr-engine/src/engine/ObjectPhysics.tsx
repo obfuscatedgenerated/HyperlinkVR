@@ -140,7 +140,32 @@ export const useCollider = (collider: Collider): {auto_strategy: RigidBodyAutoCo
     return { auto_strategy, ColliderComponent };
 }
 
-export const get_collision_forces = ({ manifold, other, target }: CollisionEnterPayload, timestep: number) => {
+export const get_collider_extents = (collider: Collider): {x: number, y: number, z: number} | undefined => {
+    switch (collider.type) {
+        case "box":
+            return { x: collider.size[0], y: collider.size[1], z: collider.size[2] };
+        case "sphere":
+            return { x: collider.radius * 2, y: collider.radius * 2, z: collider.radius * 2 };
+        case "capsule":
+            return { x: collider.radius * 2, y: collider.height + collider.radius * 2, z: collider.radius * 2 };
+        case "cylinder":
+            return { x: collider.radius * 2, y: collider.height, z: collider.radius * 2 };
+        default:
+            return undefined;
+    }
+}
+
+type CollisionInfo<T extends number | undefined> = {
+    type: "enter";
+    other_object_id: string | null;
+    contact_point: { x: number, y: number, z: number };
+    contact_normal: { x: number, y: number, z: number };
+    relative_velocity: { x: number, y: number, z: number };
+    impulse: { x: number, y: number, z: number };
+    force: T extends number ? { x: number, y: number, z: number } : undefined;
+}
+
+export const get_collision_info = <T extends number | undefined>({ manifold, other, target }: CollisionEnterPayload, timestep?: T): CollisionInfo<T> => {
     const this_body = target.rigidBody;
     const other_body = other.rigidBody;
 
@@ -158,12 +183,15 @@ export const get_collision_forces = ({ manifold, other, target }: CollisionEnter
         z: normal.z * total_impulse,
     }
 
-    const force_magnitude = total_impulse / timestep;
-    const force = {
-        x: normal.x * force_magnitude,
-        y: normal.y * force_magnitude,
-        z: normal.z * force_magnitude,
-    };
+    let force: {x: number, y: number, z: number} | undefined = undefined;
+    if (timestep !== undefined) {
+        const force_magnitude = total_impulse / timestep;
+        force = {
+            x: normal.x * force_magnitude,
+            y: normal.y * force_magnitude,
+            z: normal.z * force_magnitude,
+        };
+    }
 
     const solver_point = manifold.numSolverContacts() > 0 ? manifold.solverContactPoint(0) : null;
     const contact_point = solver_point
@@ -189,7 +217,7 @@ export const get_collision_forces = ({ manifold, other, target }: CollisionEnter
         relative_velocity: relative_vel,
         force,
         impulse
-    };
+    } as CollisionInfo<T>;
 }
 
 
@@ -303,7 +331,7 @@ export const ObjectPhysics = ({
                 return;
             }
 
-            const event_payload = get_collision_forces(payload, world.timestep);
+            const event_payload = get_collision_info(payload, world.timestep);
             emit_report({
                 kind: "physics-collision",
                 payload: event_payload

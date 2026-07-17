@@ -1,4 +1,4 @@
-import {get_collision_forces, ObjectPhysics} from "../engine/ObjectPhysics";
+import {get_collision_info, ObjectPhysics} from "../engine/ObjectPhysics";
 import {Grabbable} from "../interaction";
 import {PositionalAudio, useGLTF} from "@react-three/drei";
 import type {PositionalAudio as PositionalAudioType} from "three";
@@ -65,7 +65,7 @@ export const Basketball = ({id}: { id: string }) => {
                 return;
             }
 
-            const {force} = get_collision_forces(payload, world.timestep);
+            const {force} = get_collision_info(payload, world.timestep);
 
             // blend sounds depending on the magnitude of the force
             const force_magnitude = Math.sqrt(force.x * force.x + force.y * force.y + force.z * force.z);
@@ -111,6 +111,8 @@ export const Basketball = ({id}: { id: string }) => {
                         restitution: 0.8,
                         restitution_combine_rule: "max",
                         friction: 0.75,
+
+                        ccd: true
                     }
                 }}
                 on_collision_enter={on_collision_enter}
