@@ -17,8 +17,11 @@ export const ReflectiveMirror = ({
     height,
     tint = 0xb0b0b0,
     resolution = DEFAULT_RESOLUTION,
-    ...rest
+    ...props
 }: Omit<ReflectiveMirrorPrefab, "type" | "name"> & Omit<ComponentProps<"primitive">, "object">) => {
+    // extract object id from props, as it'll crash if we assign it to the group element
+    const {id, ...rest} = props;
+
     const reflector = useMemo(() => {
         const geo = new PlaneGeometry(width, height);
         return new Reflector(geo, {

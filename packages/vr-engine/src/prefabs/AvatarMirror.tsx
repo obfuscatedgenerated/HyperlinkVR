@@ -9,7 +9,10 @@ interface AvatarMirrorProps extends Omit<ComponentProps<"group">, "position"> {
     x_z_offset?: [number, number];
 }
 
-export const AvatarMirror = ({x_z_offset = [0, 0], ...rest}: AvatarMirrorProps) => {
+export const AvatarMirror = ({x_z_offset = [0, 0], ...props}: AvatarMirrorProps) => {
+    // extract object id from props, as it'll crash if we assign it to the group element
+    const {id, ...rest} = props;
+
     const [avatar, setAvatar] = useAvatar();
     const [player_height_cm] = useSetting("player_height_cm");
 

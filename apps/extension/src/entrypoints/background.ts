@@ -207,6 +207,9 @@ export default defineBackground(() => {
             port.onDisconnect.addListener(() => {
                 if (active_session?.tab_id === tab_id) {
                     active_session.ready_port = null;
+
+                    // the host may have dropped its ready port without the window closing (e.g. HMR, standard reload), clear the flag to try again later
+                    active_session.ready_notified = false;
                 }
             });
             return;
