@@ -1,6 +1,6 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
-import { Euler, Group, Matrix4, Object3D, Quaternion, Vector3 } from "three";
+import {Euler, Group, MathUtils, Matrix4, Object3D, Quaternion, Vector3} from "three";
 import {
     make_button_state,
     update_button_state,
@@ -9,12 +9,20 @@ import {
     type HandPose
 } from "../../hands";
 import { useFlatFrameInput } from "./bindings";
+import {FULL_THROW_CHARGE_S} from "../../values";
 
 // carry slot: where held objects and the visible active hand sit, in camera space
 const CARRY_OFFSET: [number, number, number] = [0.25, -0.25, -0.5];
 
 const PASSIVE_HAND_OFFSET = new Vector3(-0.22, -0.35, -0.45); // left, down, forward of the head
 const PASSIVE_HAND_REST_EULER = new Euler(-Math.PI / 6, 0.15, Math.PI / 12); // wrist tilt so the watch faces up-ish
+
+const THROW_PULL_BACK = 0.22; // how far the carry slot retreats at full charge
+const THROW_PULL_UP = 0.05; // slight raise while wound up, reads as a cock-back
+const THROW_DRIVE_FORWARD = 0.35; // follow-through overshoot past the carry slot
+const THROW_DRIVE_DURATION_S = 0.25;
+const THROW_SHAKE_AMPLITUDE = 0.002;
+const THROW_SHAKE_START = 0.85; // charge fraction where the strain shake fades in
 
 const UNIT_SCALE = new Vector3(1, 1, 1);
 const scratch_world_matrix = new Matrix4();
@@ -49,6 +57,14 @@ export const FlatHandsPublisher = () => {
     const active_pose = useRef<HandPose>({ kind: "curl", amount: 0 });
     const active_grab = useMemo(make_button_state, []);
     const active_trigger = useMemo(make_button_state, []);
+    const active_throw = useMemo(make_button_state, []);
+    const active_throw_charge = useRef(0);
+
+    const held_throwable = useRef<boolean | null>(null);
+    const was_charging = useRef(false);
+
+    const throw_pull = useRef(0); // 0 to 1 smoothed wind-up amount
+    const throw_drive_remaining = useRef(0); // seconds of follow-through left
 
     const active_hand = useMemo<Hand>(
         () => ({
@@ -57,9 +73,14 @@ export const FlatHandsPublisher = () => {
             ray: active_ray as RefObject<Object3D | null>,
             grab: active_grab,
             trigger: active_trigger,
-            pose: active_pose
+            pose: active_pose,
+            throw_intent: {
+                button: active_throw,
+                charge_seconds: active_throw_charge,
+                held_throwable: held_throwable
+            }
         }),
-        [active_grab, active_trigger]
+        [active_grab, active_trigger, active_throw]
     );
 
     const passive_grip = useRef<Group>(null);
@@ -102,7 +123,65 @@ export const FlatHandsPublisher = () => {
         []
     );
 
-    useFrame(() => {
+    useFrame((state, delta) => {
+        update_button_state(active_grab, flat_input.grab);
+        update_button_state(active_trigger, flat_input.use);
+        active_pose.current = {
+            kind: "curl",
+            amount: active_grab.pressed ? 1.2 : 0
+        };
+        // TODO: differentiate grab and point pose. vr should grab pose too
+
+        update_button_state(active_throw, flat_input.throw_held);
+        if (active_throw.just_pressed) {
+            active_throw_charge.current = 0;
+        } else if (active_throw.pressed) {
+            active_throw_charge.current += delta;
+        }
+
+        // throw animation
+        const charging = active_throw.pressed && held_throwable.current === true;
+        const charge_fraction = Math.min(
+            active_throw_charge.current / FULL_THROW_CHARGE_S,
+            1
+        );
+
+        if (active_throw.just_released && was_charging.current) {
+            throw_drive_remaining.current = THROW_DRIVE_DURATION_S;
+        }
+        was_charging.current = charging;
+
+        // pull tracks the same sqrt curve as the physics, so the pose is a readout of how hard the throw will actually be
+        const pull_target = charging ? Math.sqrt(charge_fraction) : 0;
+        throw_pull.current = MathUtils.damp(
+            throw_pull.current,
+            pull_target,
+            charging ? 20 : 30, // snappier decay on release than build-up
+            delta
+        );
+
+        let drive_offset = 0;
+        if (throw_drive_remaining.current > 0) {
+            throw_drive_remaining.current = Math.max(throw_drive_remaining.current - delta, 0);
+
+            const progress = 1 - throw_drive_remaining.current / THROW_DRIVE_DURATION_S;
+
+            // snap forward fast then slowly return
+            drive_offset = Math.sin(Math.pow(progress, 0.55) * Math.PI) * THROW_DRIVE_FORWARD;
+        }
+
+        let shake_x = 0;
+        let shake_y = 0;
+        const shake_strength = charging
+            ? Math.max(0, (charge_fraction - THROW_SHAKE_START) / (1 - THROW_SHAKE_START))
+            : 0;
+        if (shake_strength > 0) {
+            const shake_time = state.clock.elapsedTime;
+            // different frequencies to ensure it doesn't look like a simple circular motion
+            shake_x = Math.sin(shake_time * 61) * THROW_SHAKE_AMPLITUDE * shake_strength;
+            shake_y = Math.sin(shake_time * 47 + 1.3) * THROW_SHAKE_AMPLITUDE * shake_strength;
+        }
+
         camera.getWorldPosition(scratch.camera_world_position);
         camera.getWorldQuaternion(scratch.camera_world_quaternion);
 
@@ -117,8 +196,13 @@ export const FlatHandsPublisher = () => {
 
         if (active_grip.current) {
             scratch.carry_world_position
-                .set(...CARRY_OFFSET)
+                .set(
+                    CARRY_OFFSET[0] + shake_x,
+                    CARRY_OFFSET[1] + shake_y + throw_pull.current * THROW_PULL_UP,
+                    CARRY_OFFSET[2] + throw_pull.current * THROW_PULL_BACK - drive_offset
+                )
                 .applyMatrix4(camera.matrixWorld);
+
             write_world_transform(
                 active_grip.current,
                 scratch.carry_world_position,
@@ -152,14 +236,6 @@ export const FlatHandsPublisher = () => {
                 scratch.passive_world_quaternion
             );
         }
-
-        update_button_state(active_grab, flat_input.grab);
-        update_button_state(active_trigger, flat_input.use);
-        active_pose.current = {
-            kind: "curl",
-            amount: active_grab.pressed ? 1.2 : 0
-        };
-        // TODO: differentiate grab and point pose. vr should grab pose too
     });
 
     return (

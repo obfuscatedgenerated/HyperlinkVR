@@ -9,6 +9,12 @@ export interface ButtonState {
     just_released: boolean;
 }
 
+export interface ThrowIntent {
+    button: ButtonState;
+    charge_seconds: RefObject<number>;
+    held_throwable: RefObject<boolean | null>; // lets grabbables tell the flat system whether they can be thrown
+}
+
 export const make_button_state = (): ButtonState => ({
     pressed: false,
     just_pressed: false,
@@ -32,6 +38,7 @@ export interface Hand {
     readonly grab: ButtonState;
     readonly trigger: ButtonState;
     readonly pose: RefObject<HandPose>;
+    readonly throw_intent?: ThrowIntent;
 }
 
 const HandsContext = createContext<Hand[] | null>(null);

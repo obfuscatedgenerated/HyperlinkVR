@@ -101,6 +101,24 @@ export class GrabbableInteractionBuilder extends BaseBuilder<GrabbableInteractio
         return this;
     }
 
+    // false only prevents using the throw button on flat mode (ui hint). we cant stop vr players throwing. use max_throw_speed = 0 to make it slip out their hand instead
+    set_flat_throwable(throwable: boolean) {
+        this._internal.flat_throwable = throwable;
+        return this;
+    }
+
+    // the speed of the minimum throw on flat (tapping the throw key)
+    set_min_flat_throw_speed(speed: number) {
+        this._internal.min_flat_throw_speed = speed;
+        return this;
+    }
+
+    // the maximum throw speed on flat and vr. note that an additional headroom of 1.2x is applied so that locomotion can add to the speed
+    set_max_throw_speed(speed: number) {
+        this._internal.max_throw_speed = speed;
+        return this;
+    }
+
     build(): GrabbableInteraction {
         return GrabbableInteractionSchema.parse(this._internal);
     }

@@ -49,6 +49,9 @@ const GrabbableWrapper = ({interaction, children}: InteractionWrapperProps<Grabb
                     ? (hand) => emit_report({ kind: "grab", payload: { type: "proximity", handedness: hand.handedness } })
                     : undefined
             }
+            flat_throwable={interaction.flat_throwable}
+            min_flat_throw_speed={interaction.min_flat_throw_speed}
+            max_throw_speed={interaction.max_throw_speed}
         >
             {children}
         </Grabbable>

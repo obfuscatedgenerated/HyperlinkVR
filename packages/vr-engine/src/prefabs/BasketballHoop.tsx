@@ -33,6 +33,8 @@ export const BasketballHoop = ({enable_sfx, binding}: {enable_sfx?: boolean, bin
 
     const entered_top = useRef(new Map<string, number>());
 
+    // TODO: confetti emitter, either rolled with instancedmesh or look at something like r3f-vfx
+
     return (
         <>
             <ObjectPhysics physics={{

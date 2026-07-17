@@ -7,6 +7,7 @@ import { BackSide, Box3, Group, Matrix4, Mesh, MeshBasicMaterial, Object3D, Quat
 import { useObjectRefsOptional } from "../contexts";
 import { PLAYER_FILTER_BIT, PLAYER_IGNORE_RELEASE_DELAY_S } from "../engine/collision_groups";
 import { Hand, useHands } from "../input/hands";
+import {FULL_THROW_CHARGE_S} from "../input/values";
 
 enum RigidBodyType {
     Fixed = 1,
@@ -14,6 +15,12 @@ enum RigidBodyType {
     KinematicPositionBased = 2,
     KinematicVelocityBased = 3
 }
+
+const DEFAULT_FLAT_MIN_THROW_SPEED = 3; // m/s, a tap of the throw key
+const DEFAULT_MAX_THROW_SPEED = 18; // m/s, full charge
+const RELEASE_HEADROOM_MULT = 1.2; // the player can throw a touch faster than max throw speed if locomoting
+const MAX_INHERITED_SPEED = 8; // cap on carry-slot velocity combined into a flat throw
+const VR_THROW_BOOST = 1.5; // vr tracking can undersell how fast the hand is moving, so boost the throw a bit
 
 const excluded_from_bounds = (o: Object3D): boolean => {
     let cur: Object3D | null = o;
@@ -209,7 +216,10 @@ export const useGrabbable = (
         on_nearby_start,
         on_nearby_end,
         on_trigger_start,
-        on_trigger_end
+        on_trigger_end,
+        flat_throwable = true, // false only prevents using the throw button on flat mode (ui hint). we cant stop vr players throwing. use max_throw_speed = 0 to make it slip out their hand instead
+        min_flat_throw_speed = DEFAULT_FLAT_MIN_THROW_SPEED,
+        max_throw_speed = DEFAULT_MAX_THROW_SPEED
     }: {
         grab_distance?: number;
         nearby_trigger_distance?: number;
@@ -226,6 +236,9 @@ export const useGrabbable = (
         on_nearby_end?: (hand: Hand) => void;
         on_trigger_start?: (hand: Hand) => void;
         on_trigger_end?: (hand: Hand | null) => void;
+        flat_throwable?: boolean;
+        min_flat_throw_speed?: number;
+        max_throw_speed?: number;
     } = {}
 ) => {
     const hands = useHands();
@@ -258,6 +271,12 @@ export const useGrabbable = (
     const aim_up = useRef(new Vector3());
     const aim_displacement = useRef(new Vector3());
     const unit_scale = useRef(new Vector3(1, 1, 1));
+
+    const throw_dir_quat = useRef(new Quaternion());
+    const throw_velocity = useRef(new Vector3());
+    const inherited_velocity = useRef(new Vector3());
+    // hands that threw and must fully release grab before re-grabbing, otherwise a still-held RMB instantly re-grabs the object it just threw
+    const throw_lockout = useRef(new Set<Hand>());
 
     const region_tester = useRef<RegionTester | null>(null);
     const region_source = useRef<GrabCollider | undefined>(undefined);
@@ -305,6 +324,31 @@ export const useGrabbable = (
         }
         saved_collision_groups.current = null;
         player_ignored.current = false;
+    };
+
+    const release_held = (
+        hand: Hand,
+        body: RapierRigidBody | null,
+        velocity: Vector3
+    ) => {
+        grabbingHand.current = null;
+        on_grab_end?.(hand);
+
+        if (hand.throw_intent) {
+            hand.throw_intent.held_throwable.current = null;
+        }
+
+        if (body) {
+            body.setBodyType(RigidBodyType.Dynamic, true);
+            // mutates the caller's vector, grabVelocity resets on the next grab and throw_velocity is per-throw scratch
+            velocity.clampLength(0, max_throw_speed * RELEASE_HEADROOM_MULT);
+            body.setLinvel({ x: velocity.x, y: velocity.y, z: velocity.z }, true);
+        }
+
+        // keep ignoring the player briefly so the receding hand can't bat the object as it turns dynamic again
+        if (player_ignored.current) {
+            restore_countdown.current = player_ignore_release_delay;
+        }
     };
 
     // builds the world matrix for a snapped grab whose offset is expressed in
@@ -375,6 +419,9 @@ export const useGrabbable = (
         for (const hand of hands) {
             const gripObj = hand.grip.current;
             if (!gripObj) continue;
+
+            if (!hand.grab.pressed) throw_lockout.current.delete(hand);
+
             gripObj.updateWorldMatrix(true, false);
 
             const handMatrix = tempMatrix.current.copy(gripObj.matrixWorld); // already world-space
@@ -403,6 +450,7 @@ export const useGrabbable = (
             if (
                 hand.grab.pressed &&
                 !grabbingHand.current &&
+                !throw_lockout.current.has(hand) &&
                 (proximity_ok || ray_ok)
             ) {
                 const use_carry_slot = ray_ok || snap_to_hand;
@@ -429,39 +477,26 @@ export const useGrabbable = (
                 }
                 grabbingHand.current = hand;
                 on_grab_start?.(hand);
+
+                // tell the flat input system whether i want to be thrown
+                if (hand.throw_intent) {
+                    hand.throw_intent.held_throwable.current = flat_throwable;
+                }
+
                 prevGrabPos.current.copy(objPos);
                 grabVelocity.current.set(0, 0, 0);
                 body?.setBodyType(RigidBodyType.KinematicPositionBased, true);
 
-                // stop colliding with the player while held, and cancel any
-                // pending restore from a previous quick release
+                // stop colliding with the player while held, and cancel any pending restore from a previous quick release
                 apply_player_ignore(body);
                 restore_countdown.current = null;
             } else if (!hand.grab.pressed && grabbingHand.current === hand) {
-                grabbingHand.current = null;
-                on_grab_end?.(hand);
-                if (body) {
-                    body.setBodyType(RigidBodyType.Dynamic, true);
-                    body.setLinvel(
-                        {
-                            x: grabVelocity.current.x,
-                            y: grabVelocity.current.y,
-                            z: grabVelocity.current.z
-                        },
-                        true
-                    );
-                }
-
-                // keep ignoring the player briefly so the receding hand can't
-                // bat the object as it turns dynamic again
-                if (player_ignored.current) {
-                    restore_countdown.current = player_ignore_release_delay;
-                }
+                // boost for vr throws only (which dont use the intent system)
+                release_held(hand, body, hand.throw_intent ? grabVelocity.current : grabVelocity.current.multiplyScalar(VR_THROW_BOOST));
             }
 
             if (grabbingHand.current === hand) {
-                // copy into its own storage so later loop iterations overwriting
-                // tempMatrix (the per-hand scratch) can't corrupt the grabber
+                // copy into its own storage so later loop iterations overwriting tempMatrix can't corrupt the grabber
                 activeHandMatrix = grabbedHandMatrix.current.copy(handMatrix);
                 if (hand.trigger.just_pressed) {
                     is_trigger_held.current = true;
@@ -469,6 +504,40 @@ export const useGrabbable = (
                 } else if (hand.trigger.just_released) {
                     is_trigger_held.current = false;
                     on_trigger_end?.(hand);
+                }
+
+                const throw_intent = hand.throw_intent;
+                if (flat_throwable && throw_intent?.button.just_released) {
+                    const normalized = Math.min(
+                        throw_intent.charge_seconds.current / FULL_THROW_CHARGE_S,
+                        1
+                    );
+
+                    // ease-out, most of the power arrives early in the hold
+                    const speed = min_flat_throw_speed + Math.sqrt(normalized) * (max_throw_speed - min_flat_throw_speed);
+
+                    // aim along the pointer ray (the crosshair in flat), falling back to the grip's own forward
+                    const rayNode = hand.ray.current;
+                    if (rayNode) {
+                        rayNode.updateWorldMatrix(true, false);
+                        rayNode.getWorldQuaternion(throw_dir_quat.current);
+                    } else {
+                        gripObj.getWorldQuaternion(throw_dir_quat.current);
+                    }
+
+                    // inherit carry-slot motion (player locomotion, mouse flicks), capped so a look flick can't stack with full charge
+                    inherited_velocity.current
+                        .copy(grabVelocity.current)
+                        .clampLength(0, MAX_INHERITED_SPEED);
+
+                    throw_velocity.current
+                        .copy(FWD)
+                        .applyQuaternion(throw_dir_quat.current)
+                        .multiplyScalar(speed)
+                        .add(inherited_velocity.current);
+
+                    throw_lockout.current.add(hand);
+                    release_held(hand, body, throw_velocity.current);
                 }
             }
         }
@@ -571,6 +640,9 @@ interface GrabbableProps extends ComponentProps<"group"> {
     on_nearby_end?: (input: Hand | null) => void;
     on_trigger_start?: (input: Hand) => void;
     on_trigger_end?: (input: Hand | null) => void; // TODO: unite these with the wider controller button interaction?
+    flat_throwable?: boolean;
+    min_flat_throw_speed?: number;
+    max_throw_speed?: number;
 }
 
 export const Grabbable = (props: GrabbableProps) => {
@@ -611,7 +683,10 @@ export const Grabbable = (props: GrabbableProps) => {
         on_nearby_start: handle_nearby_start,
         on_nearby_end: handle_nearby_end,
         on_trigger_start: props.on_trigger_start,
-        on_trigger_end: props.on_trigger_end
+        on_trigger_end: props.on_trigger_end,
+        flat_throwable: props.flat_throwable,
+        min_flat_throw_speed: props.min_flat_throw_speed,
+        max_throw_speed: props.max_throw_speed
     });
 
     useOutlineEffect(target_ref, is_nearby);

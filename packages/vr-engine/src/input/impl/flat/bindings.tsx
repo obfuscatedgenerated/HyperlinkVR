@@ -20,6 +20,7 @@ export interface FlatFrameInput {
     use: boolean; // LMB
     jump: boolean;
     sprint: boolean; // shift TODO: toggle sprint option
+    throw_held: boolean;
 }
 
 const frame_input: FlatFrameInput = {
@@ -28,7 +29,8 @@ const frame_input: FlatFrameInput = {
     grab: false,
     use: false,
     jump: false,
-    sprint: false
+    sprint: false,
+    throw_held: false
 };
 
 export const useFlatFrameInput = (): FlatFrameInput => frame_input;
@@ -115,6 +117,7 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
 
             frame_input.jump = keys.has("Space");
             frame_input.sprint = keys.has("ShiftLeft") || keys.has("ShiftRight");
+            frame_input.throw_held = keys.has("KeyF");
 
             if (!watch_presented_local) {
                 recompute_move();
