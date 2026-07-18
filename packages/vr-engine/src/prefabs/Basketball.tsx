@@ -47,6 +47,7 @@ const compute_audio_weights = (force_magnitude: number) => {
 
 export const Basketball = ({id}: { id: string }) => {
     const {scene} = useGLTF(MESH_URL);
+    const instance = scene.clone(true);
 
     const light_audio_ref = useRef<PositionalAudioType>(null);
     const medium_audio_ref = useRef<PositionalAudioType>(null);
@@ -118,7 +119,7 @@ export const Basketball = ({id}: { id: string }) => {
                 on_collision_enter={on_collision_enter}
             >
                 <Grabbable>
-                    <primitive object={scene}/>
+                    <primitive object={instance}/>
                 </Grabbable>
 
                 <PositionalAudio

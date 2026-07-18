@@ -29,6 +29,7 @@ const TOP_TO_BOTTOM_TIME = 5000;
 
 export const BasketballHoop = ({enable_sfx, enable_particles, binding}: {enable_sfx?: boolean, enable_particles?: boolean, binding?: BindingConfig}) => {
     const {scene} = useGLTF(MESH_URL);
+    const instance = scene.clone(true);
 
     const audio_ref = useRef<PositionalAudioType>(null);
     const particles_ref = useRef<ParticleSystemRef>(null);
@@ -54,7 +55,7 @@ export const BasketballHoop = ({enable_sfx, enable_particles, binding}: {enable_
                     friction: 0.5,
                 }
             }}>
-                <primitive object={scene}/>
+                <primitive object={instance}/>
             </ObjectPhysics>
 
             <TriggerVolume
