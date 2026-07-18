@@ -101,4 +101,6 @@ export const ColorPicker = ({
             </mesh>
         </group>
     );
+
+    // TODO: not working on unfreed flat cursor?
 }

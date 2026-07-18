@@ -434,6 +434,8 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
             }
             pad_sprint = pad_persisting_sprint.current;
 
+            // TODO: simulate pointerdown on controller, perhaps reusing square or trigger?
+
             if (watch_open) {
                 const raw_x = pad.axes[0] ?? 0;
                 const raw_y = pad.axes[1] ?? 0; // pad y+ is down, which matches ui "down"
