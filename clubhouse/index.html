@@ -76,7 +76,19 @@
                     .set_position(-5, 0, 11.95)
                     .set_euler_rotation(0, Math.PI, 0)
                     .create()
-        )
+        );
+
+        const skeeballs = [];
+
+        const skee = new h.StandardPrefabBuilder("skeeball").build();
+
+        skeeballs.push(new h.EngineObjectDispatchBuilder().set_object(skee).set_position(-14,0,-10.5).create());
+        skeeballs.push(new h.EngineObjectDispatchBuilder().set_object(skee).set_position(-12.75,0,-10.5).create());
+        skeeballs.push(new h.EngineObjectDispatchBuilder().set_object(skee).set_position(-11.5,0,-10.5).create());
+        skeeballs.push(new h.EngineObjectDispatchBuilder().set_object(skee).set_position(-10,0,-10.5).create());
+        skeeballs.push(new h.EngineObjectDispatchBuilder().set_object(skee).set_position(-8.5,0,-10.5).create());
+
+        promises.push(...skeeballs);
 
         promises.push(hyperlinkvr.players.get_current_player().teleport_to([0, 0, 10.5], 0));
 
