@@ -106,3 +106,4 @@ export const WatchUI = () => {
 
 // TODO: disable movement when watch open
 // TODO: add ui debounce to prevent double pointer on pushing too far through watch? or just global Z check?
+// TODO: support keyboard and controller navigation
