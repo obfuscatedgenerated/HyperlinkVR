@@ -230,6 +230,8 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
     const pad_start_previous = useRef(false);
     const pad_select_previous = useRef(false);
     const stick_scratch = useRef<StickVector>({ x: 0, y: 0 });
+    const pad_persisting_sprint = useRef(false);
+    const pad_left_stick_click_previous = useRef(false);
 
     useFrame((_frame_state, delta) => {
         // most recently active standard-mapping pad wins, falling back to the last one used
@@ -279,10 +281,6 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
             pad_use_held.current =
                 use_value > (pad_use_held.current ? PAD_TRIGGER_RELEASE : PAD_TRIGGER_PRESS);
 
-            pad_jump = buttons[StandardControllerInput.FACE_BOTTOM]?.pressed ?? false;
-            pad_sprint = buttons[StandardControllerInput.L_STICK_PRESS]?.pressed ?? false;
-            pad_throw = buttons[StandardControllerInput.FACE_LEFT]?.pressed ?? false;
-
             // left stick movement
             apply_radial_deadzone(pad.axes[0] ?? 0, -(pad.axes[1] ?? 0), stick);
             pad_move_x = stick.x;
@@ -295,6 +293,27 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
                 frame_input.look.x += stick.x * response * PAD_LOOK_SPEED * delta;
                 frame_input.look.y += stick.y * response * PAD_LOOK_SPEED * delta;
             }
+
+            // sprint should toggle on until either toggled off or movement stops
+            const is_moving = pad_move_x * pad_move_x + pad_move_y * pad_move_y > 0;
+
+            if (pad_persisting_sprint && !is_moving) {
+                pad_persisting_sprint.current = false;
+            }
+
+            if (buttons[StandardControllerInput.L_STICK_PRESS]?.pressed) {
+                if (!pad_left_stick_click_previous.current) {
+                    pad_persisting_sprint.current = !pad_persisting_sprint.current;
+                }
+                pad_left_stick_click_previous.current = true;
+            } else {
+                pad_left_stick_click_previous.current = false;
+            }
+
+            pad_sprint = pad_persisting_sprint.current;
+
+            pad_jump = buttons[StandardControllerInput.FACE_BOTTOM]?.pressed ?? false;
+            pad_throw = buttons[StandardControllerInput.FACE_LEFT]?.pressed ?? false;
         } else {
             pad_grab_held.current = false;
             pad_use_held.current = false;
@@ -320,7 +339,6 @@ export const FlatInputProvider = ({ children }: { children: ReactNode }) => {
 
         const sprint =
             keys.has("ShiftLeft") || keys.has("ShiftRight") || pad_sprint;
-        // TODO: persist controller sprint until released, so you can hold L stick and then click to toggle on and off. stopping moving cancels sprint
         const throw_held = keys.has("KeyF") || pad_throw;
 
         // manage hint layers
