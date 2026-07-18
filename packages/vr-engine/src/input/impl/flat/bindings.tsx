@@ -126,7 +126,7 @@ const mouse_buttons = { use: false, grab: false };
 const PAD_DEADZONE = 0.15; // radial. TODO: useSetting, drifting sticks need to raise this
 const PAD_TRIGGER_PRESS = 0.55; // hysteresis so analog triggers dont flutter at the threshold
 const PAD_TRIGGER_RELEASE = 0.45;
-const PAD_LOOK_SPEED = 900; // equivalent mouse px per second at full deflection TODO: stick sensitivity setting
+const PAD_LOOK_SPEED = 1500; // equivalent mouse px per second at full deflection TODO: separate stick sensitivity setting (need to change it so sens is multed into look rather than done in rig)
 
 // ui nav repeat: fire on press, wait, then repeat while held
 const UI_REPEAT_DELAY_S = 0.4;
