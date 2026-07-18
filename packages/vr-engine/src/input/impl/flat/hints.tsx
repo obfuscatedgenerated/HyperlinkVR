@@ -29,7 +29,8 @@ export type HintAction =
     "free_cursor" |
     "ui_navigate" |
     "ui_accept" |
-    "ui_cancel";
+    "ui_cancel" |
+    "close_watch";
 
 export type HintLayer = "default" | "verbose" | "not_sprinting" | "sprinting" | "not_holding" | "holding" | "holding_throwable" | "holding_useable" | "charging_throw" | "watch_ui";
 
@@ -49,7 +50,7 @@ export interface InputHint {
 
 // TODO: sync with the actual input bindings, and make this configurable by the user
 // TODO: I18N everywhere in this app!
-const HINTS: Record<HintDevice, Record<HintAction, InputHint>> = {
+const HINTS: Record<HintDevice, Partial<Record<HintAction, InputHint>>> = {
     kbm: {
         move: { glyphs: [key("W"), key("A"), key("S"), key("D")], label: "Move" },
         jump: { glyphs: [key("Space")], label: "Jump" },
@@ -61,11 +62,12 @@ const HINTS: Record<HintDevice, Record<HintAction, InputHint>> = {
         throw_charge: { glyphs: [pf("button-hold-press"), key("F")], label: "Throw (charge)" },
         charged_throw_execute: { glyphs: [pf("button-hold-release"), key("F")], label: "Throw (release)" },
         use: { glyphs: [pf("mouse-button-1")], label: "Use" },
-        watch: { glyphs: [key("⇥ Tab")], label: "Watch" },
+        watch: { glyphs: [key("⇥ Tab")], label: "Watch menu" },
         free_cursor: { glyphs: [key("Alt")], label: "Free cursor" },
         ui_navigate: { glyphs: [key("↑"), key("↓"), key("←"), key("→")], label: "Navigate" },
-        ui_accept: { glyphs: [key("Enter")], label: "Accept / Interact" },
-        ui_cancel: { glyphs: [key("Esc")], label: "Cancel / Back" }
+        ui_accept: { glyphs: [key("Enter")], label: "Accept / interact" },
+        ui_cancel: { glyphs: [key("Esc")], label: "Cancel / back" }
+        // cant close watch directly as tab does nav and esc is contextual
     },
 
     // TODO: actually implement these bindings
@@ -80,11 +82,12 @@ const HINTS: Record<HintDevice, Record<HintAction, InputHint>> = {
         throw_charge: { glyphs: [pf("button-hold-press"), pf("xbox-x")], label: "Throw (charge)" },
         charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("xbox-x")], label: "Throw (release)" },
         use: { glyphs: [pf("xbox-right-trigger")], label: "Use" },
-        watch: { glyphs: [pf("xbox-menu")], label: "Watch" },
+        watch: { glyphs: [pf("xbox-menu")], label: "Watch menu" },
         free_cursor: { glyphs: [pf("xbox-view")], label: "Free cursor" },
         ui_navigate: { glyphs: [pf("analog-l-any"), text("/"), pf("dpad-left"), pf("dpad-right"), pf("dpad-up"), pf("dpad-down")], label: "Navigate" },
-        ui_accept: { glyphs: [pf("xbox-a")], label: "Accept / Interact" },
-        ui_cancel: { glyphs: [pf("xbox-b")], label: "Cancel / Back" }
+        ui_accept: { glyphs: [pf("xbox-a")], label: "Accept / interact" },
+        ui_cancel: { glyphs: [pf("xbox-b")], label: "Cancel / back" },
+        close_watch: { glyphs: [pf("xbox-menu")], label: "Close watch" }
     },
     playstation: {
         move: { glyphs: [pf("analog-l-any")], label: "Move" },
@@ -97,11 +100,12 @@ const HINTS: Record<HintDevice, Record<HintAction, InputHint>> = {
         throw_charge: { glyphs: [pf("button-hold-press"), pf("sony-x")], label: "Throw (charge)" },
         charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("sony-x")], label: "Throw (release)" },
         use: { glyphs: [pf("sony-right-trigger")], label: "Use" },
-        watch: { glyphs: [pf("sony-options")], label: "Watch" },
+        watch: { glyphs: [pf("sony-options")], label: "Watch menu" },
         free_cursor: { glyphs: [pf("sony-share")], label: "Free cursor" },
         ui_navigate: { glyphs: [pf("analog-l-any"), text("/"), pf("dpad-left"), pf("dpad-right"), pf("dpad-up"), pf("dpad-down")], label: "Navigate" },
-        ui_accept: { glyphs: [pf("sony-a")], label: "Accept / Interact" },
-        ui_cancel: { glyphs: [pf("sony-b")], label: "Cancel / Back" }
+        ui_accept: { glyphs: [pf("sony-a")], label: "Accept / interact" },
+        ui_cancel: { glyphs: [pf("sony-b")], label: "Cancel / back" },
+        close_watch: { glyphs: [pf("sony-options")], label: "Close watch" }
     },
     switch: {
         move: { glyphs: [pf("analog-l-any")], label: "Move" },
@@ -114,11 +118,12 @@ const HINTS: Record<HintDevice, Record<HintAction, InputHint>> = {
         throw_charge: { glyphs: [pf("button-hold-press"), pf("xbox-y")], label: "Throw (charge)" },
         charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("xbox-y")], label: "Throw (release)" },
         use: { glyphs: [pf("nintendo-right-trigger")], label: "Use" },
-        watch: { glyphs: [pf("nintendo-plus")], label: "Watch" },
+        watch: { glyphs: [pf("nintendo-plus")], label: "Watch menu" },
         free_cursor: { glyphs: [pf("nintendo-minus")], label: "Free cursor" },
         ui_navigate: { glyphs: [pf("analog-l-any"), text("/"), pf("nintendo-dpad-left"), pf("nintendo-dpad-right"), pf("nintendo-dpad-up"), pf("nintendo-dpad-down")], label: "Navigate" },
-        ui_accept: { glyphs: [pf("xbox-b")], label: "Accept / Interact" }, // nintendo bottom face button
-        ui_cancel: { glyphs: [pf("xbox-a")], label: "Cancel / Back" } // nintendo right face button
+        ui_accept: { glyphs: [pf("xbox-b")], label: "Accept / interact" }, // nintendo bottom face button
+        ui_cancel: { glyphs: [pf("xbox-a")], label: "Cancel / back" }, // nintendo right face button
+        close_watch: { glyphs: [pf("nintendo-plus")], label: "Close watch" }
     }
 };
 
@@ -132,7 +137,7 @@ const HINT_LAYERS: Record<HintLayer, HintAction[]> = {
     holding_throwable: ["throw_tap", "throw_charge"],
     holding_useable: ["use"],
     charging_throw: ["charged_throw_execute"],
-    watch_ui: ["ui_navigate", "ui_accept", "ui_cancel"]
+    watch_ui: ["close_watch", "ui_navigate", "ui_accept", "ui_cancel"]
 };
 
 
@@ -190,6 +195,7 @@ const glyph_key = (spec: HintGlyphSpec): string => spec.kind === "pf" ? `pf:${sp
 export const HintGlyph = ({ action, merge_same_label = true, show_label = true, className = "", glyph_className = "" }: { action: HintAction; merge_same_label?: boolean, show_label?: boolean, className?: string, glyph_className?: string }) => {
     const {device} = useHintState();
     const hint = HINTS[device][action];
+    if (!hint) return null;
 
     return (
         <div aria-label={hint.label} className={className}>

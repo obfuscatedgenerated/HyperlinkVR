@@ -89,7 +89,6 @@ export const Dropdown = ({
     const ref = useRef<ComponentRef<typeof Container>>(null);
     const {is_focused, grab_focus} = useFocusable(ref, {
         on_accept: () => setIsOpen(true),
-        on_cancel: () => {setIsOpen(false); return true}
     });
 
     const close = useCallback(
