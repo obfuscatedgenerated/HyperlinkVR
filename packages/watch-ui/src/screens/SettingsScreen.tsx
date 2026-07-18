@@ -1,11 +1,12 @@
 import { Container, Text } from "@react-three/uikit";
 import { useSettingsTree } from "@hyperlinkvr/react";
-import { useMemo, useState } from "react";
+import {ComponentRef, useEffect, useMemo, useRef, useState} from "react";
 import type { SettingsTree, SettingKey } from "@hyperlinkvr/types";
 import { WatchSettingWidget } from "../settings/WatchSettingWidget";
 import { ScreenProps } from "./index";
 import {Header} from "../layout/Header";
 import {Crossfader} from "../animation/Crossfader";
+import {useFocusable} from "../contexts/FocusNavContext";
 
 const SettingSubtree = ({
     index,
@@ -74,13 +75,26 @@ const SettingSubtree = ({
     );
 };
 
-const TabButton = ({ label, active, on_click }: { label: string; active: boolean; on_click: () => void }) => {
+const TabButton = ({ label, active, on_click }: { label: string; active: boolean; on_click: () => void; }) => {
+    const ref = useRef<ComponentRef<typeof Container>>(null);
+    const {is_focused, grab_focus} = useFocusable(ref, {on_accept: on_click}, undefined);
+
+    // when active state changes, grab focus
+    useEffect(() => {
+        if (active) {
+            grab_focus();
+        }
+    }, [active, grab_focus]);
+
     return (
         <Container
+            ref={ref}
             cursor="pointer"
             paddingX={16}
             paddingY={8}
             borderTopRadius={6}
+            borderWidth={is_focused ? 1 : 0}
+            borderColor={is_focused ? "white" : "transparent"}
             backgroundColor={active ? "#2563eb" : "#374151"}
             hover={{ backgroundColor: active ? "#2563eb" : "#4b5563" }}
             onPointerDown={on_click}
@@ -94,20 +108,20 @@ const TabButton = ({ label, active, on_click }: { label: string; active: boolean
 
 export const SettingsScreen = ({}: ScreenProps) => {
     const tree = useSettingsTree("watch");
+    const subtree_keys = useMemo(() => Object.keys(tree.subtrees), [tree]);
 
     const [tab, setTab] = useState("General");
 
     return (
         <Container width="100%" flexDirection="column">
             <Container flexDirection="row" gap={8} flexShrink={0}>
-                {Object.keys(tree.subtrees).map(subtab => (
-                    <Crossfader content_key={tab} key={subtab} duration={150}>
-                        <TabButton
-                            label={subtab}
-                            active={tab === subtab}
-                            on_click={() => setTab(subtab)}
-                        />
-                    </Crossfader>
+                {subtree_keys.map((subtab, idx) => (
+                    <TabButton
+                        key={subtab}
+                        label={subtab}
+                        active={tab === subtab}
+                        on_click={() => setTab(subtab)}
+                    />
                 ))}
             </Container>
 

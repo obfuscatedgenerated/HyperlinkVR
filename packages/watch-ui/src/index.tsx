@@ -1,5 +1,5 @@
 import { Container } from "@react-three/uikit";
-import { useMemo, useState } from "react";
+import {ReactNode, useCallback, useMemo} from "react";
 import { DoubleSide, MeshBasicMaterial } from "three";
 import { configureTextBuilder } from "troika-three-text";
 
@@ -8,9 +8,12 @@ import { configureTextBuilder } from "troika-three-text";
 import { ScreenName, screens } from "./screens";
 import {NavStateProvider, useNavState} from "./contexts/NavStateContext";
 import {Crossfader, useCrossfadeOpacity} from "./animation/Crossfader";
-import {Button} from "@react-three/uikit-default";
 import {Settings} from "@react-three/uikit-lucide";
 import {Header} from "./layout/Header";
+import {FocusNavProvider} from "./contexts/FocusNavContext";
+import {FocusableButton} from "./components/FocusableButton";
+
+export {dispatch_ui_nav} from "./contexts/FocusNavContext";
 
 
 // its not happy! turn off web workers
@@ -36,9 +39,9 @@ const EndButtons = ({ current, change_screen }: { current: ScreenName | null, ch
 
     return (
         current === "home" && (
-            <Button variant="link" color="white" onPointerDown={() => change_screen("settings")} opacity={opacity}>
+            <FocusableButton variant="link" color="white" on_press={() => change_screen("settings")} opacity={opacity}>
                 <Settings />
-            </Button>
+            </FocusableButton>
         )
     );
 }
@@ -77,7 +80,28 @@ const CurrentScreen = () => {
     );
 }
 
-export const WatchUI = () => {
+const FocusNavBridge = ({
+    children,
+    on_request_close
+}: {
+    children: ReactNode;
+    on_request_close?: () => void;
+}) => {
+    const { backwards, back } = useNavState();
+
+    // cancel walks the screen stack first, at the root it closes the watch
+    const on_back = useCallback(() => {
+        if (backwards.length > 0) {
+            back();
+        } else {
+            on_request_close?.();
+        }
+    }, [backwards.length, back, on_request_close]);
+
+    return <FocusNavProvider on_back={on_back}>{children}</FocusNavProvider>;
+};
+
+export const WatchUI = ({on_request_close}: {on_request_close?: () => void}) => {
     return (
         <Container
             width={WATCH_UI_WIDTH}
@@ -98,12 +122,12 @@ export const WatchUI = () => {
             onWheel={(e) => e.stopPropagation()}
         >
             <NavStateProvider>
-                <CurrentScreen />
+                <FocusNavBridge on_request_close={on_request_close}>
+                    <CurrentScreen />
+                </FocusNavBridge>
             </NavStateProvider>
         </Container>
     );
 };
 
-// TODO: disable movement when watch open
 // TODO: add ui debounce to prevent double pointer on pushing too far through watch? or just global Z check?
-// TODO: support keyboard and controller navigation

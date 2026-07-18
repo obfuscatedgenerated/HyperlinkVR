@@ -14,16 +14,33 @@ import {
 export type HintDevice = "kbm" | "xbox" | "playstation" | "switch";
 
 // TODO: cancel throw action
-export type HintAction = "move" | "jump" | "sprint" | "stop_sprinting" | "grab" | "release" | "throw_tap" | "throw_charge" | "charged_throw_execute" | "use" | "watch" | "free_cursor";
+export type HintAction =
+    "move" |
+    "jump" |
+    "sprint" |
+    "stop_sprinting" |
+    "grab" |
+    "release" |
+    "throw_tap" |
+    "throw_charge" |
+    "charged_throw_execute" |
+    "use" |
+    "watch" |
+    "free_cursor" |
+    "ui_navigate" |
+    "ui_accept" |
+    "ui_cancel";
 
-export type HintLayer = "default" | "verbose" | "not_sprinting" | "sprinting" | "not_holding" | "holding" | "holding_throwable" | "holding_useable" | "charging_throw";
+export type HintLayer = "default" | "verbose" | "not_sprinting" | "sprinting" | "not_holding" | "holding" | "holding_throwable" | "holding_useable" | "charging_throw" | "watch_ui";
 
 export type HintGlyphSpec =
     | { kind: "pf"; glyph: string } // promptfont glyph, rendered via its css class
-    | { kind: "key"; text: string }; // literal text in a box (as it's more readable than a glyph)
+    | { kind: "key"; text: string } // literal text in a box (as it's more readable than a glyph)
+    | { kind: "text", text: string }; // literal text, no box for separators etc
 
 const pf = (glyph: string): HintGlyphSpec => ({ kind: "pf", glyph });
 const key = (text: string): HintGlyphSpec => ({ kind: "key", text });
+const text = (text: string): HintGlyphSpec => ({ kind: "text", text });
 
 export interface InputHint {
     glyphs: HintGlyphSpec[];
@@ -46,6 +63,9 @@ const HINTS: Record<HintDevice, Record<HintAction, InputHint>> = {
         use: { glyphs: [pf("mouse-button-1")], label: "Use" },
         watch: { glyphs: [key("⇥ Tab")], label: "Watch" },
         free_cursor: { glyphs: [key("Alt")], label: "Free cursor" },
+        ui_navigate: { glyphs: [key("↑"), key("↓"), key("←"), key("→")], label: "Navigate" },
+        ui_accept: { glyphs: [key("Enter")], label: "Accept / Interact" },
+        ui_cancel: { glyphs: [key("Esc")], label: "Cancel / Back" }
     },
 
     // TODO: actually implement these bindings
@@ -61,7 +81,10 @@ const HINTS: Record<HintDevice, Record<HintAction, InputHint>> = {
         charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("xbox-x")], label: "Throw (release)" },
         use: { glyphs: [pf("xbox-right-trigger")], label: "Use" },
         watch: { glyphs: [pf("xbox-menu")], label: "Watch" },
-        free_cursor: { glyphs: [pf("xbox-view")], label: "Free cursor" }
+        free_cursor: { glyphs: [pf("xbox-view")], label: "Free cursor" },
+        ui_navigate: { glyphs: [pf("analog-l-any"), text("/"), pf("dpad-left"), pf("dpad-right"), pf("dpad-up"), pf("dpad-down")], label: "Navigate" },
+        ui_accept: { glyphs: [pf("xbox-a")], label: "Accept / Interact" },
+        ui_cancel: { glyphs: [pf("xbox-b")], label: "Cancel / Back" }
     },
     playstation: {
         move: { glyphs: [pf("analog-l-any")], label: "Move" },
@@ -75,7 +98,10 @@ const HINTS: Record<HintDevice, Record<HintAction, InputHint>> = {
         charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("sony-x")], label: "Throw (release)" },
         use: { glyphs: [pf("sony-right-trigger")], label: "Use" },
         watch: { glyphs: [pf("sony-options")], label: "Watch" },
-        free_cursor: { glyphs: [pf("sony-share")], label: "Free cursor" }
+        free_cursor: { glyphs: [pf("sony-share")], label: "Free cursor" },
+        ui_navigate: { glyphs: [pf("analog-l-any"), text("/"), pf("dpad-left"), pf("dpad-right"), pf("dpad-up"), pf("dpad-down")], label: "Navigate" },
+        ui_accept: { glyphs: [pf("sony-a")], label: "Accept / Interact" },
+        ui_cancel: { glyphs: [pf("sony-b")], label: "Cancel / Back" }
     },
     switch: {
         move: { glyphs: [pf("analog-l-any")], label: "Move" },
@@ -89,7 +115,10 @@ const HINTS: Record<HintDevice, Record<HintAction, InputHint>> = {
         charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("xbox-y")], label: "Throw (release)" },
         use: { glyphs: [pf("nintendo-right-trigger")], label: "Use" },
         watch: { glyphs: [pf("nintendo-plus")], label: "Watch" },
-        free_cursor: { glyphs: [pf("nintendo-minus")], label: "Free cursor" }
+        free_cursor: { glyphs: [pf("nintendo-minus")], label: "Free cursor" },
+        ui_navigate: { glyphs: [pf("analog-l-any"), text("/"), pf("nintendo-dpad-left"), pf("nintendo-dpad-right"), pf("nintendo-dpad-up"), pf("nintendo-dpad-down")], label: "Navigate" },
+        ui_accept: { glyphs: [pf("xbox-b")], label: "Accept / Interact" }, // nintendo bottom face button
+        ui_cancel: { glyphs: [pf("xbox-a")], label: "Cancel / Back" } // nintendo right face button
     }
 };
 
@@ -102,13 +131,14 @@ const HINT_LAYERS: Record<HintLayer, HintAction[]> = {
     holding: ["release"],
     holding_throwable: ["throw_tap", "throw_charge"],
     holding_useable: ["use"],
-    charging_throw: ["charged_throw_execute"]
+    charging_throw: ["charged_throw_execute"],
+    watch_ui: ["ui_navigate", "ui_accept", "ui_cancel"]
 };
 
 
 type HintSide = "left" | "right" | "both";
 
-const HINT_LAYER_ORDER_LEFT: HintLayer[] = ["default", "verbose", "not_sprinting", "sprinting"];
+const HINT_LAYER_ORDER_LEFT: HintLayer[] = ["default", "verbose", "watch_ui", "not_sprinting", "sprinting"];
 const HINT_LAYER_ORDER_RIGHT: HintLayer[] = ["holding_useable", "not_holding", "holding", "holding_throwable", "charging_throw"];
 const HINT_LAYER_OVERALL_ORDER: HintLayer[] = [...HINT_LAYER_ORDER_LEFT, ...HINT_LAYER_ORDER_RIGHT];
 
@@ -121,7 +151,8 @@ const HINT_SIDES: Record<HintSide, HintLayer[]> = {
 const HINT_LAYER_SUPPRESSES: Partial<Record<HintLayer, HintLayer[]>> = {
     sprinting: ["not_sprinting"],
     holding: ["not_holding"],
-    charging_throw: ["holding_throwable"]
+    charging_throw: ["holding_throwable"],
+    watch_ui: ["default", "verbose", "not_sprinting", "sprinting", "not_holding", "holding", "holding_throwable", "holding_useable", "charging_throw"]
 };
 
 export const compute_hint_actions_from_layers = (layers: HintLayer[], side_filter: HintSide = "both"): HintAction[] => {
@@ -166,7 +197,10 @@ export const HintGlyph = ({ action, merge_same_label = true, show_label = true, 
                 <div key={glyph_key(spec)} className={glyph_className}>
                     {spec.kind === "pf"
                         ? <span className={`pf pf-${spec.glyph}`} aria-hidden="true" />
-                        : <kbd className="font-sans text-[0.5em] flex items-center justify-center border-1 border-white h-[2.6em] min-w-[2.6em] p-1 rounded-sm" aria-hidden="true">{spec.text}</kbd>}
+                        : spec.kind === "key"
+                            ? <kbd className="font-sans text-[0.5em] flex items-center justify-center border-1 border-white h-[2.6em] min-w-[2.6em] p-1 rounded-sm" aria-hidden="true">{spec.text}</kbd>
+                            : <span className="font-sans text-[0.5em]" aria-hidden="true">{spec.text}</span>
+                    }
                     {show_label && !merge_same_label && <span>{hint.label}</span>}
                 </div>
             ))}

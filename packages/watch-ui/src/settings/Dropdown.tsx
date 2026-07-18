@@ -1,7 +1,8 @@
 import { Container, Text } from "@react-three/uikit";
 import { ChevronDown, ChevronUp } from "@react-three/uikit-lucide";
-import { useState } from "react";
+import {ComponentRef, useCallback, useEffect, useRef, useState} from "react";
 import {useCrossfadeOpacity} from "../animation/Crossfader";
+import {useFocusable} from "../contexts/FocusNavContext";
 
 export interface Option {
     label: string;
@@ -14,6 +15,62 @@ interface DropdownProps {
     options: Option[];
     on_change: (value: string | number) => void;
     disabled?: boolean;
+}
+
+const Option = ({
+    opt,
+    value,
+    on_change,
+    close
+}: {
+    opt: Option;
+    value: string | number;
+    on_change: (value: string | number) => void;
+    close: () => void;
+}) => {
+    const ref = useRef<ComponentRef<typeof Container>>(null);
+    const {is_focused, grab_focus} = useFocusable(ref, {
+        on_accept: () => {
+            on_change(opt.value);
+            close();
+        },
+        on_cancel: () => {
+            close();
+            return true
+        }
+    });
+
+    // become focused on open if this is the currently selected option
+    useEffect(() => {
+        if (opt.value === value) {
+            grab_focus();
+        }
+    }, [grab_focus, opt.value, value]);
+
+    return (
+        <Container
+            ref={ref}
+            key={opt.value}
+            paddingX={8}
+            paddingY={6}
+            borderRadius={4}
+            cursor="pointer"
+            backgroundColor={opt.value === value ? "#475569" : "transparent"}
+            onClick={(e) => {
+                e.stopPropagation();
+                on_change(opt.value);
+                close();
+            }}
+            hover={{ backgroundColor: "#475569" }}
+
+            borderWidth={is_focused ? 1 : 0}
+            borderColor={is_focused ? "white" : "transparent"}
+        >
+            <Text fontSize={14} color="white">
+                {opt.label}
+            </Text>
+        </Container>
+    );
 }
 
 export const Dropdown = ({
@@ -29,16 +86,31 @@ export const Dropdown = ({
 
     const opacity = useCrossfadeOpacity();
 
+    const ref = useRef<ComponentRef<typeof Container>>(null);
+    const {is_focused, grab_focus} = useFocusable(ref, {
+        on_accept: () => setIsOpen(true),
+        on_cancel: () => {setIsOpen(false); return true}
+    });
+
+    const close = useCallback(
+        () => {
+            setIsOpen(false);
+            grab_focus();
+        },
+        [grab_focus]
+    );
+
     return (
         <Container
+            ref={ref}
             flexDirection="row"
             alignItems="center"
             justifyContent="space-between"
             width="100%"
             maxWidth={384}
             paddingY={8}
-            opacity={disabled ? opacity/2 : opacity}>
-
+            opacity={disabled ? opacity/2 : opacity}
+        >
             {label && (
                 <Text fontSize={12} flexWrap="no-wrap" marginRight={16} color="white">
                     {label}
@@ -58,11 +130,20 @@ export const Dropdown = ({
                     onClick={(e) => {
                         if (disabled) return;
                         e.stopPropagation();
-                        setIsOpen(!is_open);
+
+                        if (is_open) {
+                            close();
+                        } else {
+                            setIsOpen(true);
+                        }
                     }}
                     hover={{
                         backgroundColor: disabled ? "#334155" : "#475569"
-                    }}>
+                    }}
+
+                    borderWidth={is_focused ? 1 : 0}
+                    borderColor={is_focused ? "white" : "transparent"}
+                >
                     <Text
                         fontSize={14}
                         color="white"
@@ -109,24 +190,13 @@ export const Dropdown = ({
                             gap={2}
                         >
                             {options.map((opt) => (
-                                <Container
+                                <Option
                                     key={opt.value}
-                                    paddingX={8}
-                                    paddingY={6}
-                                    borderRadius={4}
-                                    cursor="pointer"
-                                    backgroundColor={opt.value === value ? "#475569" : "transparent"}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        on_change(opt.value);
-                                        setIsOpen(false);
-                                    }}
-                                    hover={{ backgroundColor: "#475569" }}
-                                >
-                                    <Text fontSize={14} color="white">
-                                        {opt.label}
-                                    </Text>
-                                </Container>
+                                    opt={opt}
+                                    value={value}
+                                    on_change={on_change}
+                                    close={close}
+                                />
                             ))}
                         </Container>
                     </>

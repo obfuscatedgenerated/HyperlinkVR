@@ -1,11 +1,11 @@
 import { Container, Svg, Text } from "@react-three/uikit";
-import { Button } from "@react-three/uikit-default";
 import { useStorage, useTabSession } from "@hyperlinkvr/react";
 
 import type { ScreenProps } from "./index";
 import { Star } from "@react-three/uikit-lucide";
 import { useMemo } from "react";
 import {Crossfader, useCrossfadeOpacity} from "../animation/Crossfader";
+import {FocusableButton} from "../components/FocusableButton";
 
 const star_filled_url = new URL("../assets/lucide_star_filled.svg", import.meta.url).href;
 const StarFilled = () => (
@@ -31,7 +31,7 @@ export const HomeScreen = ({}: ScreenProps) => {
             <Text fontWeight="bold">Current world:</Text>
             <Text>{session.url}</Text>
 
-            <Button opacity={opacity} variant="link" color="black" marginLeft="auto" onPointerDown={() => {
+            <FocusableButton opacity={opacity} variant="link" color="black" marginLeft="auto" on_press={() => {
                 if (!session.url) return;
                 if (is_world_favourite) {
                     setFavouriteWorlds(favourite_worlds.filter(url => url !== session.url));
@@ -42,7 +42,7 @@ export const HomeScreen = ({}: ScreenProps) => {
                 <Crossfader content_key={is_world_favourite ? "favourite" : "not_favourite"} duration={100}>
                     {is_world_favourite ? <StarFilled /> : <Star />}
                 </Crossfader>
-            </Button>
+            </FocusableButton>
         </Container>
     );
 };

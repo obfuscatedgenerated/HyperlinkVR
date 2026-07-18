@@ -7,7 +7,7 @@ import { Group, MathUtils, Matrix4, Quaternion, Vector3 } from "three";
 
 import { useSessionMode } from "../contexts/SessionModeContext";
 import { useHands } from "../input/hands";
-import { useFlatInputState } from "../input/impl/flat/bindings";
+import {FlatWatchUINavDriver, useFlatInputControls, useFlatInputState} from "../input/impl/flat/bindings";
 
 export type WatchMode = "wrist" | "presented" | "detached";
 
@@ -35,11 +35,13 @@ const build_wrist_offset = (hand: "left" | "right") => {
 interface WatchUIPresentationProps {
     mode: WatchMode;
     gaze_to_open?: boolean;
+    on_request_close?: () => void;
 }
 
 const WatchUIPresentation = ({
     mode,
-    gaze_to_open = false
+    gaze_to_open = false,
+    on_request_close
 }: WatchUIPresentationProps) => {
     const body_group_ref = useRef<Group>(null);
     const ui_group_ref = useRef<Group>(null);
@@ -260,8 +262,9 @@ const WatchUIPresentation = ({
                         width={WATCH_UI_WIDTH}
                         height={WATCH_UI_HEIGHT}
                         pixelSize={0.3 / WATCH_UI_HEIGHT}
-                        flexDirection="column">
-                        <WatchUI />
+                        flexDirection="column"
+                    >
+                        <WatchUI on_request_close={on_request_close} />
                     </Container>
                 </group>
             </group>
@@ -271,17 +274,23 @@ const WatchUIPresentation = ({
 
 export const FlatWatch = () => {
     const input = useFlatInputState();
+    const { close_watch } = useFlatInputControls();
+
     return (
-        <WatchUIPresentation
-            mode={input.watch_presented ? "presented" : "wrist"}
-            gaze_to_open={false}
-        />
+        <>
+            <WatchUIPresentation
+                mode={input.watch_presented ? "presented" : "wrist"}
+                gaze_to_open={false}
+                on_request_close={close_watch}
+            />
+            <FlatWatchUINavDriver />
+        </>
     );
 };
 
 export const VRWatch = () => {
-    const [mode, set_mode] = useState<WatchMode>("wrist");
-    // TODO: vr button (or on the watch ui) to toggle between wrist and detached mode
+    const [mode, setMode] = useState<WatchMode>("wrist");
+    // TODO: add detach requesting (both with vr controller bind, and button in the watch that passes out like close does)
     return <WatchUIPresentation mode={mode} gaze_to_open />;
 };
 

@@ -251,3 +251,5 @@ export const SmartSlider = ({
         </Container>
     );
 };
+
+// TODO: accept focus, use on_direction to move slider when toggled into edit mode
