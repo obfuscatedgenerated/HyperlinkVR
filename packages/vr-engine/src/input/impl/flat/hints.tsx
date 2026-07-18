@@ -50,46 +50,46 @@ const HINTS: Record<HintDevice, Record<HintAction, InputHint>> = {
 
     // TODO: actually implement these bindings
     xbox: {
-        move: { glyphs: [pf("stick-l")], label: "Move" },
-        jump: { glyphs: [pf("button-a")], label: "Jump" },
-        sprint: { glyphs: [pf("stick-l-press")], label: "Sprint" },
-        stop_sprinting: { glyphs: [pf("stick-l-press")], label: "Walk" },
-        grab: { glyphs: [pf("trigger-l")], label: "Grab" },
-        release: { glyphs: [pf("button-hold-release"), pf("trigger-l")], label: "Release" },
-        throw_tap: { glyphs: [pf("button-y")], label: "Throw (tap)" },
-        throw_charge: { glyphs: [pf("button-hold-press"), pf("button-y")], label: "Throw (charge)" },
-        charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("button-y")], label: "Throw (release)" },
-        use: { glyphs: [pf("trigger-r")], label: "Use" },
+        move: { glyphs: [pf("analog-l-any")], label: "Move" },
+        jump: { glyphs: [pf("xbox-a")], label: "Jump" },
+        sprint: { glyphs: [pf("analog-l-touch")], label: "Sprint" },
+        stop_sprinting: { glyphs: [pf("analog-l-touch")], label: "Walk" },
+        grab: { glyphs: [pf("xbox-left-trigger")], label: "Grab" },
+        release: { glyphs: [pf("button-hold-release"), pf("xbox-left-trigger")], label: "Release" },
+        throw_tap: { glyphs: [pf("xbox-x")], label: "Throw (tap)" },
+        throw_charge: { glyphs: [pf("button-hold-press"), pf("xbox-x")], label: "Throw (charge)" },
+        charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("xbox-x")], label: "Throw (release)" },
+        use: { glyphs: [pf("xbox-right-trigger")], label: "Use" },
         watch: { glyphs: [pf("xbox-menu")], label: "Watch" },
         free_cursor: { glyphs: [pf("xbox-view")], label: "Free cursor" }
     },
     playstation: {
-        move: { glyphs: [pf("stick-l")], label: "Move" },
-        jump: { glyphs: [pf("button-cross")], label: "Jump" },
-        sprint: { glyphs: [pf("stick-l-press")], label: "Sprint" },
-        stop_sprinting: { glyphs: [pf("stick-l-press")], label: "Walk" },
-        grab: { glyphs: [pf("trigger-l2")], label: "Grab" },
-        release: { glyphs: [pf("button-hold-release"), pf("trigger-l2")], label: "Release" },
-        throw_tap: { glyphs: [pf("button-triangle")], label: "Throw (tap)" },
-        throw_charge: { glyphs: [pf("button-hold-press"), pf("button-triangle")], label: "Throw (charge)" },
-        charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("button-triangle")], label: "Throw (release)" },
-        use: { glyphs: [pf("trigger-r2")], label: "Use" },
+        move: { glyphs: [pf("analog-l-any")], label: "Move" },
+        jump: { glyphs: [pf("sony-a")], label: "Jump" },
+        sprint: { glyphs: [pf("sony-left-stick")], label: "Sprint" },
+        stop_sprinting: { glyphs: [pf("sony-left-stick")], label: "Walk" },
+        grab: { glyphs: [pf("sony-left-trigger")], label: "Grab" },
+        release: { glyphs: [pf("button-hold-release"), pf("sony-left-trigger")], label: "Release" },
+        throw_tap: { glyphs: [pf("sony-x")], label: "Throw (tap)" },
+        throw_charge: { glyphs: [pf("button-hold-press"), pf("sony-x")], label: "Throw (charge)" },
+        charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("sony-x")], label: "Throw (release)" },
+        use: { glyphs: [pf("sony-right-trigger")], label: "Use" },
         watch: { glyphs: [pf("sony-options")], label: "Watch" },
         free_cursor: { glyphs: [pf("sony-share")], label: "Free cursor" }
     },
     switch: {
-        move: { glyphs: [pf("stick-l")], label: "Move" },
-        jump: { glyphs: [pf("button-b")], label: "Jump" }, // nintendo bottom face button
-        sprint: { glyphs: [pf("stick-l-press")], label: "Sprint" },
-        stop_sprinting: { glyphs: [pf("stick-l-press")], label: "Walk" },
-        grab: { glyphs: [pf("trigger-zl")], label: "Grab" },
-        release: { glyphs: [pf("button-hold-release"), pf("trigger-zl")], label: "Release" },
-        throw_tap: { glyphs: [pf("button-x")], label: "Throw (tap)" },
-        throw_charge: { glyphs: [pf("button-hold-press"), pf("button-x")], label: "Throw (charge)" },
-        charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("button-x")], label: "Throw (release)" },
-        use: { glyphs: [pf("trigger-zr")], label: "Use" },
-        watch: { glyphs: [pf("button-plus")], label: "Watch" },
-        free_cursor: { glyphs: [pf("button-minus")], label: "Free cursor" }
+        move: { glyphs: [pf("analog-l-any")], label: "Move" },
+        jump: { glyphs: [pf("xbox-b")], label: "Jump" }, // nintendo bottom face button
+        sprint: { glyphs: [pf("analog-l-touch")], label: "Sprint" },
+        stop_sprinting: { glyphs: [pf("analog-l-touch")], label: "Walk" },
+        grab: { glyphs: [pf("nintendo-left-trigger")], label: "Grab" },
+        release: { glyphs: [pf("button-hold-release"), pf("nintendo-left-trigger")], label: "Release" },
+        throw_tap: { glyphs: [pf("xbox-y")], label: "Throw (tap)" },
+        throw_charge: { glyphs: [pf("button-hold-press"), pf("xbox-y")], label: "Throw (charge)" },
+        charged_throw_execute: { glyphs: [pf("button-hold-release"), pf("xbox-y")], label: "Throw (release)" },
+        use: { glyphs: [pf("nintendo-right-trigger")], label: "Use" },
+        watch: { glyphs: [pf("nintendo-plus")], label: "Watch" },
+        free_cursor: { glyphs: [pf("nintendo-minus")], label: "Free cursor" }
     }
 };
 
