@@ -153,6 +153,12 @@ const HINT_SIDES: Record<HintSide, HintLayer[]> = {
     both: HINT_LAYER_OVERALL_ORDER
 };
 
+const HINT_LAYER_DEPENDENCIES: Partial<Record<HintLayer, HintLayer[]>> = {
+    holding_useable: ["holding"],
+    holding_throwable: ["holding"],
+    charging_throw: ["holding_throwable"],
+};
+
 const HINT_LAYER_SUPPRESSES: Partial<Record<HintLayer, HintLayer[]>> = {
     sprinting: ["not_sprinting"],
     holding: ["not_holding"],
@@ -165,6 +171,13 @@ export const compute_hint_actions_from_layers = (layers: HintLayer[], side_filte
 
     const suppressed = new Set<HintLayer>();
     for (const layer of layers) {
+        // check dependencies before its own suppressions, but after other suppressions. if any are missing then suppress this layer
+        const dependencies = HINT_LAYER_DEPENDENCIES[layer] ?? [];
+        if (!dependencies.every((dep) => layers.includes(dep) && !suppressed.has(dep))) {
+            suppressed.add(layer);
+            continue;
+        }
+
         if (!side_order.includes(layer)) {
             suppressed.add(layer);
             continue;
