@@ -3,7 +3,7 @@ import {Basketball} from "./Basketball";
 import {BasketballHoop} from "./BasketballHoop";
 import {ReflectiveMirror} from "./ReflectiveMirror";
 import {AvatarMirror} from "./AvatarMirror";
-import {Skeeball} from "./Skeeball";
+import {SkeeballMachine} from "./SkeeballMachine";
 
 export default {
     button: Button,
@@ -11,5 +11,5 @@ export default {
     basketball_hoop: BasketballHoop,
     reflective_mirror: ReflectiveMirror,
     avatar_mirror: AvatarMirror,
-    skeeball: Skeeball
+    skeeball: SkeeballMachine
 };
