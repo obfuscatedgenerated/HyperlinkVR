@@ -85,7 +85,7 @@ const Ball = ({machine_id, machine_ref, id, initial_position, handle}: BallProps
     );
 }
 
-const SPAWN_OFFSET = [0.4, 0.325, 1.875] as [number, number, number];
+const SPAWN_OFFSET = [0.4, 0.8, 1.875] as [number, number, number];
 
 export const SkeeballMachine = () => {
     const {scene} = useGLTF(MACHINE_URL);
