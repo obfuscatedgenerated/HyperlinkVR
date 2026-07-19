@@ -338,6 +338,7 @@ export const useGrabbable = (
 
     const prevGrabPos = useRef(new Vector3());
     const grabVelocity = useRef(new Vector3());
+    const just_grabbed = useRef(false);
 
     const parentInverse = useRef(new Matrix4());
     const _p = useRef(new Vector3());
@@ -623,6 +624,7 @@ export const useGrabbable = (
 
                 prevGrabPos.current.copy(objPos);
                 grabVelocity.current.set(0, 0, 0);
+                just_grabbed.current = true;
                 body?.setBodyType(RigidBodyType.KinematicPositionBased, true);
 
                 // stop colliding with the player while held, and cancel any pending restore from a previous quick release
@@ -720,10 +722,15 @@ export const useGrabbable = (
             }
 
             newWorldMatrix.decompose(_p.current, _q.current, _s.current);
-            grabVelocity.current
-                .copy(_p.current)
-                .sub(prevGrabPos.current)
-                .divideScalar(Math.max(delta, 1e-4));
+            if (just_grabbed.current) {
+                just_grabbed.current = false;
+                grabVelocity.current.set(0, 0, 0);
+            } else {
+                grabVelocity.current
+                    .copy(_p.current)
+                    .sub(prevGrabPos.current)
+                    .divideScalar(Math.max(delta, 1e-4));
+            }
             prevGrabPos.current.copy(_p.current);
 
             if (body) {
