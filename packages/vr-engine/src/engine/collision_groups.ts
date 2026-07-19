@@ -10,3 +10,7 @@ export const PLAYER_FILTER_BIT = 1 << GROUP_PLAYER;
 
 // how long after release we keep ignoring the player, so a receding hand can't bat the object as it turns dynamic again
 export const PLAYER_IGNORE_RELEASE_DELAY_S = 0.25;
+
+
+// rapier flag
+export const EXCLUDE_SENSORS = 8;
