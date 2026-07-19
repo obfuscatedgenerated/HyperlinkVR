@@ -1,7 +1,7 @@
 import {ObjectPhysics} from "../engine/ObjectPhysics";
 import {Text, useGLTF} from "@react-three/drei";
 import {Grabbable} from "../interaction";
-import {ComponentType, RefObject, useCallback, useEffect, useImperativeHandle, useRef, useState} from "react";
+import {RefObject, useCallback, useEffect, useImperativeHandle, useRef, useState} from "react";
 import {resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
 import {create_object_refs, ObjectRefsContextType, ObjectRefsProvider} from "../contexts";
 import {Group, Vector3} from "three";

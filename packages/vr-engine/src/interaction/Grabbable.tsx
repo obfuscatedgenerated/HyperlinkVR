@@ -1,7 +1,7 @@
 import type { GrabCollider } from "@hyperlinkvr/vr-engine-schemas";
 import { useFrame } from "@react-three/fiber";
 import type { RapierRigidBody } from "@react-three/rapier";
-import { ComponentProps, RefObject, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import {ComponentProps, RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from "react";
 import { BackSide, Box3, Group, Matrix4, Mesh, MeshBasicMaterial, Object3D, Quaternion, Raycaster, Sphere, Vector3 } from "three";
 
 import { useObjectRefsOptional } from "../contexts";
@@ -22,6 +22,75 @@ const DEFAULT_MAX_THROW_SPEED = 18; // m/s, full charge
 const RELEASE_HEADROOM_MULT = 1.2; // the player can throw a touch faster than max throw speed if locomoting
 const MAX_INHERITED_SPEED = 8; // cap on carry-slot velocity combined into a flat throw
 const VR_THROW_BOOST = 1.5; // vr tracking can undersell how fast the hand is moving, so boost the throw a bit
+
+// every useGrabbable instance runs its own useFrame, so no single instance can know whether it's the closest candidate for a hand
+// each instance submits a distance bid per hand per frame
+// the winner resolved from the previous completed frame is authoritative
+// (one frame of latency is nothing)
+
+type GrabbableID = symbol;
+
+interface HandArbitration {
+    bid_frame: number; // frame the currently-open bids belong to
+    best_distance: number;
+    best_claimant: GrabbableID | null;
+    winner: GrabbableID | null; // resolved from the last completed frame
+    holder: GrabbableID | null; // grabbable currently held by this hand
+}
+
+const hand_arbitrations = new WeakMap<Hand, HandArbitration>();
+
+const get_arbitration = (hand: Hand): HandArbitration => {
+    let arbitration = hand_arbitrations.get(hand);
+    if (!arbitration) {
+        arbitration = {
+            bid_frame: -1,
+            best_distance: Infinity,
+            best_claimant: null,
+            winner: null,
+            holder: null
+        };
+        hand_arbitrations.set(hand, arbitration);
+    }
+    return arbitration;
+};
+
+const bid_for_hand = (
+    hand: Hand,
+    claimant: GrabbableID,
+    distance: number,
+    frame_number: number
+) => {
+    const arbitration = get_arbitration(hand);
+
+    // first bid of a new frame: seal last frame's result, open fresh bids
+    if (arbitration.bid_frame !== frame_number) {
+        arbitration.winner = arbitration.best_claimant;
+        arbitration.best_claimant = null;
+        arbitration.best_distance = Infinity;
+        arbitration.bid_frame = frame_number;
+    }
+
+    if (distance < arbitration.best_distance) {
+        arbitration.best_distance = distance;
+        arbitration.best_claimant = claimant;
+    }
+};
+
+const is_closest_for_hand = (hand: Hand, claimant: GrabbableID): boolean =>
+    get_arbitration(hand).winner === claimant;
+
+const hand_holder = (hand: Hand): GrabbableID | null =>
+    get_arbitration(hand).holder;
+
+const claim_hand = (hand: Hand, claimant: GrabbableID) => {
+    get_arbitration(hand).holder = claimant;
+};
+
+const release_hand_claim = (hand: Hand, claimant: GrabbableID) => {
+    const arbitration = get_arbitration(hand);
+    if (arbitration.holder === claimant) arbitration.holder = null;
+};
 
 const excluded_from_bounds = (o: Object3D): boolean => {
     let cur: Object3D | null = o;
@@ -243,6 +312,21 @@ export const useGrabbable = (
     } = {}
 ) => {
     const hands = useHands();
+    const grabbable_id = useMemo<GrabbableID>(() => Symbol("grabbable_id"), []);
+
+    const hands_ref = useRef(hands);
+    hands_ref.current = hands;
+
+    useEffect(
+        () => () => {
+            // despawned while held, free the hand so it can grab something else
+            for (const hand of hands_ref.current) {
+                release_hand_claim(hand, grabbable_id);
+            }
+        },
+        [grabbable_id]
+    );
+
     const body_ref = useObjectRefsOptional()?.rigid_body ?? null;
 
     const grabbingHand = useRef<Hand | null>(null);
@@ -367,6 +451,7 @@ export const useGrabbable = (
         velocity: Vector3
     ) => {
         grabbingHand.current = null;
+        release_hand_claim(hand, grabbable_id);
         on_grab_end?.(hand);
         publish_held(false);
 
@@ -439,8 +524,11 @@ export const useGrabbable = (
         );
     };
 
-    useFrame((_state, delta) => {
+    useFrame((state, delta) => {
         if (!target_ref.current) return;
+
+        const frame_number = state.gl.info.render.frame;
+
         target_ref.current.updateWorldMatrix(true, false);
 
         const body = body_ref?.current ?? null;
@@ -473,11 +561,22 @@ export const useGrabbable = (
             }
 
             if (distance < nearby_trigger_distance) {
-                currentlyNear.add(hand);
-                if (!nearbyHands.current.has(hand)) on_nearby_start?.(hand);
+                bid_for_hand(hand, grabbable_id, distance, frame_number);
+
+                const holder = hand_holder(hand);
+                const highlight_ok =
+                    is_closest_for_hand(hand, grabbable_id) &&
+                    (holder === null || holder === grabbable_id);
+
+                if (highlight_ok) {
+                    currentlyNear.add(hand);
+                    if (!nearbyHands.current.has(hand)) on_nearby_start?.(hand);
+                }
             }
 
-            const proximity_ok = distance < grab_distance;
+            const proximity_ok =
+                distance < grab_distance &&
+                is_closest_for_hand(hand, grabbable_id);
             const ray_ok =
                 hand.grab.just_pressed &&
                 reach > 0 &&
@@ -486,6 +585,7 @@ export const useGrabbable = (
             if (
                 hand.grab.pressed &&
                 !grabbingHand.current &&
+                hand_holder(hand) === null &&
                 !throw_lockout.current.has(hand) &&
                 (proximity_ok || ray_ok)
             ) {
@@ -512,6 +612,7 @@ export const useGrabbable = (
                     );
                 }
                 grabbingHand.current = hand;
+                claim_hand(hand, grabbable_id);
                 on_grab_start?.(hand);
                 publish_held(true);
 
