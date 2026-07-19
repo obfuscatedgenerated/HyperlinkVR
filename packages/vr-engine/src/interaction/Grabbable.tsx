@@ -1,15 +1,16 @@
 import type { GrabCollider } from "@hyperlinkvr/vr-engine-schemas";
 import { useFrame } from "@react-three/fiber";
 import type { RapierRigidBody } from "@react-three/rapier";
-import {ComponentProps, RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from "react";
+import { ComponentProps, RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { BackSide, Box3, Group, Matrix4, Mesh, MeshBasicMaterial, Object3D, Quaternion, Raycaster, Sphere, Vector3 } from "three";
 
 import { useObjectRefsOptional } from "../contexts";
+import { useSessionMode } from "../contexts/SessionModeContext";
 import { PLAYER_FILTER_BIT, PLAYER_IGNORE_RELEASE_DELAY_S } from "../engine/collision_groups";
 import { Hand, useHands } from "../input/hands";
 import {FULL_THROW_CHARGE_S} from "../input/values";
 import {HintLayer, useSetHintState} from "../input/impl/flat/hints";
-import {useSessionMode} from "../contexts/SessionModeContext";
+import { CAPSULE_RADIUS, get_capsule_world_position } from "../player/motion";
 
 enum RigidBodyType {
     Fixed = 1,
@@ -24,24 +25,34 @@ const RELEASE_HEADROOM_MULT = 1.2; // the player can throw a touch faster than m
 const MAX_INHERITED_SPEED = 8; // cap on carry-slot velocity combined into a flat throw
 const VR_THROW_BOOST = 1.5; // vr tracking can undersell how fast the hand is moving, so boost the throw a bit
 
-// flat aims with the crosshair, whose ray starts at the head rather than the hand, so the authored (hand-to-object) grab distance is extended
+// flat aims with the crosshair, whose ray starts at the head rather than the
+// hand, so when no explicit reach is given the flat default extends the
+// authored (hand-to-object) grab distance by roughly that head offset
 const FLAT_REACH_HEAD_OFFSET = 1.75;
 
-// crosshair hover should always beat grip proximity in the closest-object arbitration, so hovered bids are shifted into their own priority band
+// flat only: crosshair hover should beat grip proximity in the closest-object
+// arbitration, so hovered bids are shifted into their own priority band
 const HOVER_BID_PRIORITY = -1000;
 
-// every useGrabbable instance runs its own useFrame, so no single instance can know whether it's the closest candidate for a hand
-// each instance submits a distance bid per hand per frame
-// the winner resolved from the previous completed frame is authoritative
-// (one frame of latency is nothing)
+// released objects stay player-transparent until the capsule is clear of the
+// grab region by this skin on top of the capsule radius
+const RESTORE_CLEARANCE_SKIN = 0.05;
+const RESTORE_FOOT_PROBE_DROP = 0.7;
+
+// every useGrabbable instance runs its own useFrame, so no single instance can
+// know whether it's the closest candidate for a hand. each instance submits a
+// distance bid per hand per tick; the winner resolved from the previous
+// completed round is authoritative (one tick of latency, imperceptible). the
+// registry also tracks which grabbable currently holds each hand, so a hand
+// can only ever carry one object at a time.
 
 type GrabbableID = symbol;
 
 interface HandArbitration {
-    bid_frame: number; // frame the currently-open bids belong to
+    round_bidders: Set<GrabbableID>; // claimants that have bid in the open round
     best_distance: number;
     best_claimant: GrabbableID | null;
-    winner: GrabbableID | null; // resolved from the last completed frame
+    winner: GrabbableID | null; // resolved from the last completed round
     holder: GrabbableID | null; // grabbable currently held by this hand
 }
 
@@ -51,7 +62,7 @@ const get_arbitration = (hand: Hand): HandArbitration => {
     let arbitration = hand_arbitrations.get(hand);
     if (!arbitration) {
         arbitration = {
-            bid_frame: -1,
+            round_bidders: new Set(),
             best_distance: Infinity,
             best_claimant: null,
             winner: null,
@@ -62,21 +73,19 @@ const get_arbitration = (hand: Hand): HandArbitration => {
     return arbitration;
 };
 
-const bid_for_hand = (
-    hand: Hand,
-    claimant: GrabbableID,
-    distance: number,
-    frame_number: number
-) => {
+const bid_for_hand = (hand: Hand, claimant: GrabbableID, distance: number) => {
     const arbitration = get_arbitration(hand);
 
-    // first bid of a new frame: seal last frame's result, open fresh bids
-    if (arbitration.bid_frame !== frame_number) {
+    // each grabbable bids at most once per tick, so a repeat bid from the same
+    // claimant proves a new tick has started: seal the previous round. this
+    // makes sealing self-clocked instead of trusting an external frame counter
+    if (arbitration.round_bidders.has(claimant)) {
         arbitration.winner = arbitration.best_claimant;
         arbitration.best_claimant = null;
         arbitration.best_distance = Infinity;
-        arbitration.bid_frame = frame_number;
+        arbitration.round_bidders.clear();
     }
+    arbitration.round_bidders.add(claimant);
 
     if (distance < arbitration.best_distance) {
         arbitration.best_distance = distance;
@@ -163,7 +172,8 @@ export const useOutlineEffect = (
 };
 
 // takes a hand position already converted to the object's local space,
-// returns distance to the grab region (0 when inside)
+// returns distance to the grab region (0 when inside). NOTE: the result is in
+// local units; callers multiply by the object's world scale for world metres
 type RegionTester = (localHand: Vector3) => number;
 
 const distance_from_point_to_segment = (() => {
@@ -252,6 +262,7 @@ const build_region_tester = (collider: GrabCollider | undefined, target: Object3
 };
 
 const _rc = new Raycaster();
+_rc.layers.enableAll(); // grabbables can live on non-default render layers
 const _ro = new Vector3();
 const _rd = new Vector3();
 const _rq = new Quaternion();
@@ -276,9 +287,10 @@ const ray_hit_distance = (
 export const useGrabbable = (
     target_ref: RefObject<Object3D | null>,
     {
+        enabled = true,
         grab_distance = 1,
         nearby_trigger_distance = 1,
-        reach = 0, // 0 = ray-grab disabled (VR default), flat sets this to a distance
+        reach = 0, // 0 = ray-grab disabled (VR default); flat derives a crosshair reach from grab_distance when unset
         snap_to_hand = true,
         snap_grab_offset,
         // "grip": offset in raw WebXR grip-space axes (tilts with the wrist).
@@ -299,6 +311,7 @@ export const useGrabbable = (
         min_flat_throw_speed = DEFAULT_FLAT_MIN_THROW_SPEED,
         max_throw_speed = DEFAULT_MAX_THROW_SPEED
     }: {
+        enabled?: boolean;
         grab_distance?: number;
         nearby_trigger_distance?: number;
         reach?: number;
@@ -320,31 +333,34 @@ export const useGrabbable = (
     } = {}
 ) => {
     const hands = useHands();
-    const grabbable_id = useMemo<GrabbableID>(() => Symbol("grabbable_id"), []);
+    const body_ref = useObjectRefsOptional()?.rigid_body ?? null;
+
+    const grabbable_id = useMemo<GrabbableID>(() => Symbol("grabbable"), []);
 
     const session_mode = useSessionMode();
+    const flat_mode = session_mode !== "vr";
 
-    // vr: touch-grab only unless the caller opts into a ray reach
-    // flat: crosshair ray-grab is always on, sized from the grab distance
+    // vr: grabbing is touch proximity, reach stays whatever the caller set
+    // (0 by default, ray-grab off, only tested on the press like always).
+    // flat: the crosshair is the only pointer, so an unset reach gets a
+    // sensible default derived from the authored grab distance
     const effective_reach =
-        session_mode === "vr"
-            ? reach
-            : Math.max(reach, grab_distance + FLAT_REACH_HEAD_OFFSET);
+        flat_mode && reach === 0 ? grab_distance + FLAT_REACH_HEAD_OFFSET : reach;
 
+    // ref'd so the unmount cleanup sees the live hands array without re-running
+    // (re-running on hands identity change would drop an active hold claim)
     const hands_ref = useRef(hands);
     hands_ref.current = hands;
 
     useEffect(
         () => () => {
-            // despawned while held, free the hand so it can grab something else
+            // despawned while held: free the hand so it can grab something else
             for (const hand of hands_ref.current) {
                 release_hand_claim(hand, grabbable_id);
             }
         },
         [grabbable_id]
     );
-
-    const body_ref = useObjectRefsOptional()?.rigid_body ?? null;
 
     const grabbingHand = useRef<Hand | null>(null);
     const offsetMatrix = useRef(new Matrix4());
@@ -365,6 +381,8 @@ export const useGrabbable = (
     const _localHand = useRef(new Vector3());
     const _rayOrigin = useRef(new Vector3());
     const _localRayOrigin = useRef(new Vector3());
+    const _capsuleLocal = useRef(new Vector3());
+    const _worldScale = useRef(new Vector3());
 
     // scratch for the "aim" offset frame
     const grip_world_pos = useRef(new Vector3());
@@ -428,6 +446,49 @@ export const useGrabbable = (
             region_source.current = collider;
         }
         return region_tester.current;
+    };
+
+    // true while the player capsule is still inside (or within margin of) the
+    // grab region: restoring collision in that state makes the character
+    // controller depenetrate the player violently, potentially through walls
+    const capsule_overlaps_object = (region_scale: number): boolean => {
+        const target = target_ref.current;
+        if (!target) return false;
+        const region = ensure_region_tester(target);
+        if (!region) return false;
+
+        const margin = CAPSULE_RADIUS + RESTORE_CLEARANCE_SKIN;
+
+        // probe the capsule centre and a lower point (dropped objects land at
+        // the player's feet, where the centre probe alone would read clear)
+        get_capsule_world_position(_capsuleLocal.current);
+        target.worldToLocal(_capsuleLocal.current);
+        if (region(_capsuleLocal.current) * region_scale < margin) return true;
+
+        get_capsule_world_position(_capsuleLocal.current);
+        _capsuleLocal.current.y -= RESTORE_FOOT_PROBE_DROP;
+        target.worldToLocal(_capsuleLocal.current);
+        return region(_capsuleLocal.current) * region_scale < margin;
+    };
+
+    const tick_collision_restore = (
+        body: RapierRigidBody | null,
+        region_scale: number,
+        delta: number
+    ) => {
+        if (restore_countdown.current === null || grabbingHand.current) return;
+        restore_countdown.current -= delta;
+        if (restore_countdown.current <= 0) {
+            if (capsule_overlaps_object(region_scale)) {
+                // still interpenetrating the player: restoring now would make
+                // the character controller depenetrate them violently. hold at
+                // zero and retry; restores the moment the player steps clear
+                restore_countdown.current = 0;
+            } else {
+                restore_player_collision(body);
+                restore_countdown.current = null;
+            }
+        }
     };
 
     const is_trigger_held = useRef(false);
@@ -544,14 +605,47 @@ export const useGrabbable = (
         );
     };
 
-    useFrame((state, delta) => {
+    useFrame((_state, delta) => {
         if (!target_ref.current) return;
-
-        const frame_number = state.gl.info.render.frame;
-
         target_ref.current.updateWorldMatrix(true, false);
 
         const body = body_ref?.current ?? null;
+
+        // region testers measure in the object's local space; scale their
+        // output back to world metres so thresholds work on scaled objects
+        target_ref.current.getWorldScale(_worldScale.current);
+        const region_scale = Math.max(
+            _worldScale.current.x,
+            _worldScale.current.y,
+            _worldScale.current.z
+        );
+
+        if (!enabled) {
+            // fold up any live interaction exactly as if the player let go,
+            // so disabling mid-hold can't strand a kinematic body, a hand
+            // claim, hint layers, or a lit outline
+            if (grabbingHand.current) {
+                release_held(grabbingHand.current, body, grabVelocity.current);
+            }
+            if (is_trigger_held.current) {
+                is_trigger_held.current = false;
+                on_trigger_end?.(null);
+            }
+            for (const h of nearbyHands.current) on_nearby_end?.(h);
+            nearbyHands.current.clear();
+            if (publishes_nearby.current) {
+                publishes_nearby.current = false;
+                remove_layer("not_holding");
+            }
+            for (const hand of hands) {
+                if (!hand.grab.pressed) throw_lockout.current.delete(hand);
+            }
+            // a just-released object may still be player-transparent; keep the
+            // restore ticking so it solidifies once the player is clear
+            tick_collision_restore(body, region_scale, delta);
+            return;
+        }
+
         const region = ensure_region_tester(target_ref.current);
         const currentlyNear = new Set<Hand>();
         let activeHandMatrix: Matrix4 | null = null;
@@ -575,16 +669,17 @@ export const useGrabbable = (
             if (region) {
                 _localHand.current.copy(handPos);
                 target_ref.current.worldToLocal(_localHand.current);
-                distance = region(_localHand.current);
+                distance = region(_localHand.current) * region_scale;
             } else {
                 distance = handPos.distanceTo(objPos);
             }
 
-            // crosshair hover: cast the hand's ray (the crosshair on flat)
-            // every frame, gated by a cheap conservative distance check so we
-            // don't raycast every grabbable in the scene
+            // flat only: crosshair hover, cast every frame so highlight and
+            // grab both follow the crosshair. gated by a cheap conservative
+            // distance check so we don't raycast every grabbable in the scene.
+            // vr never enters this block: grabbing there is touch proximity
             let crosshair_distance: number | null = null;
-            if (effective_reach > 0) {
+            if (flat_mode && effective_reach > 0) {
                 const rayNode = hand.ray.current;
                 if (rayNode) {
                     rayNode.updateWorldMatrix(true, false);
@@ -594,7 +689,7 @@ export const useGrabbable = (
                     if (region) {
                         _localRayOrigin.current.copy(_rayOrigin.current);
                         target_ref.current.worldToLocal(_localRayOrigin.current);
-                        origin_distance = region(_localRayOrigin.current);
+                        origin_distance = region(_localRayOrigin.current) * region_scale;
                     } else {
                         origin_distance = _rayOrigin.current.distanceTo(objPos);
                     }
@@ -612,15 +707,17 @@ export const useGrabbable = (
             }
 
             const hovered = crosshair_distance !== null;
+            const proximity_counts = !flat_mode;
 
-            if (distance < nearby_trigger_distance || hovered) {
-                // hovered bids sit in a lower band so the crosshair target
-                // always wins arbitration over something merely grip-adjacent;
-                // among hovered objects the nearest hit along the ray wins
+            if ((proximity_counts && distance < nearby_trigger_distance) || hovered) {
+                // hovered bids (flat only) sit in a lower band so the crosshair
+                // target wins arbitration over something merely grip-adjacent;
+                // among hovered objects the nearest hit along the ray wins. in
+                // vr all bids are plain proximity distances, closest hand wins
                 const bid_distance = hovered
                     ? HOVER_BID_PRIORITY + crosshair_distance!
                     : distance;
-                bid_for_hand(hand, grabbable_id, bid_distance, frame_number);
+                bid_for_hand(hand, grabbable_id, bid_distance);
 
                 const holder = hand_holder(hand);
                 const highlight_ok =
@@ -634,9 +731,17 @@ export const useGrabbable = (
             }
 
             const proximity_ok =
+                proximity_counts &&
                 distance < grab_distance &&
                 is_closest_for_hand(hand, grabbable_id);
-            const ray_ok = hand.grab.just_pressed && hovered;
+            // flat: grab whatever the crosshair is hovering. vr: original
+            // semantics, ray only tested on the press and only if the caller
+            // explicitly opted into a reach
+            const ray_ok = flat_mode
+                ? hand.grab.just_pressed && hovered
+                : hand.grab.just_pressed &&
+                effective_reach > 0 &&
+                ray_hit_distance(hand.ray.current, target_ref.current, effective_reach) !== null;
 
             if (
                 hand.grab.pressed &&
@@ -778,6 +883,9 @@ export const useGrabbable = (
 
             newWorldMatrix.decompose(_p.current, _q.current, _s.current);
             if (just_grabbed.current) {
+                // the object may have teleported to the carry slot this frame;
+                // a velocity computed against its pre-grab position is garbage
+                // (and turns a tap grab-release into a point-blank rocket)
                 just_grabbed.current = false;
                 grabVelocity.current.set(0, 0, 0);
             } else {
@@ -817,14 +925,7 @@ export const useGrabbable = (
             }
         }
 
-        // ---- falling-edge restore of player collision ----
-        if (restore_countdown.current !== null && !grabbingHand.current) {
-            restore_countdown.current -= delta;
-            if (restore_countdown.current <= 0) {
-                restore_player_collision(body);
-                restore_countdown.current = null;
-            }
-        }
+        tick_collision_restore(body, region_scale, delta);
     });
 };
 
@@ -833,8 +934,10 @@ export const useGrabbable = (
 
 interface GrabbableProps extends ComponentProps<"group"> {
     target_ref?: RefObject<Object3D | null>;
+    enabled?: boolean;
     grab_distance?: number;
     nearby_trigger_distance?: number;
+    reach?: number; // explicit ray-grab distance; flat auto-derives one when unset, vr stays touch-only at 0
     grab_offset?: [number, number, number];
     grab_offset_space?: "grip" | "aim";
     ignore_player_while_held?: boolean;
@@ -861,11 +964,13 @@ export const Grabbable = (props: GrabbableProps) => {
 
     const target_ref = props.target_ref || group_ref;
 
-    const [is_nearby, setIsNearby] = useState(false);
+    // refcounted rather than boolean: with two vr hands, one hand leaving the
+    // nearby radius must not extinguish the outline the other hand is earning
+    const [nearby_hand_count, setNearbyHandCount] = useState(0);
 
     const handle_nearby_start = useCallback(
         (input: Hand) => {
-            setIsNearby(true);
+            setNearbyHandCount((count) => count + 1);
             props.on_nearby_start?.(input);
         },
         [props.on_nearby_start]
@@ -873,15 +978,17 @@ export const Grabbable = (props: GrabbableProps) => {
 
     const handle_nearby_end = useCallback(
         (input: Hand | null) => {
-            setIsNearby(false);
+            setNearbyHandCount((count) => Math.max(0, count - 1));
             props.on_nearby_end?.(input);
         },
         [props.on_nearby_end]
     );
 
     useGrabbable(target_ref, {
+        enabled: props.enabled,
         grab_distance: props.grab_distance,
         nearby_trigger_distance: props.nearby_trigger_distance || props.grab_distance,
+        reach: props.reach,
         snap_grab_offset: props.grab_offset || [0, 0, 0.15],
         snap_grab_offset_space: props.grab_offset_space || "aim",
         ignore_player_while_held: props.ignore_player_while_held,
@@ -897,7 +1004,7 @@ export const Grabbable = (props: GrabbableProps) => {
         max_throw_speed: props.max_throw_speed
     });
 
-    useOutlineEffect(target_ref, is_nearby);
+    useOutlineEffect(target_ref, nearby_hand_count > 0);
 
     return (
         <group ref={group_ref} {...rest}>

@@ -53,6 +53,8 @@ export const SpectatorCamera = () => {
                     <Grabbable
                         ref={camera_model_ref}
                         on_trigger_start={() => setFollowPlayer(!follow_player)}
+                        grab_distance={0.25}
+                        enabled={mode !== "first_person"}
                     >
                         {mode !== "mixed_reality" && (
                             <EnhancedBillboard
