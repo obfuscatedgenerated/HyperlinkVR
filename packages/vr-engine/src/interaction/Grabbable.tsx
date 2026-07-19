@@ -9,6 +9,7 @@ import { PLAYER_FILTER_BIT, PLAYER_IGNORE_RELEASE_DELAY_S } from "../engine/coll
 import { Hand, useHands } from "../input/hands";
 import {FULL_THROW_CHARGE_S} from "../input/values";
 import {HintLayer, useSetHintState} from "../input/impl/flat/hints";
+import {useSessionMode} from "../contexts/SessionModeContext";
 
 enum RigidBodyType {
     Fixed = 1,
@@ -22,6 +23,12 @@ const DEFAULT_MAX_THROW_SPEED = 18; // m/s, full charge
 const RELEASE_HEADROOM_MULT = 1.2; // the player can throw a touch faster than max throw speed if locomoting
 const MAX_INHERITED_SPEED = 8; // cap on carry-slot velocity combined into a flat throw
 const VR_THROW_BOOST = 1.5; // vr tracking can undersell how fast the hand is moving, so boost the throw a bit
+
+// flat aims with the crosshair, whose ray starts at the head rather than the hand, so the authored (hand-to-object) grab distance is extended
+const FLAT_REACH_HEAD_OFFSET = 1.75;
+
+// crosshair hover should always beat grip proximity in the closest-object arbitration, so hovered bids are shifted into their own priority band
+const HOVER_BID_PRIORITY = -1000;
 
 // every useGrabbable instance runs its own useFrame, so no single instance can know whether it's the closest candidate for a hand
 // each instance submits a distance bid per hand per frame
@@ -251,18 +258,19 @@ const _rq = new Quaternion();
 const FWD = new Vector3(0, 0, -1);
 const WORLD_UP = new Vector3(0, 1, 0);
 
-const ray_hits_within = (
+const ray_hit_distance = (
     rayNode: Object3D | null,
     target: Object3D,
     reach: number
-): boolean => {
-    if (!rayNode) return false;
+): number | null => {
+    if (!rayNode) return null;
     rayNode.updateWorldMatrix(true, false);
     _ro.setFromMatrixPosition(rayNode.matrixWorld);
     _rd.copy(FWD).applyQuaternion(rayNode.getWorldQuaternion(_rq)).normalize();
     _rc.set(_ro, _rd);
     _rc.far = reach;
-    return _rc.intersectObject(target, true).length > 0;
+    const hits = _rc.intersectObject(target, true);
+    return hits.length > 0 ? hits[0].distance : null;
 };
 
 export const useGrabbable = (
@@ -314,6 +322,15 @@ export const useGrabbable = (
     const hands = useHands();
     const grabbable_id = useMemo<GrabbableID>(() => Symbol("grabbable_id"), []);
 
+    const session_mode = useSessionMode();
+
+    // vr: touch-grab only unless the caller opts into a ray reach
+    // flat: crosshair ray-grab is always on, sized from the grab distance
+    const effective_reach =
+        session_mode === "vr"
+            ? reach
+            : Math.max(reach, grab_distance + FLAT_REACH_HEAD_OFFSET);
+
     const hands_ref = useRef(hands);
     hands_ref.current = hands;
 
@@ -346,6 +363,8 @@ export const useGrabbable = (
     const _s = useRef(new Vector3());
     const _objPos = useRef(new Vector3());
     const _localHand = useRef(new Vector3());
+    const _rayOrigin = useRef(new Vector3());
+    const _localRayOrigin = useRef(new Vector3());
 
     // scratch for the "aim" offset frame
     const grip_world_pos = useRef(new Vector3());
@@ -561,8 +580,47 @@ export const useGrabbable = (
                 distance = handPos.distanceTo(objPos);
             }
 
-            if (distance < nearby_trigger_distance) {
-                bid_for_hand(hand, grabbable_id, distance, frame_number);
+            // crosshair hover: cast the hand's ray (the crosshair on flat)
+            // every frame, gated by a cheap conservative distance check so we
+            // don't raycast every grabbable in the scene
+            let crosshair_distance: number | null = null;
+            if (effective_reach > 0) {
+                const rayNode = hand.ray.current;
+                if (rayNode) {
+                    rayNode.updateWorldMatrix(true, false);
+                    _rayOrigin.current.setFromMatrixPosition(rayNode.matrixWorld);
+
+                    let origin_distance: number;
+                    if (region) {
+                        _localRayOrigin.current.copy(_rayOrigin.current);
+                        target_ref.current.worldToLocal(_localRayOrigin.current);
+                        origin_distance = region(_localRayOrigin.current);
+                    } else {
+                        origin_distance = _rayOrigin.current.distanceTo(objPos);
+                    }
+
+                    // if the surface is farther from the ray origin than we can
+                    // reach, the ray can't possibly hit within reach
+                    if (origin_distance <= effective_reach) {
+                        crosshair_distance = ray_hit_distance(
+                            rayNode,
+                            target_ref.current,
+                            effective_reach
+                        );
+                    }
+                }
+            }
+
+            const hovered = crosshair_distance !== null;
+
+            if (distance < nearby_trigger_distance || hovered) {
+                // hovered bids sit in a lower band so the crosshair target
+                // always wins arbitration over something merely grip-adjacent;
+                // among hovered objects the nearest hit along the ray wins
+                const bid_distance = hovered
+                    ? HOVER_BID_PRIORITY + crosshair_distance!
+                    : distance;
+                bid_for_hand(hand, grabbable_id, bid_distance, frame_number);
 
                 const holder = hand_holder(hand);
                 const highlight_ok =
@@ -578,10 +636,7 @@ export const useGrabbable = (
             const proximity_ok =
                 distance < grab_distance &&
                 is_closest_for_hand(hand, grabbable_id);
-            const ray_ok =
-                hand.grab.just_pressed &&
-                reach > 0 &&
-                ray_hits_within(hand.ray.current, target_ref.current, reach);
+            const ray_ok = hand.grab.just_pressed && hovered;
 
             if (
                 hand.grab.pressed &&
