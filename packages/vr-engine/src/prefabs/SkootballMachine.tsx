@@ -6,8 +6,8 @@ import {resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
 import {create_object_refs, ObjectRefsContextType, ObjectRefsProvider} from "../contexts";
 import {Group, Vector3} from "three";
 
-const MACHINE_URL = new URL("../../assets/prefabs/skeeball/machine.glb", import.meta.url).href;
-const BALL_URL = new URL("../../assets/prefabs/skeeball/ball.glb", import.meta.url).href;
+const MACHINE_URL = new URL("../../assets/prefabs/skootball/machine.glb", import.meta.url).href;
+const BALL_URL = new URL("../../assets/prefabs/skootball/ball.glb", import.meta.url).href;
 
 interface BallHandle {
     respawn: (position_override?: [number, number, number]) => void;
@@ -56,7 +56,7 @@ const Ball = ({machine_id, machine_ref, id, initial_position, handle}: BallProps
 
     return (
         <ObjectRefsProvider value={object_refs.current}>
-            <group userData={{object_id: `SKEEBALL-${id}`, tags: ["skeeball_ball", `skeeball-${machine_id}`]}}>
+            <group userData={{object_id: `SKOOTBALL-${id}`, tags: ["skootball_ball", `skootball-${machine_id}`]}}>
                 <ObjectPhysics
                     physics={{
                         rigid_body: {
@@ -87,7 +87,7 @@ const Ball = ({machine_id, machine_ref, id, initial_position, handle}: BallProps
 
 const SPAWN_OFFSET = [0.4, 0.8, 1.875] as [number, number, number];
 
-export const SkeeballMachine = () => {
+export const SkootballMachine = () => {
     const {scene} = useGLTF(MACHINE_URL);
     const instance = scene.clone(true);
 
@@ -246,14 +246,14 @@ export const SkeeballMachine = () => {
                         ignore_hands: true,
                         objects: {
                             include: true,
-                            tag_filter: [`skeeball-${machine_id}`]
+                            tag_filter: [`skootball-${machine_id}`]
                         }
                     });
 
                     if (!interacted || interacted.type !== "object") return;
 
                     // respawn the ball that exited for free
-                    respawn_ball(interacted.object_id.replace("SKEEBALL-", ""));
+                    respawn_ball(interacted.object_id.replace("SKOOTBALL-", ""));
                 }}
             />
 
