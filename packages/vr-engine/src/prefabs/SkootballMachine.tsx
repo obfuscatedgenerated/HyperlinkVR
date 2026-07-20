@@ -1,10 +1,12 @@
 import {ObjectPhysics} from "../engine/ObjectPhysics";
 import {Text, useGLTF} from "@react-three/drei";
 import {Grabbable} from "../interaction";
-import {RefObject, useCallback, useEffect, useImperativeHandle, useRef, useState} from "react";
-import {resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
+import {RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from "react";
+import {detect_trigger_direction, resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
 import {create_object_refs, ObjectRefsContextType, ObjectRefsProvider} from "../contexts";
 import {Group, Vector3} from "three";
+import {IntersectionEnterPayload, IntersectionExitPayload} from "@react-three/rapier";
+import {Collider} from "@hyperlinkvr/vr-engine-schemas";
 
 const MACHINE_URL = new URL("../../assets/prefabs/skootball/machine.glb", import.meta.url).href;
 const BALL_URL = new URL("../../assets/prefabs/skootball/ball.glb", import.meta.url).href;
@@ -87,6 +89,58 @@ const Ball = ({machine_id, machine_ref, id, initial_position, handle}: BallProps
 
 const SPAWN_OFFSET = [0.4, 0.8, 1.875] as [number, number, number];
 
+const POINT_COLLIDERS = {
+    10: {
+        type: "cylinder",
+        radius: 0.05,
+        height: 0.025,
+        offset: [0, 0.855, -0.8],
+        rotation: [Math.PI / 4, 0, 0]
+    },
+    20: {
+        type: "cylinder",
+        radius: 0.05,
+        height: 0.025,
+        offset: [0, 0.9375, -0.875],
+        rotation: [Math.PI / 4, 0, 0]
+    },
+    30: {
+        type: "cylinder",
+        radius: 0.06,
+        height: 0.025,
+        offset: [0, 1.055, -0.97],
+        rotation: [Math.PI / 4, 0, 0]
+    },
+    40: {
+        type: "cylinder",
+        radius: 0.06,
+        height: 0.025,
+        offset: [0, 1.165, -1.07],
+        rotation: [Math.PI / 4, 0, 0]
+    },
+    50: {
+        type: "cylinder",
+        radius: 0.05,
+        height: 0.025,
+        offset: [0, 1.225, -1.2],
+        rotation: [Math.PI / 4, 0, 0]
+    },
+    left_100: {
+        type: "cylinder",
+        radius: 0.05,
+        height: 0.025,
+        offset: [-0.23, 1.37, -1.235],
+        rotation: [Math.PI / 4, 0, 0]
+    },
+    right_100: {
+        type: "cylinder",
+        radius: 0.05,
+        height: 0.025,
+        offset: [0.23, 1.37, -1.235],
+        rotation: [Math.PI / 4, 0, 0]
+    }
+} as Record<string, Collider>;
+
 export const SkootballMachine = () => {
     const {scene} = useGLTF(MACHINE_URL);
     const instance = scene.clone(true);
@@ -150,7 +204,8 @@ export const SkootballMachine = () => {
             if (balls_remaining_ref.current <= 0) {
                 // game over
                 setPlaying(false);
-            } else if (balls_remaining_ref.current > 3) {
+                cleanup();
+            } else if (balls_remaining_ref.current >= 3) {
                 respawn_ball(id);
             } else {
                 // remove the ball from the machine
@@ -184,6 +239,53 @@ export const SkootballMachine = () => {
             clearInterval(spawn_interval);
         };
     }, [playing, spawn_ball]);
+
+    const is_our_ball = useCallback(
+        (payload: IntersectionEnterPayload | IntersectionExitPayload) => {
+            const interacted = resolve_interacted(payload, {
+                ignore_torso: true,
+                ignore_head: true,
+                ignore_hands: true,
+                objects: {
+                    include: true,
+                    tag_filter: [`skootball-${machine_id}`]
+                }
+            });
+
+            if (!interacted || interacted.type !== "object") return false;
+
+            return interacted.object_id.replace("SKOOTBALL-", "");
+        },
+        [machine_id]
+    );
+
+    // ball id -> points scored, to be held until the ball hits the killbox for better look
+    const pending_points = useRef(new Map<string, number>());
+
+    const PointCollider = useCallback(({value, side}: {value: number, side?: "left" | "right"}) => {
+        const collider = side ? POINT_COLLIDERS[`${side}_${value}`] : POINT_COLLIDERS[`${value}`];
+
+        return (
+            <TriggerVolume
+                collider={collider}
+                on_enter={(payload) => {
+                    const ball_id = is_our_ball(payload);
+                    if (!ball_id) return;
+
+                    // TODO: how reliable is this for what we want? could do vel but it wont be straight anyway
+                    const positioning = detect_trigger_direction(payload, collider);
+                    if (!positioning) return;
+
+                    const {direction} = positioning;
+
+                    if (direction === "top") {
+                        // prepare score to apply when reaching killbox (allowing to be overridden if it intersects a later hole before reaching the killbox, and to look prettier)
+                        pending_points.current.set(ball_id, value);
+                    }
+                }}
+            />
+        );
+    }, [is_our_ball]);
 
     return (
         <group ref={machine_ref}>
@@ -230,6 +332,16 @@ export const SkootballMachine = () => {
                 />
             ))}
 
+            {/* machine display */}
+            <group position={[0, 1.675, -1.2]}>
+                <Text fontSize={0.1} color={"white"} anchorX="center" anchorY="middle">
+                    {score}
+                </Text>
+                <Text fontSize={0.05} color={"white"} anchorX="center" anchorY="middle" position={[0, -0.1, 0]}>
+                    {`Balls Remaining: ${balls_remaining}`}
+                </Text>
+            </group>
+
             {/* trigger volume to find balls that go out of bounds on exit */}
             <TriggerVolume
                 collider={{
@@ -240,24 +352,42 @@ export const SkootballMachine = () => {
 
                 on_exit={(payload) => {
                     // check if a ball from our machine was what exited
-                    const interacted = resolve_interacted(payload, {
-                        ignore_torso: true,
-                        ignore_head: true,
-                        ignore_hands: true,
-                        objects: {
-                            include: true,
-                            tag_filter: [`skootball-${machine_id}`]
-                        }
-                    });
-
-                    if (!interacted || interacted.type !== "object") return;
+                    const ball_id = is_our_ball(payload);
+                    if (!ball_id) return;
 
                     // respawn the ball that exited for free
-                    respawn_ball(interacted.object_id.replace("SKOOTBALL-", ""));
+                    respawn_ball(ball_id);
                 }}
             />
 
-            {/* TODO: trigger volumes for the actual scoring */}
+            <PointCollider value={10} />
+            <PointCollider value={20} />
+            <PointCollider value={30} />
+            <PointCollider value={40} />
+            <PointCollider value={50} />
+            <PointCollider value={100} side="left" />
+            <PointCollider value={100} side="right" />
+
+            <TriggerVolume
+                collider={{
+                    type: "box",
+                    size: [0.75, 1, 1.1],
+                    offset: [0, 0, -0.8],
+                }}
+
+                // killbox at the bottom, applies any pending points and respawns
+                on_enter={(payload) => {
+                    const ball_id = is_our_ball(payload);
+                    if (!ball_id) return;
+
+                    const ball_score = pending_points.current.get(ball_id) ?? 0;
+                    pending_points.current.delete(ball_id);
+
+                    ball_scored(ball_id, ball_score);
+                }}
+            />
         </group>
     );
 }
+
+// TODO: respawn any stationary ball outside the return box after some time
