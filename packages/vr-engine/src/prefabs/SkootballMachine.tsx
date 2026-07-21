@@ -1,15 +1,20 @@
 import {ObjectPhysics} from "../engine/ObjectPhysics";
-import {Text, useGLTF} from "@react-three/drei";
+import {PositionalAudio, Text, useGLTF} from "@react-three/drei";
 import {Grabbable} from "../interaction";
 import {RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from "react";
 import {detect_trigger_direction, resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
 import {create_object_refs, ObjectRefsContextType, ObjectRefsProvider} from "../contexts";
-import {Group, Vector3} from "three";
+import {Group, Vector3, PositionalAudio as PositionalAudioType} from "three";
 import {IntersectionEnterPayload, IntersectionExitPayload} from "@react-three/rapier";
 import {Collider} from "@hyperlinkvr/vr-engine-schemas";
 
 const MACHINE_URL = new URL("../../assets/prefabs/skootball/machine.glb", import.meta.url).href;
 const BALL_URL = new URL("../../assets/prefabs/skootball/ball.glb", import.meta.url).href;
+
+const BELL_URL = new URL("../../assets/prefabs/skootball/carnival_bell.opus", import.meta.url).href;
+const BOOP_URL = new URL("../../assets/prefabs/skootball/soft_boop.opus", import.meta.url).href;
+
+const SEMITONE = 1.0594630943592953; // 2^(1/12)
 
 interface BallHandle {
     respawn: (position_override?: [number, number, number]) => void;
@@ -142,6 +147,8 @@ const POINT_COLLIDERS = {
     }
 } as Record<string, Collider>;
 
+const POINT_ORDER = [10, 20, 30, 40, 50, 100] as const;
+
 export const SkootballMachine = () => {
     const {scene} = useGLTF(MACHINE_URL);
     const instance = scene.clone(true);
@@ -159,6 +166,9 @@ export const SkootballMachine = () => {
 
     const machine_id = useRef(crypto.randomUUID()).current;
     const machine_ref = useRef<Group>(null);
+
+    const bell_audio_ref = useRef<PositionalAudioType>(null);
+    const boop_audio_ref = useRef<PositionalAudioType>(null);
 
     const spawn_ball = useCallback(
         () => {
@@ -212,6 +222,19 @@ export const SkootballMachine = () => {
                 // remove the ball from the machine
                 ball_handles.current.delete(id);
                 setBallIDs(prev => prev.filter(ball_id => ball_id !== id));
+            }
+
+            // play sound effect
+            const boop_audio = boop_audio_ref.current;
+            if (!boop_audio) return;
+
+            if (points > 0) {
+                boop_audio.stop();
+                boop_audio.offset = 0;
+
+                const pitch_change = Math.pow(SEMITONE, POINT_ORDER.indexOf(points as typeof POINT_ORDER[number]));
+                boop_audio.setPlaybackRate(pitch_change);
+                boop_audio.play();
             }
         },
         [respawn_ball]
@@ -298,6 +321,13 @@ export const SkootballMachine = () => {
                     color={"white"}
                     onPointerDown={() => {
                         setPlaying(true);
+
+                        const bell_audio = bell_audio_ref.current;
+                        if (!bell_audio) return;
+
+                        bell_audio.stop();
+                        bell_audio.offset = 0;
+                        bell_audio.play();
                     }}
                 >
                     Start
@@ -341,6 +371,21 @@ export const SkootballMachine = () => {
                 <Text fontSize={0.05} color={"white"} anchorX="center" anchorY="middle" position={[0, -0.1, 0]}>
                     {playing ? `${balls_remaining} ball${balls_remaining === 1 ? "" : "s"} left` : "Game Over"}
                 </Text>
+
+                <PositionalAudio
+                    ref={bell_audio_ref}
+                    url={BELL_URL}
+                    distance={1}
+                    loop={false}
+                    autoplay={false}
+                />
+                <PositionalAudio
+                    ref={boop_audio_ref}
+                    url={BOOP_URL}
+                    distance={1}
+                    loop={false}
+                    autoplay={false}
+                />
             </group>
 
             {/* trigger volume to find balls that go out of bounds on exit */}
