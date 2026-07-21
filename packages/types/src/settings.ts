@@ -413,3 +413,5 @@ export interface SettingsTree {
     subtrees: Record<string, SettingsTree>;
     settings: Setting<any>[];
 }
+
+// TODO: hard limits on ranges that are clamped on read

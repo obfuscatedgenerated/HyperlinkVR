@@ -339,7 +339,7 @@ export const SkootballMachine = () => {
                     {score}
                 </Text>
                 <Text fontSize={0.05} color={"white"} anchorX="center" anchorY="middle" position={[0, -0.1, 0]}>
-                    {playing ? `${balls_remaining} balls left` : "Game Over"}
+                    {playing ? `${balls_remaining} ball${balls_remaining === 1 ? "" : "s"} left` : "Game Over"}
                 </Text>
             </group>
 
