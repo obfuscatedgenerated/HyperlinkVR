@@ -87,56 +87,57 @@ const Ball = ({machine_id, machine_ref, id, initial_position, handle}: BallProps
     );
 }
 
-const SPAWN_OFFSET = [0.4, 0.8, 1.875] as [number, number, number];
+const TEMP_ADJ = 0.128
+const SPAWN_OFFSET = [0.4, 0.8 - TEMP_ADJ, 1.875] as [number, number, number];
 
 const POINT_COLLIDERS = {
     10: {
         type: "cylinder",
         radius: 0.05,
         height: 0.025,
-        offset: [0, 0.855, -0.8],
+        offset: [0, 0.855 - TEMP_ADJ, -0.8],
         rotation: [Math.PI / 4, 0, 0]
     },
     20: {
         type: "cylinder",
         radius: 0.05,
         height: 0.025,
-        offset: [0, 0.9375, -0.875],
+        offset: [0, 0.9375 - TEMP_ADJ, -0.875],
         rotation: [Math.PI / 4, 0, 0]
     },
     30: {
         type: "cylinder",
         radius: 0.06,
         height: 0.025,
-        offset: [0, 1.055, -0.97],
+        offset: [0, 1.055 - TEMP_ADJ, -0.97],
         rotation: [Math.PI / 4, 0, 0]
     },
     40: {
         type: "cylinder",
         radius: 0.06,
         height: 0.025,
-        offset: [0, 1.165, -1.07],
+        offset: [0, 1.165 - TEMP_ADJ, -1.07],
         rotation: [Math.PI / 4, 0, 0]
     },
     50: {
         type: "cylinder",
         radius: 0.05,
         height: 0.025,
-        offset: [0, 1.225, -1.2],
+        offset: [0, 1.225 - TEMP_ADJ, -1.2],
         rotation: [Math.PI / 4, 0, 0]
     },
     left_100: {
         type: "cylinder",
         radius: 0.05,
         height: 0.025,
-        offset: [-0.23, 1.37, -1.235],
+        offset: [-0.23, 1.37 - TEMP_ADJ, -1.235],
         rotation: [Math.PI / 4, 0, 0]
     },
     right_100: {
         type: "cylinder",
         radius: 0.05,
         height: 0.025,
-        offset: [0.23, 1.37, -1.235],
+        offset: [0.23, 1.37 - TEMP_ADJ, -1.235],
         rotation: [Math.PI / 4, 0, 0]
     }
 } as Record<string, Collider>;
@@ -333,7 +334,7 @@ export const SkootballMachine = () => {
             ))}
 
             {/* machine display */}
-            <group position={[0, 1.675, -1.2]}>
+            <group position={[0, 1.675 - TEMP_ADJ, -1.2]}>
                 <Text fontSize={0.1} color={"white"} anchorX="center" anchorY="middle">
                     {score}
                 </Text>
@@ -347,7 +348,7 @@ export const SkootballMachine = () => {
                 collider={{
                     type: "box",
                     size: [2, 3, 6],
-                    offset: [0, 1.5, 1.5]
+                    offset: [0, 1.5, 1.75]
                 }}
 
                 on_exit={(payload) => {
