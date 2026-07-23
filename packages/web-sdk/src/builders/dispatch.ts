@@ -19,7 +19,6 @@ import {
 import {BaseBuilder} from "./base";
 import {subscribe_report} from "../event_bus";
 import {send_via_rtc} from "../messenger";
-import type {NamedReply} from "@hyperlinkvr/types";
 import {_INTERACTION_API_MAKERS} from "./interactions";
 
 export interface EngineObjectCreationResult {
@@ -137,6 +136,7 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
         }
 
         this._internal.monitors.push({...monitor, binding: {name}});
+        return this;
     }
 
     remove_monitors_from_modification(name: string) {
@@ -155,6 +155,8 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
         if (this._internal.monitors.length === original_length) {
             throw new Error(`No monitors were found with name "${name}".`);
         }
+
+        return this;
     }
 
     // TODO: way to remove monitors from source object, need to pull in its state
@@ -169,6 +171,7 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
         }
 
         this._internal.monitors.push(...monitors.map(({name, monitor}) => ({...monitor, reporting: {name}})));
+        return this;
     }
 
     add_tag(tag: string) {

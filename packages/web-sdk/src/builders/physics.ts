@@ -122,6 +122,8 @@ export class DynamicRigidBodyBuilder extends RigidBodyBuilder<DynamicRigidBodyIn
                 [axis]: true
             }
         };
+
+        return this;
     }
 
     lock_x_translation() {
