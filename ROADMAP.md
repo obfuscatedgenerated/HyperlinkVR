@@ -25,6 +25,7 @@
   - [x] Jump
   - [ ] Fly
   - [ ] Crouch for flat
+  - [ ] Seated mode that automatically adjusts to player height (with crouch button)
 - [ ] Option for SDK rigid body to forbid teleport onto
 - [x] Light interactions: point, spot, directional
   - [ ] Support tweening of light properties 
@@ -42,7 +43,7 @@
 - [ ] Decide if/how to deal with duplicate interactions
 - [x] Environment props via SDK (sky, fog, maybe even gravity and rain!)
 - [x] Watch UI backstack and standardised screen layout
-- [ ] Detached watch mode
+- [x] Detached watch mode
 - [ ] Expression input
 - [ ] Player stuff via SDK
   - [x] read player position
@@ -67,7 +68,7 @@
 - [ ] Scene/collection dispatch
 - [ ] Prefab for links that use player sending (a door? a portal? a big link logo?). If clearly displays text then could bypass prompt
 - [ ] Way for SDK to add HUD layer stuff (could reuse vignette layer)
-- [ ] `wait_for_ready()` and `is_ready` on SDK as alternative to DOM event
+- [x] `wait_for_ready()` and `is_ready` on SDK as alternative to DOM event
 - [ ] Meta value to tell the engine to preload assets from URLs to make mesh and audio loading immediate when used (shows as loading)
 - [ ] Layers debugger devtool
 - [ ] Camera debugger devtool
@@ -81,7 +82,9 @@
 - [ ] VR keyboard for DOM and watch input
 - [ ] Object parenting via SDK (needs transform resolution against parent, and think about what happens when a parent has a rigid body)
 - [ ] Finish grabbable options: sticky vs non-sticky, snap-to-hand default, grab offset, translation/rotation constraints, scale unlock and constriants
+- [ ] Free hand movement on flat with keypress
 - [ ] Define consistent error message interface for SDK and check for it in builders
+- [ ] Fix VR error boundary (doesnt follow player)
 - [ ] DOMMirror input: right/middle click, hold-and-drag, thumbstick scroll, click ripple
 - [ ] DOMMirror prefab
 - [ ] Physics reporting:
@@ -94,7 +97,7 @@
 - [ ] Flat controller support
 - [ ] Flat rebinding support
 - [ ] Scripted object pathways/full keyframing system on SDK (could a gradual tween already do this? But I guess less annoying to just define a path in advance)
-- [ ] Avatar walk animation
+- [ ] Avatar walk animation and sounds (with ability to let surfaces choose their walk sound material type from a selection)
 - [ ] Avatar clothing, more hair options
 - [ ] Avatar slots
 - [ ] Fix auth bugs (only allow lowercase username, improve UX, add JWT/passkey somehow)
@@ -114,7 +117,6 @@
 - [ ] Improve OOBE
 - [ ] Create hub world with links to other worlds at project homepage, fixed links for now
 - [ ] Create other official worlds and games (i.e. our version of the Rec Center, some games that show off features, etc)
-- [ ] Free hand movement on flat with keypress
 - [ ] Flat gestures
 - [ ] Use of backpack API to add custom clothing/cross world items? Would probably do it by approving creators on a baked in list of public keys (but obvs needs vetting and may not be the best idea)
 - [ ] Improve error resillience with more error boundaries (can isolate errors per object and per the scene contents as a whole to make sure the user can still navigate out with the watch UI)
