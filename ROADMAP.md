@@ -94,7 +94,7 @@
 - [ ] Option for bodies to ignore player or object collisions
 - [ ] Way to add prefabs using empties with custom props?
 - [ ] Extend prefab library in general (adding props, weapons, sports stuff, maybe even vehicles etc)
-- [ ] Flat controller support
+- [x] Flat controller support
 - [ ] Flat rebinding support
 - [ ] Scripted object pathways/full keyframing system on SDK (could a gradual tween already do this? But I guess less annoying to just define a path in advance)
 - [ ] Avatar walk animation and sounds (with ability to let surfaces choose their walk sound material type from a selection)
