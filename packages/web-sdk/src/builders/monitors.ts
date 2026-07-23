@@ -11,6 +11,11 @@ class AxesBasedMonitorBuilder extends BaseBuilder<AxesBasedMonitorInput> {
         return this;
     }
 
+    continuous(is_continuous: boolean) {
+        this._internal.continuous = is_continuous;
+        return this;
+    }
+
     x(range: AxisRange) {
         this._internal.x = range;
         return this;
