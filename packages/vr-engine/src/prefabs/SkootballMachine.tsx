@@ -1,7 +1,7 @@
 import {ObjectPhysics} from "../engine/ObjectPhysics";
 import {PositionalAudio, Text, useGLTF} from "@react-three/drei";
 import {Grabbable} from "../interaction";
-import {RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState} from "react";
+import {RefObject, useCallback, useEffect, useImperativeHandle, useRef, useState} from "react";
 import {detect_trigger_direction, resolve_interacted, TriggerVolume} from "../interaction/TriggerVolume";
 import {create_object_refs, ObjectRefsContextType, ObjectRefsProvider} from "../contexts";
 import {Group, Vector3, PositionalAudio as PositionalAudioType} from "three";

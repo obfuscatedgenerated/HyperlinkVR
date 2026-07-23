@@ -36,12 +36,16 @@ interface WatchUIPresentationProps {
     mode: WatchMode;
     gaze_to_open?: boolean;
     on_request_close?: () => void;
+    set_detach?: (detached: boolean) => void;
+    detachable?: boolean;
 }
 
 const WatchUIPresentation = ({
     mode,
     gaze_to_open = false,
-    on_request_close
+    on_request_close,
+    set_detach,
+    detachable = false
 }: WatchUIPresentationProps) => {
     const body_group_ref = useRef<Group>(null);
     const ui_group_ref = useRef<Group>(null);
@@ -158,8 +162,17 @@ const WatchUIPresentation = ({
             have_ui_target = true;
         } else if (mode === "detached") {
             if (previous_mode.current !== "detached") {
+                // spawn where the panel currently is, but re-orient to face the user
                 ui_group.getWorldPosition(scratch.detached_pos);
-                ui_group.getWorldQuaternion(scratch.detached_quat);
+                camera.getWorldPosition(scratch.camera_pos);
+
+                scratch.look_matrix.lookAt(
+                    scratch.detached_pos,
+                    scratch.camera_pos,
+                    WORLD_UP
+                );
+                scratch.detached_quat.setFromRotationMatrix(scratch.look_matrix);
+                scratch.detached_quat.multiply(FLIP_180);
             }
             scratch.ui_pos.copy(scratch.detached_pos);
             scratch.ui_quat.copy(scratch.detached_quat);
@@ -264,7 +277,7 @@ const WatchUIPresentation = ({
                         pixelSize={0.3 / WATCH_UI_HEIGHT}
                         flexDirection="column"
                     >
-                        <WatchUI on_request_close={on_request_close} />
+                        <WatchUI on_request_close={on_request_close} detached={mode === "detached"} set_detach={set_detach} detachable={detachable} />
                     </Container>
                 </group>
             </group>
@@ -289,12 +302,14 @@ export const FlatWatch = () => {
 };
 
 export const VRWatch = () => {
-    const [mode, setMode] = useState<WatchMode>("wrist");
-    // TODO: add detach requesting (both with vr controller bind, and button in the watch that passes out like close does)
-    return <WatchUIPresentation mode={mode} gaze_to_open />;
+    const [detached, setDetached] = useState(false);
+    // TODO: add controller bind for detach
+    return <WatchUIPresentation mode={detached ? "detached" : "wrist"} detachable set_detach={setDetached} gaze_to_open />;
 };
 
 export const WristWatch = () => {
     const session_mode = useSessionMode();
     return session_mode === "vr" ? <VRWatch /> : <FlatWatch />;
 };
+
+// TODO: wrist gesture far from detached watch should reattach. or just auto reattach at distance anyway. perhaps both at diff distances

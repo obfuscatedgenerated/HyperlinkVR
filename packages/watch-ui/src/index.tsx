@@ -8,7 +8,7 @@ import { configureTextBuilder } from "troika-three-text";
 import { ScreenName, screens } from "./screens";
 import {NavStateProvider, useNavState} from "./contexts/NavStateContext";
 import {Crossfader, useCrossfadeOpacity} from "./animation/Crossfader";
-import {Settings} from "@react-three/uikit-lucide";
+import {Maximize2, Minimize2, Settings} from "@react-three/uikit-lucide";
 import {Header} from "./layout/Header";
 import {FocusNavProvider} from "./contexts/FocusNavContext";
 import {FocusableButton} from "./components/FocusableButton";
@@ -35,14 +35,23 @@ class DoubleSidedSolidPanel extends MeshBasicMaterial {
 }
 
 const EndButtons = ({ current, change_screen }: { current: ScreenName | null, change_screen: (screen_name: ScreenName) => void }) => {
+    const {detachable, detached, set_detach} = useNavState();
     const opacity = useCrossfadeOpacity();
 
     return (
-        current === "home" && (
-            <FocusableButton variant="link" color="white" on_press={() => change_screen("settings")} opacity={opacity}>
-                <Settings />
-            </FocusableButton>
-        )
+        <>
+            {current === "home" && (
+                <FocusableButton variant="link" color="white" on_press={() => change_screen("settings")} opacity={opacity}>
+                    <Settings />
+                </FocusableButton>
+            )}
+
+            {detachable && (
+                <FocusableButton variant="link" color="white" on_press={() => set_detach && set_detach(!detached)} opacity={opacity}>
+                    {detached ? <Minimize2 /> : <Maximize2 />}
+                </FocusableButton>
+            )}
+        </>
     );
 }
 
@@ -101,7 +110,7 @@ const FocusNavBridge = ({
     return <FocusNavProvider on_back={on_back}>{children}</FocusNavProvider>;
 };
 
-export const WatchUI = ({on_request_close}: {on_request_close?: () => void}) => {
+export const WatchUI = ({on_request_close, set_detach, detached, detachable}: {on_request_close?: () => void, set_detach?: (detached: boolean) => void, detached?: boolean, detachable?: boolean}) => {
     return (
         <Container
             width={WATCH_UI_WIDTH}
@@ -121,7 +130,7 @@ export const WatchUI = ({on_request_close}: {on_request_close?: () => void}) => 
             onPointerMove={(e) => e.stopPropagation()}
             onWheel={(e) => e.stopPropagation()}
         >
-            <NavStateProvider>
+            <NavStateProvider options={{detached, detachable, set_detach}}>
                 <FocusNavBridge on_request_close={on_request_close}>
                     <CurrentScreen />
                 </FocusNavBridge>

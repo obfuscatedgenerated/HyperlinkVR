@@ -9,6 +9,10 @@ interface NavStateContextType {
     name_to_title: (screen_name: ScreenName | null) => string;
     back: () => void;
     forward: () => void;
+
+    set_detach?: (detached: boolean) => void;
+    detached?: boolean;
+    detachable?: boolean;
 }
 
 const screen_titles: Record<ScreenName, string> = {
@@ -18,7 +22,7 @@ const screen_titles: Record<ScreenName, string> = {
 
 const NavStateContext = createContext<NavStateContextType | null>(null);
 
-export const NavStateProvider = ({ children }: { children: React.ReactNode }) => {
+export const NavStateProvider = ({ children, options }: { children: React.ReactNode, options?: { detachable?: boolean, set_detach?: (detached: boolean) => void, detached?: boolean } }) => {
     const [backwards, setBackwards] = useState<ScreenName[]>([]);
     const [forwards, setForwards] = useState<ScreenName[]>([]);
     const [current, setCurrent] = useState<ScreenName | null>("home");
@@ -67,7 +71,7 @@ export const NavStateProvider = ({ children }: { children: React.ReactNode }) =>
     }, []);
 
     return (
-        <NavStateContext.Provider value={{ backwards, forwards, current, change_screen, back, forward, name_to_title }}>
+        <NavStateContext.Provider value={{ backwards, forwards, current, change_screen, back, forward, name_to_title, ...options }}>
             {children}
         </NavStateContext.Provider>
     );
