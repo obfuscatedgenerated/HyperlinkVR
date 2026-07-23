@@ -1,0 +1,306 @@
+import {z} from "zod";
+
+import {BoxColliderSchema, CapsuleColliderSchema, ColliderSchema, SphereColliderSchema} from "./physics";
+import {bindable} from "./binding";
+import {RotationSchema} from "./transforms";
+
+import {HexColorSchema} from "./colors";
+
+export const GrabOffsetSchema = z.object({
+    position: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+    rotation: RotationSchema.default([0, 0, 0])
+});
+export type GrabOffset = z.infer<typeof GrabOffsetSchema>;
+export type GrabOffsetInput = z.input<typeof GrabOffsetSchema>;
+export const AutoBoundingBoxColliderSchema = z.object({
+    type: z.literal("auto-bounding-box")
+});
+export type AutoBoundingBoxCollider = z.infer<
+    typeof AutoBoundingBoxColliderSchema
+>;
+export const AutoBoundingSphereColliderSchema = z.object({
+    type: z.literal("auto-bounding-sphere")
+});
+export type AutoBoundingSphereCollider = z.infer<
+    typeof AutoBoundingSphereColliderSchema
+>;
+export const GrabColliderSchema = z.discriminatedUnion("type", [
+    AutoBoundingBoxColliderSchema,
+    AutoBoundingSphereColliderSchema,
+    BoxColliderSchema,
+    SphereColliderSchema,
+    CapsuleColliderSchema
+]);
+export type GrabCollider = z.infer<typeof GrabColliderSchema>;
+export const GrabbableInteractionSchema = bindable({
+    type: z.literal("grabbable"),
+    collider: GrabColliderSchema.default({type: "auto-bounding-box"}),
+    grab_distance: z.number().positive().optional(),
+    grab_offset: GrabOffsetSchema.optional(),
+    sticky: z.boolean().default(true),
+    snaps_to_hand: z.boolean().default(true),
+    report_grabs: z.boolean().default(false),
+    report_releases: z.boolean().default(false),
+    report_proximity: z.boolean().default(false),
+    flat_throwable: z.boolean().default(true), // false only prevents using the throw button on flat mode (ui hint). we cant stop vr players throwing. use max_throw_speed = 0 to make it slip out their hand instead
+    min_flat_throw_speed: z.number().nonnegative().optional(), // the speed of the minimum throw on flat (tapping the throw key)
+    max_throw_speed: z.number().nonnegative().optional(), // the maximum throw speed on flat and vr. note that an additional headroom of 1.2x is applied so that locomotion can add to the speed
+});
+export type GrabbableInteraction = z.infer<typeof GrabbableInteractionSchema>;
+export type GrabbableInteractionInput = z.input<typeof GrabbableInteractionSchema>;
+export const ControllerButtonWhenListenSchema = z.union([
+    z.literal("held"),
+    z.literal("nearby"),
+    z.literal("intersecting"),
+    z.literal("always")
+]);
+export type ControllerButtonWhenListen = z.infer<
+    typeof ControllerButtonWhenListenSchema
+>;
+export const ControllerButtonInteractionSchema = bindable({
+    type: z.literal("controller-button"),
+    button: z.string(),
+    report_press: z.boolean().default(true),
+    report_release: z.boolean().default(true),
+    when_listen: ControllerButtonWhenListenSchema.default("held")
+});
+export type ControllerButtonInteraction = z.infer<
+    typeof ControllerButtonInteractionSchema
+>;
+export type ControllerButtonInteractionInput = z.input<
+    typeof ControllerButtonInteractionSchema
+>;
+const TriggerVolumeObjectsDisableSchema = z.object({
+    include: z.literal(false)
+});
+const TriggerVolumeObjectsEnableSchema = z.object({
+    include: z.literal(true),
+    tag_filter: z.array(z.string()).optional()
+});
+const TriggerVolumeObjectsSchema = z.union([
+    TriggerVolumeObjectsDisableSchema,
+    TriggerVolumeObjectsEnableSchema
+]);
+export const TriggerVolumeInteractionSchema = bindable({
+    type: z.literal("trigger-volume"),
+    collider: ColliderSchema,
+    report_enter: z.boolean().default(true),
+    report_exit: z.boolean().default(true),
+    ignore_hands: z.boolean().default(false),
+    ignore_torso: z.boolean().default(false),
+    ignore_head: z.boolean().default(false),
+    objects: TriggerVolumeObjectsSchema.default({include: false})
+});
+export type TriggerVolumeInteraction = z.infer<
+    typeof TriggerVolumeInteractionSchema
+>;
+export type TriggerVolumeInteractionInput = z.input<
+    typeof TriggerVolumeInteractionSchema
+>;
+export const FollowPlayerInteractionSchema = bindable({
+    type: z.literal("follow-player"),
+    enabled: z.boolean().default(true),
+    snap_on_release: z.boolean().default(false) // if true, disabling follow will make the object obey its position coordinates rather than freezing in place. likely irrelevant for most implementations
+});
+export type FollowPlayerInteraction = z.infer<typeof FollowPlayerInteractionSchema>;
+export type FollowPlayerInteractionInput = z.input<typeof FollowPlayerInteractionSchema>;
+export const PositionalAudioInteractionSchema = bindable({
+    type: z.literal("positional-audio"),
+    url: z.url({
+        protocol: /^https?$/,
+        hostname: z.regexes.domain
+    }),
+    max_distance: z.number().positive().default(10),
+    loop: z.boolean().default(false),
+    autoplay: z.boolean().default(false),
+    offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+});
+export type PositionalAudioInteraction = z.infer<typeof PositionalAudioInteractionSchema>;
+export type PositionalAudioInteractionInput = z.input<typeof PositionalAudioInteractionSchema>
+export const GlobalAudioInteractionSchema = bindable({
+    type: z.literal("global-audio"),
+    url: z.url({
+        protocol: /^https?$/,
+        hostname: z.regexes.domain
+    }),
+    loop: z.boolean().default(false),
+    autoplay: z.boolean().default(false),
+    volume: z.number().min(0).max(1).default(1)
+});
+export type GlobalAudioInteraction = z.infer<typeof GlobalAudioInteractionSchema>;
+export type GlobalAudioInteractionInput = z.input<typeof GlobalAudioInteractionSchema>
+export const PointLightInteractionSchema = bindable({
+    type: z.literal("point-light"),
+    color: HexColorSchema.default(0xffffff),
+    intensity: z.number().nonnegative().default(1),
+    distance: z.number().nonnegative().default(0),
+    decay: z.number().nonnegative().default(2),
+    offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+});
+export type PointLightInteraction = z.infer<typeof PointLightInteractionSchema>;
+export type PointLightInteractionInput = z.input<typeof PointLightInteractionSchema>;
+export const SpotLightInteractionSchema = bindable({
+    type: z.literal("spot-light"),
+    color: HexColorSchema.default(0xffffff),
+    intensity: z.number().nonnegative().default(1),
+    distance: z.number().nonnegative().default(0),
+    decay: z.number().nonnegative().default(2),
+    angle: z.number().min(0).max(Math.PI / 2).default(Math.PI / 3),
+    penumbra: z.number().min(0).max(1).default(0),
+    offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+    rotation: RotationSchema.default([0, 0, 0]),
+});
+export type SpotLightInteraction = z.infer<typeof SpotLightInteractionSchema>;
+export type SpotLightInteractionInput = z.input<typeof SpotLightInteractionSchema>;
+export const DirectionalLightInteractionSchema = bindable({
+    type: z.literal("directional-light"),
+    color: HexColorSchema.default(0xffffff),
+    intensity: z.number().nonnegative().default(1),
+    offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+    rotation: RotationSchema.default([0, 0, 0]),
+});
+export type DirectionalLightInteraction = z.infer<typeof DirectionalLightInteractionSchema>;
+export type DirectionalLightInteractionInput = z.input<typeof DirectionalLightInteractionSchema>;
+const BaseParticleEmitterShapeSchema = z.object({
+    type: z.string(),
+});
+export const ParticleEmitterShapeModeSchema = z.enum(["random", "loop", "ping-pong", "burst"]).default("random");
+export type ParticleEmitterShapeMode = z.infer<typeof ParticleEmitterShapeModeSchema>;
+export const ParticleEmitterShapePointSchema = BaseParticleEmitterShapeSchema.extend({
+    type: z.literal("point")
+});
+export type ParticleEmitterShapePoint = z.infer<typeof ParticleEmitterShapePointSchema>;
+export type ParticleEmitterShapePointInput = z.input<typeof ParticleEmitterShapePointSchema>;
+export const ParticleEmitterShapeSphereSchema = BaseParticleEmitterShapeSchema.extend({
+    type: z.literal("sphere"),
+    mode: ParticleEmitterShapeModeSchema.optional(),
+    radius: z.number().positive(),
+    thickness: z.number().nonnegative().optional()
+});
+export type ParticleEmitterShapeSphere = z.infer<typeof ParticleEmitterShapeSphereSchema>;
+export type ParticleEmitterShapeSphereInput = z.input<typeof ParticleEmitterShapeSphereSchema>;
+export const ParticleEmitterShapeConeSchema = BaseParticleEmitterShapeSchema.extend({
+    type: z.literal("cone"),
+    mode: ParticleEmitterShapeModeSchema.optional(),
+    radius: z.number().positive(),
+    angle: z.number().min(0).max(Math.PI / 2),
+    arc: z.number().min(0).max(Math.PI * 2).optional()
+});
+export type ParticleEmitterShapeCone = z.infer<typeof ParticleEmitterShapeConeSchema>;
+export type ParticleEmitterShapeConeInput = z.input<typeof ParticleEmitterShapeConeSchema>;
+// TODO: add remaining per-shape props
+export const ParticleEmitterShapeSchema = z.discriminatedUnion("type", [
+    ParticleEmitterShapePointSchema,
+    ParticleEmitterShapeSphereSchema,
+    ParticleEmitterShapeConeSchema
+    // TODO: rectangle, grid, hemisphere, donut, mesh. maybe could reuse collider system and just reinterpret?
+]);
+export type ParticleEmitterShape = z.infer<typeof ParticleEmitterShapeSchema>;
+export type ParticleEmitterShapeInput = z.input<typeof ParticleEmitterShapeSchema>;
+export const ParticleEmitterVisualImageSchema = z.object({
+    type: z.literal("image"),
+    url: z.url({
+        protocol: /^https?$/,
+        hostname: z.regexes.domain
+    }),
+    alpha: z.number().min(0).max(1).default(1).optional()
+});
+export type ParticleEmitterVisualImage = z.infer<typeof ParticleEmitterVisualImageSchema>;
+export type ParticleEmitterVisualImageInput = z.input<typeof ParticleEmitterVisualImageSchema>;
+export const ParticleEmitterVisualQuadSchema = z.object({
+    type: z.literal("quad"),
+    width: z.number().positive(),
+    height: z.number().positive(),
+    color: HexColorSchema.default(0xffffff).optional(),
+    alpha: z.number().min(0).max(1).default(1).optional()
+});
+export type ParticleEmitterVisualQuad = z.infer<typeof ParticleEmitterVisualQuadSchema>;
+export type ParticleEmitterVisualQuadInput = z.input<typeof ParticleEmitterVisualQuadSchema>;
+export const ParticleEmitterVisualSchema = z.discriminatedUnion("type", [
+    ParticleEmitterVisualImageSchema,
+    ParticleEmitterVisualQuadSchema
+]);
+export type ParticleEmitterVisual = z.infer<typeof ParticleEmitterVisualSchema>;
+export type ParticleEmitterVisualInput = z.input<typeof ParticleEmitterVisualSchema>;
+
+// TODO: more options, its any threejs material. need to use it more to figure out what though (stuff like shapes and animations)
+// TODO: emissive particles etc, maybe just have a central "material schema" and accept that, which can also be reused for material override later
+
+export const ParticleEmitterGravityBehaviorSchema = z.object({
+    type: z.literal("gravity"),
+    origin: z.tuple([z.number(), z.number(), z.number()]).optional(),
+    magnitude: z.number().default(9.81).optional(),
+});
+export type ParticleEmitterGravityBehavior = z.infer<typeof ParticleEmitterGravityBehaviorSchema>;
+export type ParticleEmitterGravityBehaviorInput = z.input<typeof ParticleEmitterGravityBehaviorSchema>;
+export const ParticleEmitterBehaviorSchema = z.discriminatedUnion("type", [
+    ParticleEmitterGravityBehaviorSchema
+]);
+export type ParticleEmitterBehavior = z.infer<typeof ParticleEmitterBehaviorSchema>;
+export type ParticleEmitterBehaviorInput = z.input<typeof ParticleEmitterBehaviorSchema>;
+export const ParticleEmitterRandomisableValueSchema = z.union([
+    z.number().positive(),
+    z.object({
+        min: z.number().positive(),
+        max: z.number().positive()
+    })
+]);
+export type ParticleEmitterRandomisableValue = z.infer<typeof ParticleEmitterRandomisableValueSchema>;
+export type ParticleEmitterRandomisableValueInput = z.input<typeof ParticleEmitterRandomisableValueSchema>;
+export const ParticleEmitterColorSchema = z.union([
+    HexColorSchema,
+    z.array(HexColorSchema).min(2),
+    z.array(z.object({
+        color: HexColorSchema,
+        weight: z.number().positive().default(1).optional(),
+        alpha: z.number().min(0).max(1).default(1).optional()
+    }))
+]);
+export type ParticleEmitterColor = z.infer<typeof ParticleEmitterColorSchema>;
+export type ParticleEmitterColorInput = z.input<typeof ParticleEmitterColorSchema>;
+export const ParticleEmitterInteractionSchema = bindable({
+    type: z.literal("particle-emitter"),
+    duration: z.number().positive().optional(),
+    loop: z.boolean().default(false),
+    autoplay: z.boolean().default(false),
+    lifetime: ParticleEmitterRandomisableValueSchema.default(1),
+    speed: ParticleEmitterRandomisableValueSchema.default(1),
+    particle_size: ParticleEmitterRandomisableValueSchema.default(1).optional(),
+    particle_rotation: ParticleEmitterRandomisableValueSchema.default(0).optional(),
+    color: ParticleEmitterColorSchema.optional(),
+    per_second: ParticleEmitterRandomisableValueSchema.default(10),
+    emitter_shape: ParticleEmitterShapeSchema,
+    visual: ParticleEmitterVisualSchema,
+    // TODO: rendermode? or leave it up to the visuals
+    behaviors: z.array(ParticleEmitterBehaviorSchema).optional(),
+    // TODO: uvTileCount (whatever they are)
+    // TODO: add the undocumented properties on particlesystem component
+    world_space: z.boolean().default(true).optional(), // whether particles followe the emitter or remain in world space
+    offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]).optional(),
+    rotation: RotationSchema.default([0, 0, 0]).optional(),
+    scale: z.tuple([z.number(), z.number(), z.number()]).default([1, 1, 1]).optional()
+});
+export type ParticleEmitterInteraction = z.infer<typeof ParticleEmitterInteractionSchema>;
+export type ParticleEmitterInteractionInput = z.input<typeof ParticleEmitterInteractionSchema>;
+
+// TODO: more quarks behaviours (need schema for bezier curve and gradient for overlife behaviors)
+// export const ParticleEmitterBehaviorSizeOverLifeSchema = z.object({
+
+// TODO: option to provide prebuilt quarks json
+// TODO: support burst timings
+// TODO: support sprite sheet
+// TODO: support soft particles
+export const InteractionSchema = z.discriminatedUnion("type", [
+    GrabbableInteractionSchema,
+    ControllerButtonInteractionSchema,
+    TriggerVolumeInteractionSchema,
+    FollowPlayerInteractionSchema,
+    PositionalAudioInteractionSchema,
+    GlobalAudioInteractionSchema,
+    PointLightInteractionSchema,
+    SpotLightInteractionSchema,
+    DirectionalLightInteractionSchema,
+    ParticleEmitterInteractionSchema
+]);
+export type Interaction = z.infer<typeof InteractionSchema>;
+export type InteractionInput = z.input<typeof InteractionSchema>;
