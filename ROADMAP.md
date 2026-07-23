@@ -37,7 +37,7 @@
 - [ ] Implement ControllerButtonInteraction
 - [ ] Expand ControllerButtonInteraction to also read flat input, and axes like movement. Provide option to use consolidated input, or to use raw input per control scheme to customise it
 - [ ] Billboard positioning interaction
-- [ ] Implement monitors in engine
+- [x] Implement monitors in engine
 - [ ] Ensure all interaction properties implemented
 - [ ] Anchored option on kinematic-pos rigid body builder
 - [ ] Decide if/how to deal with duplicate interactions

@@ -9,6 +9,7 @@ import { PrefabRenderer } from "./PrefabRenderer";
 import {rotation_to_quaternion} from "./rotation";
 import {Group} from "three";
 import {ObjectReadyMarker} from "./object_ready_registry";
+import {register_object_monitors} from "./monitor_registry";
 
 export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) => {
     const { type, ...obj_rest } = data.object;
@@ -24,6 +25,12 @@ export const EngineObjectRenderer = ({ data }: { data: CreatedEngineObject }) =>
 
     // register refs with registry for retrieval by sdk
     useEffect(() => register_object_refs(refs.current), []);
+
+    // register monitors
+    useEffect(
+        () => register_object_monitors(data.id, data.monitors),
+        [data.id, data.monitors]
+    );
 
     // a physics object's pose is owned by its rigid body so the outer group must stay at identity or the mesh double-transforms
     // a non-physics object's pose is owned by this group

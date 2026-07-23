@@ -11,8 +11,16 @@ class AxesBasedMonitorBuilder extends BaseBuilder<AxesBasedMonitorInput> {
         return this;
     }
 
-    continuous(is_continuous: boolean) {
-        this._internal.continuous = is_continuous;
+    continuous(is_continuous: boolean, options: {ignored_unchanged?: boolean} = {}) {
+        if (!this._internal.continuous) {
+            this._internal.continuous = {};
+        }
+
+        this._internal.continuous.enabled = is_continuous;
+        if (options.ignored_unchanged !== undefined) {
+            this._internal.continuous.ignored_unchanged = options.ignored_unchanged;
+        }
+
         return this;
     }
 

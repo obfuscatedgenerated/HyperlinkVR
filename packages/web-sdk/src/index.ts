@@ -10,7 +10,14 @@ import {bind_rtc_event, facilitate_rtc, send_via_rtc} from "./messenger";
 
 export const connect = async () => {
     await facilitate_rtc();
+
+    // connect reports to internal dispatch
     bind_rtc_event("HVRSDK_ENGINE_OBJECT_REPORT", (msg) => publish_report(msg.report));
+    bind_rtc_event("HVRSDK_ENGINE_OBJECT_REPORT_BATCH", (msg) => {
+        for (const report of msg.reports) {
+            publish_report(report);
+        }
+    });
 }
 
 export const bind_messages = () => {

@@ -46,6 +46,7 @@ import {FlatLoadingScreen, VRLoadingScreen} from "./LoadingScreen";
 import {SSAO} from "../render/SSAO";
 import {QuarksProvider} from "quarks.r3f";
 import {AutoHintGlyphs, HintDevicePublisher, HintStateProvider} from "../input/impl/flat/hints";
+import {MonitorRunner} from "./MonitorRunner";
 
 configureTextBuilder({
     useWorker: false
@@ -252,6 +253,8 @@ const SceneContents = ({
             {show_loader && <VRLoadingScreen />}
 
             <TweenRunner />
+            <MonitorRunner />
+
             <SSAO mode={ssao_mode} />
             {/*TODO: should ssao even be in use in vr? if not, then may as well use react-three postprocessing (which doesn't work in vr but prob more battle tested than out own ao sahder) */}
 

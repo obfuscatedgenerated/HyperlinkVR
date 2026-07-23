@@ -231,9 +231,15 @@ interface WebSDKEngineObjectReportEventMessage extends BaseWebSDKEventMessage {
     report: ReportEvent;
 }
 
+interface WebSDKBatchEngineObjectReportEventMessage extends BaseWebSDKEventMessage {
+    type: "HVRSDK_ENGINE_OBJECT_REPORT_BATCH";
+    reports: ReportEvent[];
+}
+
 export type WebSDKEventMessage =
     WebSDKReadyEventMessage
-    | WebSDKEngineObjectReportEventMessage;
+    | WebSDKEngineObjectReportEventMessage
+    | WebSDKBatchEngineObjectReportEventMessage;
 
 export type EventMessage =
     StreamEvent |

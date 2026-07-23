@@ -21,7 +21,10 @@ export type AxisRange = z.infer<typeof AxisRangeSchema>;
 export const AxesBasedMonitorSchema = bindable({
     type: z.enum(["position", "rotation", "linear-velocity", "angular-velocity"]),
     when: z.enum(["any", "all", "xor"]).default("all"),
-    continuous: z.boolean().default(false),
+    continuous: z.object({
+        enabled: z.boolean().default(false),
+        ignored_unchanged: z.boolean().default(true),
+    }).optional(),
     x: AxisRangeSchema.optional(),
     y: AxisRangeSchema.optional(),
     z: AxisRangeSchema.optional()
