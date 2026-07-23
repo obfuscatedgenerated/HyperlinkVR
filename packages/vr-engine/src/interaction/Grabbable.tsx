@@ -39,6 +39,11 @@ const HOVER_BID_PRIORITY = -1000;
 const RESTORE_CLEARANCE_SKIN = 0.05;
 const RESTORE_FOOT_PROBE_DROP = 0.7;
 
+// jumping to the carry pose in one step gives the kinematic body a huge implied velocity,
+// which rockets any dynamic body it clips on the way
+// instead the held body approaches the carry pose at a capped speed
+const ATTACH_MAX_SPEED = 8; // m/s
+
 // every useGrabbable instance runs its own useFrame, so no single instance can
 // know whether it's the closest candidate for a hand. each instance submits a
 // distance bid per hand per tick; the winner resolved from the previous
@@ -448,6 +453,43 @@ export const useGrabbable = (
         return region_tester.current;
     };
 
+    const attach_gliding = useRef(false);
+    const glide_pos = useRef(new Vector3());
+    const glide_quat = useRef(new Quaternion());
+    const glide_target_pos = useRef(new Vector3());
+    const glide_target_quat = useRef(new Quaternion());
+    const glide_target_scale = useRef(new Vector3());
+
+    const clamp_attach_glide = useCallback(
+        (world_matrix: Matrix4, delta: number) => {
+            if (!attach_gliding.current) return;
+
+            world_matrix.decompose(
+                glide_target_pos.current,
+                glide_target_quat.current,
+                glide_target_scale.current
+            );
+
+            const distance = glide_pos.current.distanceTo(glide_target_pos.current);
+            const max_step = ATTACH_MAX_SPEED * delta;
+
+            if (distance <= max_step) {
+                // caught up
+                attach_gliding.current = false;
+                return;
+            }
+
+            const fraction = max_step / distance;
+            glide_pos.current.lerp(glide_target_pos.current, fraction);
+
+            // rotation keeps pace with the trip, but always makes some progress so a long glide doesn't arrive with the object still unturned
+            glide_quat.current.slerp(glide_target_quat.current, Math.max(fraction, 0.15));
+
+            world_matrix.compose(glide_pos.current, glide_quat.current, glide_target_scale.current);
+        },
+        []
+    );
+
     // true while the player capsule is still inside (or within margin of) the
     // grab region: restoring collision in that state makes the character
     // controller depenetrate the player violently, potentially through walls
@@ -535,6 +577,7 @@ export const useGrabbable = (
         release_hand_claim(hand, grabbable_id);
         on_grab_end?.(hand);
         publish_held(false);
+        attach_gliding.current = false;
 
         if (hand.throw_intent) {
             hand.throw_intent.held_throwable.current = null;
@@ -787,6 +830,13 @@ export const useGrabbable = (
                 just_grabbed.current = true;
                 body?.setBodyType(RigidBodyType.KinematicPositionBased, true);
 
+                target_ref.current.matrixWorld.decompose(
+                    glide_pos.current,
+                    glide_quat.current,
+                    glide_target_scale.current
+                );
+                attach_gliding.current = true;
+
                 // stop colliding with the player while held, and cancel any pending restore from a previous quick release
                 apply_player_ignore(body);
                 restore_countdown.current = null;
@@ -923,6 +973,8 @@ export const useGrabbable = (
                 );
                 target_ref.current.matrixAutoUpdate = true;
             }
+
+            clamp_attach_glide(newWorldMatrix, delta);
         }
 
         tick_collision_restore(body, region_scale, delta);

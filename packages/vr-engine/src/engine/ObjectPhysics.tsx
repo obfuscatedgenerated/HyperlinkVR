@@ -120,22 +120,62 @@ export const URLMeshCollider = ({
     );
 };
 
+const arrays_equal = (left: readonly unknown[], right: readonly unknown[]): boolean => {
+    if (left.length !== right.length) return false;
+
+    for (let index = 0; index < left.length; index++) {
+        if (left[index] !== right[index]) return false;
+    }
+
+    return true;
+};
+
+const colliders_equal = (left: Collider, right: Collider): boolean => {
+    const left_keys = Object.keys(left);
+    if (left_keys.length !== Object.keys(right).length) return false;
+
+    for (const key of left_keys) {
+        const left_value = (left as Record<string, unknown>)[key];
+        const right_value = (right as Record<string, unknown>)[key];
+
+        if (Array.isArray(left_value) && Array.isArray(right_value)) {
+            if (!arrays_equal(left_value, right_value)) return false;
+            continue;
+        }
+
+        if (left_value !== right_value) return false;
+    }
+
+    return true;
+};
+
+const useStableCollider = (collider: Collider): Collider => {
+    const stable = useRef(collider);
+
+    if (stable.current !== collider && !colliders_equal(stable.current, collider)) {
+        stable.current = collider;
+    }
+
+    return stable.current;
+};
+
 export const useCollider = (collider: Collider): {auto_strategy: RigidBodyAutoCollider | false, ColliderComponent: React.ComponentType<ColliderProps> | null} => {
-    const auto_strategy = collider.type === "auto" ? (collider.approximation as any) : false;
+    const stable_collider = useStableCollider(collider);
+    const auto_strategy = stable_collider.type === "auto" ? (stable_collider.approximation as any) : false;
 
     const ColliderComponent = useMemo(() => {
-        switch (collider.type) {
+        switch (stable_collider.type) {
             case "custom-mesh":
-                return (props: ColliderProps) => <URLMeshCollider url={collider.mesh} approximation={collider.approximation || "hull"} {...props} />;
+                return (props: ColliderProps) => <URLMeshCollider url={stable_collider.mesh} approximation={stable_collider.approximation || "hull"} {...props} />;
             case "box":
             case "sphere":
             case "capsule":
             case "cylinder":
-                return (props: ColliderProps) => <PrimitiveCollider collider={collider} {...props} />;
+                return (props: ColliderProps) => <PrimitiveCollider collider={stable_collider} {...props} />;
             default:
                 return null;
         }
-    }, [collider]);
+    }, [stable_collider]);
 
     return { auto_strategy, ColliderComponent };
 }

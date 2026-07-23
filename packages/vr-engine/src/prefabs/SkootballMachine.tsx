@@ -185,8 +185,6 @@ export const SkootballMachine = () => {
 
     const respawn_ball = useCallback(
         (id: string) => {
-            if (balls_remaining_ref.current <= 3) return;
-
             const ball_handle = ball_handles.current.get(id)?.current;
             if (!ball_handle) return;
 
