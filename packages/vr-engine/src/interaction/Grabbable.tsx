@@ -1,6 +1,6 @@
 import type { GrabCollider } from "@hyperlinkvr/vr-engine-schemas";
 import { useFrame } from "@react-three/fiber";
-import type { RapierRigidBody } from "@react-three/rapier";
+import {RapierRigidBody, useRapier} from "@react-three/rapier";
 import { ComponentProps, RefObject, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { BackSide, Box3, Group, Matrix4, Mesh, MeshBasicMaterial, Object3D, Quaternion, Raycaster, Sphere, Vector3 } from "three";
 
@@ -43,6 +43,68 @@ const RESTORE_FOOT_PROBE_DROP = 0.7;
 // which rockets any dynamic body it clips on the way
 // instead the held body approaches the carry pose at a capped speed
 const ATTACH_MAX_SPEED = 8; // m/s
+
+const MAX_DRIVE_ANGVEL = 25; // rad/s, same job as ATTACH_MAX_SPEED but for spin
+
+const drive_target_quat = new Quaternion();
+const drive_error_quat = new Quaternion();
+const drive_linvel = new Vector3();
+
+// drives a still-dynamic body toward the carry pose by velocity, sized against the physics timestep
+// this means constraints still apply
+const drive_body_toward = (
+    body: RapierRigidBody,
+    target_pos: Vector3,
+    target_quat: Quaternion,
+    timestep: number
+) => {
+    const inv_dt = 1 / Math.max(timestep, 1e-4);
+
+    const translation = body.translation();
+    drive_linvel
+        .set(
+            target_pos.x - translation.x,
+            target_pos.y - translation.y,
+            target_pos.z - translation.z
+        )
+        .multiplyScalar(inv_dt)
+        .clampLength(0, ATTACH_MAX_SPEED);
+    body.setLinvel({ x: drive_linvel.x, y: drive_linvel.y, z: drive_linvel.z }, true);
+
+    const rotation = body.rotation();
+    drive_error_quat.set(rotation.x, rotation.y, rotation.z, rotation.w).invert();
+    drive_target_quat.copy(target_quat);
+    drive_error_quat.premultiply(drive_target_quat); // error = target * current⁻¹, world frame
+
+    // shortest path: a negated quaternion is the same rotation the long way round
+    if (drive_error_quat.w < 0) {
+        drive_error_quat.set(
+            -drive_error_quat.x,
+            -drive_error_quat.y,
+            -drive_error_quat.z,
+            -drive_error_quat.w
+        );
+    }
+
+    const clamped_w = Math.min(1, Math.max(-1, drive_error_quat.w));
+    const angle = 2 * Math.acos(clamped_w);
+    const sin_half = Math.sqrt(1 - clamped_w * clamped_w);
+
+    if (sin_half < 1e-5 || angle < 1e-5) {
+        body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+        return;
+    }
+
+    const speed = Math.min(angle * inv_dt, MAX_DRIVE_ANGVEL) / sin_half;
+    body.setAngvel(
+        {
+            x: drive_error_quat.x * speed,
+            y: drive_error_quat.y * speed,
+            z: drive_error_quat.z * speed
+        },
+        true
+    );
+};
 
 // every useGrabbable instance runs its own useFrame, so no single instance can
 // know whether it's the closest candidate for a hand. each instance submits a
@@ -338,7 +400,8 @@ export const useGrabbable = (
     } = {}
 ) => {
     const hands = useHands();
-    const body_ref = useObjectRefsOptional()?.rigid_body ?? null;
+    const obj_refs = useObjectRefsOptional();
+    const body_ref = obj_refs?.rigid_body ?? null;
 
     const grabbable_id = useMemo<GrabbableID>(() => Symbol("grabbable"), []);
 
@@ -648,6 +711,8 @@ export const useGrabbable = (
         );
     };
 
+    const {world} = useRapier();
+
     useFrame((_state, delta) => {
         if (!target_ref.current) return;
         target_ref.current.updateWorldMatrix(true, false);
@@ -828,7 +893,12 @@ export const useGrabbable = (
                 prevGrabPos.current.copy(objPos);
                 grabVelocity.current.set(0, 0, 0);
                 just_grabbed.current = true;
-                body?.setBodyType(RigidBodyType.KinematicPositionBased, true);
+
+                // constrained bodies stay dynamic and get velocity-driven, so
+                // the joint solver keeps authority over what motion is legal
+                if (!obj_refs?.constrained.current) {
+                    body?.setBodyType(RigidBodyType.KinematicPositionBased, true);
+                }
 
                 target_ref.current.matrixWorld.decompose(
                     glide_pos.current,
@@ -946,7 +1016,9 @@ export const useGrabbable = (
             }
             prevGrabPos.current.copy(_p.current);
 
-            if (body) {
+            if (body && obj_refs?.constrained.current) {
+                drive_body_toward(body, _p.current, _q.current, world.timestep);
+            } else if (body) {
                 body.setNextKinematicTranslation({
                     x: _p.current.x,
                     y: _p.current.y,

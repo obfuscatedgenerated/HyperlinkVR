@@ -1,10 +1,10 @@
 import {BaseBuilder} from "./base";
 import {
-    AxisLockInput,
+    AxisLockInput, BodyConstraintInput, BodyConstraintSchema,
     Collider,
     ColliderSchema,
     CustomMeshApproximation, DynamicRigidBodyInput, FixedRigidBodyInput, KinematicPositionRigidBodyInput,
-    KinematicVelocityRigidBodyInput, LockedAxesInput,
+    KinematicVelocityRigidBodyInput,
     MeshApproximation,
     PhysicsSystem,
     PhysicsSystemInput,
@@ -107,15 +107,14 @@ export class DynamicRigidBodyBuilder extends RigidBodyBuilder<DynamicRigidBodyIn
         return this;
     }
 
-    set_locked_axes(locked_axes: LockedAxesInput) {
-        this._internal.locked_axes = locked_axes;
-        return this;
-    }
-
     lock_axis(type: "translation" | "rotation", axis: "x" | "y" | "z") {
-        const current = this._internal.locked_axes ?? {translation: {}, rotation: {}};
+        if (this._internal.constraint && this._internal.constraint.type !== "axis-locks") {
+            throw new Error("Cannot add axis locks to a body that already has a joint constraint.");
+        }
 
-        this._internal.locked_axes = {
+        const current = this._internal.constraint ?? {type: "axis-locks" as const};
+
+        this._internal.constraint = {
             ...current,
             [type]: {
                 ...current[type],
@@ -123,6 +122,15 @@ export class DynamicRigidBodyBuilder extends RigidBodyBuilder<DynamicRigidBodyIn
             }
         };
 
+        return this;
+    }
+
+    set_constraint(constraint: BodyConstraintInput) {
+        if (this._internal.constraint) {
+            console.warn("Constraint replaced.");
+        }
+
+        this._internal.constraint = BodyConstraintSchema.parse(constraint);
         return this;
     }
 
@@ -157,16 +165,18 @@ export class DynamicRigidBodyBuilder extends RigidBodyBuilder<DynamicRigidBodyIn
     }
 
     set_locked_translation_axes(locked_translation_axes: AxisLockInput) {
-        this._internal.locked_axes = {
-            ...this._internal.locked_axes || {translation: {}, rotation: {}},
-            translation: locked_translation_axes
+        this._internal.constraint = {
+            type: "axis-locks",
+            translation: locked_translation_axes,
+            rotation: this._internal.constraint?.type === "axis-locks" ? this._internal.constraint.rotation : undefined
         };
         return this;
     }
 
     set_locked_rotation_axes(locked_rotation_axes: AxisLockInput) {
-        this._internal.locked_axes = {
-            ...this._internal.locked_axes || {translation: {}, rotation: {}},
+        this._internal.constraint = {
+            type: "axis-locks",
+            translation: this._internal.constraint?.type === "axis-locks" ? this._internal.constraint.translation : undefined,
             rotation: locked_rotation_axes
         };
         return this;

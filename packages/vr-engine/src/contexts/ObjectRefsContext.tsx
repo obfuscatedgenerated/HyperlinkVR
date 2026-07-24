@@ -6,6 +6,7 @@ export interface ObjectRefsContextType {
     id: string;
     root: RefObject<Group | null>;
     rigid_body: RefObject<RapierRigidBody | null>;
+    constrained: RefObject<boolean>;
 }
 
 const ObjectRefsContext = createContext<ObjectRefsContextType | null>(null);
@@ -29,6 +30,7 @@ export const create_object_refs = (id: string): ObjectRefsContextType => {
     return {
         id,
         root: { current: null },
-        rigid_body: { current: null }
+        rigid_body: { current: null },
+        constrained: { current: false }
     };
 }

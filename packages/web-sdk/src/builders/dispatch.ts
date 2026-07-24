@@ -451,12 +451,13 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
         }
 
         // if prefab has reporting, add it
-        if (dispatch.object.type === "prefab" && dispatch.object.binding?.name) {
+        if (dispatch.object.type === "prefab" && "binding" in dispatch.object && dispatch.object.binding?.name) {
             const prefab_object = dispatch.object as PrefabInput;
             named_sources.push({
                 name: dispatch.object.binding.name,
                 assign_id: (id) => {
-                    prefab_object.binding = {...prefab_object.binding, id};
+                    const bindable = prefab_object as Bindable;
+                    bindable.binding = {...bindable.binding, id};
                 }
             });
         }

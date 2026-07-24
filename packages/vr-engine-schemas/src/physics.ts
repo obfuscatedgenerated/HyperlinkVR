@@ -64,19 +64,44 @@ export const ColliderSchema = z.discriminatedUnion("type", [
     AutoColliderSchema
 ]);
 export type Collider = z.infer<typeof ColliderSchema>;
+
 const AxisLockSchema = z.object({
     x: z.boolean().default(false),
     y: z.boolean().default(false),
     z: z.boolean().default(false)
 });
+
 export type AxisLock = z.infer<typeof AxisLockSchema>;
 export type AxisLockInput = z.input<typeof AxisLockSchema>;
-const LockedAxesSchema = z.object({
-    rotation: AxisLockSchema,
-    translation: AxisLockSchema
+
+const AxisLocksConstraintSchema = z.object({
+    type: z.literal("axis-locks"),
+    translation: AxisLockSchema.optional(),
+    rotation: AxisLockSchema.optional()
 });
-export type LockedAxes = z.infer<typeof LockedAxesSchema>;
-export type LockedAxesInput = z.input<typeof LockedAxesSchema>;
+export type AxisLocksConstraint = z.infer<typeof AxisLocksConstraintSchema>;
+
+export const HingeConstraintSchema = z.object({
+    type: z.literal("hinge"),
+    axis: z.enum(["x", "y", "z"]),
+    limits: z.object({min: z.number(), max: z.number()}).optional(),
+    spring: z
+        .object({
+            target: z.number().default(0),
+            stiffness: z.number(),
+            damping: z.number()
+        })
+        .optional()
+});
+export type HingeConstraint = z.infer<typeof HingeConstraintSchema>;
+
+export const BodyConstraintSchema = z.discriminatedUnion("type", [
+    AxisLocksConstraintSchema,
+    HingeConstraintSchema
+]);
+export type BodyConstraint = z.infer<typeof BodyConstraintSchema>;
+export type BodyConstraintInput = z.input<typeof BodyConstraintSchema>;
+
 const BaseRigidBodySchema = z.object({
     restitution: z.number().optional(),
     restitution_combine_rule: z.enum(["average", "min", "max", "multiply"]).default("average").optional(),
@@ -97,7 +122,7 @@ export const DynamicRigidBodySchema = BaseRigidBodySchema.extend({
     ccd: z.boolean().optional(),
     velocity: Vector3Schema.optional(),
     angular_velocity: Vector3Schema.optional(),
-    locked_axes: LockedAxesSchema.optional()
+    constraint: BodyConstraintSchema.optional()
 });
 export type DynamicRigidBody = z.infer<typeof DynamicRigidBodySchema>;
 export type DynamicRigidBodyInput = z.input<typeof DynamicRigidBodySchema>;

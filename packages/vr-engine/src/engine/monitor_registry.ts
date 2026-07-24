@@ -57,6 +57,7 @@ export interface CompiledMonitor {
 
     continuous: boolean;
     ignore_unchanged: boolean;
+    min_change_delta: number;
 
     windows: { x: AxisWindow; y: AxisWindow; z: AxisWindow };
     active_axis_count: number;
@@ -99,6 +100,7 @@ const compile_monitor = (object_id: string, monitor: Monitor): CompiledMonitor |
         when: monitor.when,
         continuous: monitor.continuous?.enabled ?? false,
         ignore_unchanged: monitor.continuous?.ignored_unchanged ?? true,
+        min_change_delta: monitor.continuous?.min_change_delta ?? 0,
         windows,
         active_axis_count,
         was_inside: false,
@@ -216,4 +218,8 @@ export const sample_is_unchanged = (
     x: number,
     y: number,
     z: number
-): boolean => entry.has_emitted && entry.last_x === x && entry.last_y === y && entry.last_z === z;
+): boolean =>
+    entry.has_emitted &&
+    Math.abs(x - entry.last_x) <= entry.min_change_delta &&
+    Math.abs(y - entry.last_y) <= entry.min_change_delta &&
+    Math.abs(z - entry.last_z) <= entry.min_change_delta;

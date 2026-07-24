@@ -13,6 +13,7 @@ import { clone } from "three/examples/jsm/utils/SkeletonUtils"
 import { useObjectRefsOptional } from "../contexts/ObjectRefsContext";
 import {rotation_to_euler, rotation_to_quaternion_array} from "./rotation";
 import {useObjectBinding} from "../hooks/useObjectBinding";
+import {useWorldHinge} from "./physics_constraints";
 
 
 const RB_TYPE = {
@@ -282,7 +283,9 @@ const get_body_props = (rb: RigidBodyConfig): Partial<ComponentProps<typeof Rigi
     }
 
     if (rb.type === "dynamic") {
-        const locked_axes = rb.locked_axes || { rotation: { x: false, y: false, z: false }, translation: { x: false, y: false, z: false } };
+        const axis_locks = rb.constraint?.type === "axis-locks" ? rb.constraint : undefined;
+        const locked_rotation = axis_locks?.rotation ?? {x: false, y: false, z: false};
+        const locked_translation = axis_locks?.translation ?? {x: false, y: false, z: false};
 
         return strip_undefined({
             ...base_props,
@@ -291,8 +294,8 @@ const get_body_props = (rb: RigidBodyConfig): Partial<ComponentProps<typeof Rigi
             mass: rb.mass,
             gravityScale: rb.gravity_scale,
             ccd: rb.ccd,
-            enabledRotations: [!locked_axes.rotation.x, !locked_axes.rotation.y, !locked_axes.rotation.z],
-            enabledTranslations: [!locked_axes.translation.x, !locked_axes.translation.y, !locked_axes.translation.z],
+            enabledRotations: [!locked_rotation.x, !locked_rotation.y, !locked_rotation.z],
+            enabledTranslations: [!locked_translation.x, !locked_translation.y, !locked_translation.z],
         });
     } else if (rb.type === "kinematic-vel") {
         return strip_undefined({
@@ -354,6 +357,11 @@ export const ObjectPhysics = ({
 
     useKinematicPosition(rb_ref, rb, kinematic_pos_tracking_ref || container_ref);
     useKinematicVelocity(rb_ref, rb);
+    useWorldHinge(
+        rb_ref,
+        refs?.constrained,
+        rb.type === "dynamic" && rb.constraint?.type === "hinge" ? rb.constraint : undefined
+    ); // TODO: unified useContsraints hook that automatically handles all constraint types
     // usePhysicsReporting(rbRef, physics, monitors, id); // TODO: implement
 
     const collider_rot_euler = useMemo(() => {

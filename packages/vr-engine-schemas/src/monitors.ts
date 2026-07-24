@@ -24,6 +24,7 @@ export const AxesBasedMonitorSchema = bindable({
     continuous: z.object({
         enabled: z.boolean().default(false),
         ignored_unchanged: z.boolean().default(true),
+        min_change_delta: z.number().min(0).default(0.001),
     }).optional(),
     x: AxisRangeSchema.optional(),
     y: AxisRangeSchema.optional(),

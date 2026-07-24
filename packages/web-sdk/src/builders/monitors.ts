@@ -11,7 +11,7 @@ class AxesBasedMonitorBuilder extends BaseBuilder<AxesBasedMonitorInput> {
         return this;
     }
 
-    continuous(is_continuous: boolean, options: {ignored_unchanged?: boolean} = {}) {
+    continuous(is_continuous: boolean, options: {ignored_unchanged?: boolean, min_change_delta?: number} = {}) {
         if (!this._internal.continuous) {
             this._internal.continuous = {};
         }
@@ -19,6 +19,9 @@ class AxesBasedMonitorBuilder extends BaseBuilder<AxesBasedMonitorInput> {
         this._internal.continuous.enabled = is_continuous;
         if (options.ignored_unchanged !== undefined) {
             this._internal.continuous.ignored_unchanged = options.ignored_unchanged;
+        }
+        if (options.min_change_delta !== undefined) {
+            this._internal.continuous.min_change_delta = options.min_change_delta;
         }
 
         return this;
