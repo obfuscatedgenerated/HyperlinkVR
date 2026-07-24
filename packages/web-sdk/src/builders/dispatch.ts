@@ -170,7 +170,7 @@ class EngineObjectModificationBuilder extends BaseBuilder<EngineObjectModificati
             this._internal.monitors = [];
         }
 
-        this._internal.monitors.push(...monitors.map(({name, monitor}) => ({...monitor, reporting: {name}})));
+        this._internal.monitors.push(...monitors.map(({name, monitor}) => ({...monitor, binding: {name}})));
         return this;
     }
 
@@ -373,7 +373,7 @@ export class EngineObjectDispatchBuilder extends BaseBuilder<EngineObjectDispatc
     }
 
     set_monitors(monitors: { name: string, monitor: Monitor }[]) {
-        this._internal.monitors = monitors.map(({name, monitor}) => ({...monitor, reporting: {name}}));
+        this._internal.monitors = monitors.map(({name, monitor}) => ({...monitor, binding: {name}}));
         return this;
     }
 
